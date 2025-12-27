@@ -7,6 +7,8 @@ import { useState } from "react";
 import RefreshHandler from "./RefreshHandler";
 import SignupChoice from "./pages/SignupChoice";
 import Landing from "./pages/Landing";
+import ForgotPassword from "./pages/ForgetPassword";  
+import ResetPassword from "./pages/ResetPassword";
 
 
 function App() {
@@ -28,6 +30,10 @@ function App() {
         <Route path="/signup-choice" element={<SignupChoice />} />
         <Route path="/signup/:role" element={<Signup />} />
         <Route path="/home" element={<PrivateRoute element={<Home />} />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        
       </Routes>
     </div>        
   );

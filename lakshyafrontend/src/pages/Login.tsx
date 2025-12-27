@@ -94,6 +94,10 @@ function Login() {
             value={loginInfo.password}
           />
         </div>
+
+        <div style={{ marginBottom: "10px" }}>
+          <Link to="/forgot-password">Forgot Password?</Link>
+        </div>
         
         <button type='submit'>Login</button><br></br>
         <span> Don't have an account?

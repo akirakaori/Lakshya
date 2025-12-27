@@ -2,6 +2,9 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const UserModel = require('../models/User');
 const ROLES = require('../Library/Roles').ROLES;
+const sendEmail = require("../Library/sendEmails");
+const crypto = require("crypto");
+
 
 const signup = async (req, res) => {
    try{
@@ -81,7 +84,84 @@ const login = async (req, res) => {
     }
 }
 
+//for the forgot password functionality
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+// Generate NEW OTP every time (send or resend)
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    user.resetOTP = otp;
+    user.resetOTPExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save();
+
+    await sendEmail(
+      user.email,
+      "Password Reset OTP",
+      `Your OTP is ${otp}. It will expire in 10 minutes.`
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent to your email",
+    });
+
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+ //reset password functionality
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    const user = await UserModel.findOne({ email });
+    if (
+      !user ||
+      user.resetOTP !== otp ||
+      user.resetOTPExpiry < Date.now()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP",
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetOTP = undefined;
+    user.resetOTPExpiry = undefined;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successful",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
 module.exports = { 
     signup,
-    login
+    login,
+    forgotPassword,
+  resetPassword
 };

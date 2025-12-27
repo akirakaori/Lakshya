@@ -28,7 +28,9 @@ const userschema = new schema({
     enum: Object.values(ROLES), // job_seeker | recruiter | admin
     required: true,             // must be provided
   },
-  },
+  resetOTP: String,
+  resetOTPExpiry: Date,
+  }
 
 );
 
