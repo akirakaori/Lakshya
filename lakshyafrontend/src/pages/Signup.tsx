@@ -40,16 +40,23 @@ function Signup() {
         body: JSON.stringify(signupInfo),
       });
       const result = await response.json();
-      if (response.ok) {
-        handleSuccess(result.message);
-        setTimeout(() => navigate('/login'), 1000);
-      } else {
-        handleError(result.message || 'Something went wrong');
-      }
-    } catch (err) {
-      handleError(err instanceof Error ? err.message : 'An error occurred');
+       const { success, message, error } = result;
+            if (success) {
+                handleSuccess(message);
+                setTimeout(() => {
+                    navigate('/login')
+                }, 1000)
+            } else if (error) {
+                const details = error?.details[0].message;
+                handleError(details);
+            } else if (!success) {
+                handleError(message);
+            }
+            console.log(result);
+        } catch (err) {
+            handleError(err as string | number);
+        }
     }
-  }
 // ...existing code...
 // ...existing code...
   
