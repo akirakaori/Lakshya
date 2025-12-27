@@ -5,6 +5,7 @@ import { handleError } from '../Utils';
 import { handleSuccess } from '../Utils';
 import { useNavigate } from 'react-router-dom';
 
+
 function Login() {
   
   
@@ -46,6 +47,7 @@ function Login() {
                 handleSuccess(message);
                 localStorage.setItem("token", result.jwtToken);
                 localStorage.setItem("loggedInUser", result.name);
+                
                 setTimeout(() => {
                     navigate('/home')
                 }, 1000)
