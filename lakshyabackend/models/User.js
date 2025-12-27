@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const ROLES = require('../Library/Roles').ROLES;
 const schema = mongoose.Schema;
 
 const userschema = new schema({
@@ -22,13 +23,13 @@ const userschema = new schema({
         unique: true,
          
     },
-    // role: {
-    //   type: String,
-    //   enum: ['jobseeker'],
-    //   default: 'jobseeker'
-    // }
+    role: {
+    type: String,
+    enum: Object.values(ROLES), // job_seeker | recruiter | admin
+    required: true,             // must be provided
   },
-//   { timestamps: true }
+  },
+
 );
 
 const UserModel = mongoose.model('User', userschema);
