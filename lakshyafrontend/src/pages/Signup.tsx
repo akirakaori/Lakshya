@@ -4,17 +4,36 @@ import { ToastContainer } from 'react-toastify';
 import { handleError } from '../Utils';
 import { handleSuccess } from '../Utils';
 import { useNavigate } from 'react-router-dom';
+import { useParams } from "react-router-dom";
+
 
 function Signup() {
-  const navigate = useNavigate(); // Add this line
-  
-  const [signupInfo, setSignupInfo] = useState({
+   const { role } = useParams(); // jobseeker | recruiter
+   const navigate = useNavigate(); // Add this line
+   
+
+   const [signupInfo, setSignupInfo] = useState({
     name: "",
     email: "",
     number: "",
-    password: ""
+    password: "",
+    role: role === "recruiter" ? "recruiter" : "job_seeker"
   })
+//VALIDATION COMES AFTER HOOKS
+  if (!role) {
+    return null; // wait for router param
+  }
 
+  if (role !== "recruiter" && role !== "jobseeker") {
+    return <h2>Invalid signup type</h2>;
+  }
+
+
+
+
+ 
+  
+  
   const handleChange = (e: any) => {
     const { name, value } = e.target;
     console.log(name, value);
@@ -37,7 +56,10 @@ function Signup() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(signupInfo),
+        body: JSON.stringify({
+          ...signupInfo,
+          role: role === "recruiter" ? "recruiter" : "job_seeker",
+        }),
       });
       const result = await response.json();
        const { success, message, error } = result;
@@ -64,7 +86,9 @@ function Signup() {
 
   return (
     <div className='container'>
-      <h1>Signup</h1>
+      <h1>
+        Signup as {role === "recruiter" ? "Recruiter" : "Job Seeker"}
+      </h1>
       <form onSubmit={handleSignup}>
         <div>
           <label htmlFor='name'>Name:</label>
