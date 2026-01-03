@@ -3,6 +3,7 @@ function RecruiterDashboard() {
     <div>
       <h2>Recruiter Dashboard</h2>
       <p>Post jobs, manage candidates</p>
+      
     </div>
   );
 }

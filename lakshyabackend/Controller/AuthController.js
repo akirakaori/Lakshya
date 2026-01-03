@@ -8,7 +8,8 @@ const crypto = require("crypto");
 
 const signup = async (req, res) => {
    try{
-    const {name,email,password,number,role}=req.body;
+    const { name, email, password, number, role, companyName, location } = req.body;
+
     const user = await UserModel.findOne({email});
     const ALLOWED_SIGNUP_ROLES = [
       ROLES.JOB_SEEKER,
@@ -20,6 +21,14 @@ const signup = async (req, res) => {
         error: "Invalid role for signup",
       });
     }
+    if (role === ROLES.RECRUITER) {
+      if (!companyName || !location) {
+        return res.status(400).json({
+          success: false,
+          message: "Company name and location are required for recruiters",
+        });
+      }
+    }
 
     const userExists = await UserModel.findOne({ email });
     if (userExists) {
@@ -28,7 +37,8 @@ const signup = async (req, res) => {
         success: false,
       });
     }
-    const userModel = new UserModel({name, email, password, number,role});
+    const userModel = new UserModel({name, email, password, number,role, companyName: role === ROLES.RECRUITER ? companyName : undefined,
+  location: role === ROLES.RECRUITER ? location : undefined,});
     userModel.password = await bcrypt.hash(password, 10);
     
     await userModel.save();

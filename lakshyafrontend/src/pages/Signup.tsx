@@ -17,6 +17,8 @@ function Signup() {
     email: "",
     number: "",
     password: "",
+    companyName: "",
+  location: "",
     role: role === "recruiter" ? "recruiter" : "job_seeker"
   })
 //VALIDATION COMES AFTER HOOKS
@@ -44,10 +46,15 @@ function Signup() {
   
   const  handleSignup = async (e: any) => {
     e.preventDefault();
-    const { name, email, number, password } = signupInfo;
+    const { name, email, number, password, companyName, location } = signupInfo;
+
     if (!name || !email || !number || !password) {
       return handleError("All fields are required");
     }
+    if (role === "recruiter") {
+      if (!companyName || !location) {
+          return handleError("Company name and location are required for recruiters");
+    }}
     
     try {
       const url = "http://localhost:3000/auth/signup";
@@ -121,7 +128,31 @@ function Signup() {
             value={signupInfo.number}
           />
         </div>
-        <div>
+        
+        
+        {role === "recruiter" && (
+          <>
+            <div>
+              <label htmlFor='companyName'>Company Name:</label>
+              <input 
+                onChange={handleChange}
+                type='text' 
+                name='companyName' 
+                placeholder='Enter your company name'
+                value={signupInfo.companyName}
+              />
+            </div>
+            <div>
+              <label htmlFor='location'>Location:</label>
+              <input 
+                onChange={handleChange}
+                type='text' 
+                name='location' 
+                placeholder='Enter your location'
+                value={signupInfo.location}
+              />
+            </div>
+            <div>
           <label htmlFor='password'>Password:</label>
           <input 
             onChange={handleChange}
@@ -131,6 +162,8 @@ function Signup() {
             value={signupInfo.password}
           />
         </div>
+          </>
+        )}
         
         <button type='submit'>Signup</button><br></br>
         <span> Already have an account?
