@@ -29,6 +29,12 @@ const signup = async (req, res) => {
         });
       }
     }
+    if (!ALLOWED_SIGNUP_ROLES.includes(role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin signup is not allowed",
+      });
+    }
 
     const userExists = await UserModel.findOne({ email });
     if (userExists) {

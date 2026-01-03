@@ -5,11 +5,16 @@ const ROLES = require("../Library/Roles").ROLES;
 
 router.get(
   "/users",
-   authenticate,
+  authenticate,
   authorizeRoles(ROLES.ADMIN),
-  (req, res) => {
-    res.json({ message: "Admin can see all users" });
+  async (req, res) => {
+    const users = await UserModel.find().select("-password");
+    res.json({
+      success: true,
+      users,
+    });
   }
 );
+
 
 module.exports = router;

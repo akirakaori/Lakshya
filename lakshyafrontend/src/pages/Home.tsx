@@ -4,6 +4,7 @@ import { handleSuccess } from "../Utils";
 import {ToastContainer} from 'react-toastify';
 import JobSeekerDashboard from "./JobSeekerDashboard";
 import RecruiterDashboard from "./RecruiterDashboard";
+import AdminDashboard from "./AdminDashBoard";
 
 function Home() {
 
@@ -31,6 +32,7 @@ function Home() {
             {/* 🔥 ROLE BASED DASHBOARD  */}
           {role === "job_seeker" && <JobSeekerDashboard />}
           {role === "recruiter" && <RecruiterDashboard />}
+          {role === "admin" && <AdminDashboard />}
 
           <ToastContainer/>
         </div>

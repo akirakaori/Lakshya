@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { handleSuccess } from "../Utils";
 import { ToastContainer } from 'react-toastify';
 
-function RecruiterDashboard() {
+function AdminDashboard() {
   const [loggedInUser, setLoggedInUser] = useState('');
   const [role, setRole] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -27,11 +27,17 @@ function RecruiterDashboard() {
     <div>
       <h1>Welcome, {loggedInUser}!</h1>
       <button onClick={handleLogout}>Logout</button>
-      <h2>Recruiter Dashboard</h2>
-      <p>Post jobs, manage candidates</p>
+      <h1>Admin Dashboard</h1>
+      <p>Welcome Admin 👑</p>
+
+      <ul>
+        <li>View All Users</li>
+        <li>Manage Recruiters</li>
+        <li>Manage Job Seekers</li>
+      </ul>
       <ToastContainer />
     </div>
   );
 }
 
-export default RecruiterDashboard;
+export default AdminDashboard;
