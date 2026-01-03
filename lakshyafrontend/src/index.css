@@ -20,7 +20,13 @@ body {
   display:flex;
   justify-content: center;
   align-items: center;
-  
+}
+
+/* Override body centering for landing page */
+body:has(.landing-page) {
+  display: block;
+  align-items: unset;
+  justify-content: unset;
 }
 
 .container {

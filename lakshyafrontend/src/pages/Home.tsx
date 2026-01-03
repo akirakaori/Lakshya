@@ -4,7 +4,7 @@ import { handleSuccess } from "../Utils";
 import {ToastContainer} from 'react-toastify';
 import JobSeekerDashboard from "./JobSeekerDashboard";
 import RecruiterDashboard from "./RecruiterDashboard";
-import AdminDashboard from "./AdminDashBoard";
+import AdminDashboard from "./AdminDashboard";
 
 function Home() {
 
