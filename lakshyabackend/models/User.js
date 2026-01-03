@@ -12,11 +12,7 @@ const userschema = new schema({
         required: true,
         unique: true,  
     },
-    password: {
-        type: String,
-        required: true,
-         
-    },
+    
     number: {
         type:String,
         required: true,
@@ -28,9 +24,33 @@ const userschema = new schema({
     enum: Object.values(ROLES), // job_seeker | recruiter | admin
     required: true,             // must be provided
   },
+
+  // ✅ ADD THESE FIELDS
+  companyName: {
+    type: String,
+    required: function () {
+      return this.role === ROLES.RECRUITER;
+    }
+  },
+
+  location: {
+    type: String,
+    required: function () {
+      return this.role === ROLES.RECRUITER;
+    }
+  },
+  password: {
+        type: String,
+        required: true,
+         
+    },
+
+  
   resetOTP: String,
   resetOTPExpiry: Date,
   }
+
+  
 
 );
 
