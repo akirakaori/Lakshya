@@ -9,6 +9,9 @@ import SignupChoice from "./pages/SignupChoice";
 import Landing from "./pages/Landing";
 import ForgotPassword from "./pages/ForgetPassword";  
 import ResetPassword from "./pages/ResetPassword";
+import AdminDashboard from "./pages/AdminDashBoard";
+import RecruiterDashboard from "./pages/RecruiterDashboard";
+import JobSeekerDashboard from "./pages/JobSeekerDashboard";
 
 
 function App() {
@@ -32,8 +35,9 @@ function App() {
         <Route path="/home" element={<PrivateRoute element={<Home />} />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-
-        
+        <Route path="/AdminDashboard" element={<PrivateRoute element={<AdminDashboard />} />} />
+        <Route path="/RecruiterDashboard" element={<PrivateRoute element={<RecruiterDashboard />} />} />
+        <Route path="/JobSeekerDashboard" element={<PrivateRoute element={<JobSeekerDashboard />} />} />
       </Routes>
     </div>        
   );

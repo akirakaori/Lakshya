@@ -50,9 +50,15 @@ function Login() {
                 localStorage.setItem("role", result.role);
                 
                 setTimeout(() => {
-                    navigate('/home')
-                }, 1000)
-            } else if (error) {
+                  if (result.role === "admin") {
+                    navigate("/AdminDashboard");
+                  } else if (result.role === "recruiter") {
+                    navigate("/RecruiterDashboard");
+                  } else {
+                    navigate("/JobSeekerDashboard");
+                  }
+                }, 1000);
+              } else if (error) {
                 const details = error?.details[0].message;
                 handleError(details);
             } else if (!success) {
