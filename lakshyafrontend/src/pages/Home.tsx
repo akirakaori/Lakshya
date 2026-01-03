@@ -30,9 +30,9 @@ function Home() {
           <h1>Welcome, {loggedInUser}!</h1>
           <button onClick={handleLogout}>Logout</button>
             {/* 🔥 ROLE BASED DASHBOARD  */}
-          {role === "job_seeker" && <JobSeekerDashboard />}
+          {/* {role === "job_seeker" && <JobSeekerDashboard />}
           {role === "recruiter" && <RecruiterDashboard />}
-          {role === "admin" && <AdminDashboard />}
+          {role === "admin" && <AdminDashboard />} */}
 
           <ToastContainer/>
         </div>
