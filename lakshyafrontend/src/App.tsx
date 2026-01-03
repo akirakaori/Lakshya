@@ -9,7 +9,7 @@ import SignupChoice from "./pages/SignupChoice";
 import Landing from "./pages/Landing";
 import ForgotPassword from "./pages/ForgetPassword";  
 import ResetPassword from "./pages/ResetPassword";
-import AdminDashboard from "./pages/AdminDashBoard";
+import AdminDashboard from "./pages/AdminDashboard";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
 import JobSeekerDashboard from "./pages/JobSeekerDashboard";
 
@@ -26,7 +26,7 @@ function App() {
   return (
     <div className ="App">
       <RefreshHandler setIsAuthenticated={setIsAuthenticated} />
-      <h1>Lakshya Frontend Running 🚀</h1>
+      {/* <h1>Lakshya Frontend Running 🚀</h1> */}
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
