@@ -107,7 +107,7 @@ function Login() {
         
         <button type='submit'>Login</button><br></br>
         <span> Don't have an account?
-          <Link to="/Signup">Signup</Link>
+          <Link to="/signup-choice">Signup</Link>
         </span>
       </form>
       <ToastContainer />      
