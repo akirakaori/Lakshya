@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 *,
 ::before,
 ::after {
@@ -14,6 +18,9 @@ html,
 body{
   height: 100%;
   width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -22,11 +29,17 @@ body {
   align-items: center;
 }
 
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
 /* Override body centering for landing page */
 body:has(.landing-page) {
   display: block;
   align-items: unset;
   justify-content: unset;
+  overflow-x: hidden;
 }
 
 .container {
@@ -49,7 +62,7 @@ body:has(.landing-page) {
 }
 
 .container div {
-  dsiplay:flex;
+  display: flex;
   flex-direction: column;
   
 }

@@ -7,6 +7,12 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
+  position: relative;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* Navbar Styles */
@@ -17,6 +23,8 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  width: 100%;
+  left: 0;
 }
 
 .nav-container {
@@ -33,6 +41,8 @@
   font-weight: bold;
   color: #3b4bb8;
   letter-spacing: 1px;
+  cursor: default;
+  user-select: none;
 }
 
 .nav-links {
@@ -46,6 +56,8 @@
   text-decoration: none;
   font-size: 0.95rem;
   transition: color 0.3s;
+  cursor: pointer;
+  user-select: none;
 }
 
 .nav-links a:hover {
@@ -132,6 +144,7 @@
   padding: 0.5rem;
   background-color: transparent;
   color: #333;
+  user-select: text;
 }
 
 .search-input::placeholder {
@@ -196,6 +209,7 @@
   padding: 2rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s, box-shadow 0.3s;
+  will-change: transform;
 }
 
 .step-card:hover {
@@ -281,6 +295,7 @@
   text-align: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s, box-shadow 0.3s;
+  will-change: transform;
 }
 
 .cta-card:hover {
