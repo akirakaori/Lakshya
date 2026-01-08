@@ -48,7 +48,7 @@ const userschema = new schema({
   
   resetOTP: String,
   resetOTPExpiry: Date,
-  }
+  }, { timestamps: true }
 
   
 
