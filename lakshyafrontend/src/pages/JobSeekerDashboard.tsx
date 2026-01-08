@@ -19,7 +19,7 @@ function JobSeekerDashboard() {
     localStorage.removeItem("role");
     handleSuccess("User Logged out successfully");
     setTimeout(() => {
-      navigate('/login')
+      navigate('/login', { replace: true })
     }, 1000);
   }
 

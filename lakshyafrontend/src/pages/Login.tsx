@@ -51,11 +51,11 @@ function Login() {
                 
                 setTimeout(() => {
                   if (result.role === "admin") {
-                    navigate("/AdminDashboard");
+                    navigate("/AdminDashboard", { replace: true });
                   } else if (result.role === "recruiter") {
-                    navigate("/RecruiterDashboard");
+                    navigate("/RecruiterDashboard", { replace: true });
                   } else {
-                    navigate("/JobSeekerDashboard");
+                    navigate("/JobSeekerDashboard", { replace: true });
                   }
                 }, 1000);
               } else if (error) {

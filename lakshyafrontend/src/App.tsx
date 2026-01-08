@@ -12,15 +12,11 @@ import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
 import JobSeekerDashboard from "./pages/JobSeekerDashboard";
+import PrivateRoute from "./components/PrivateRoute";
 
 
 function App() {
   const [isAuthenticated ,setIsAuthenticated] = useState(false);
-
-
-  const PrivateRoute = ({ element }: { element: React.ReactElement }) => {
-  return isAuthenticated ? element : <Navigate to="/login" />;
-};
 
 
   return (
