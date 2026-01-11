@@ -459,7 +459,7 @@ function AdminDashboard() {
                       <td className='px-6 py-4'><div className='text-sm font-medium text-gray-900'>{user.name}</div></td>
                       <td className='px-6 py-4'><div className='text-sm text-gray-600'>{user.email}</div></td>
                       <td className='px-6 py-4'><span className='px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800'>{user.role}</span></td>
-                      <td className='px-6 py-4'><span className={`px-3 py-1 text-xs rounded-full {${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Suspended'}</span></td>
+                      <td className='px-6 py-4'><span className={`px-3 py-1 text-xs rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Suspended'}</span></td>
                       <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(user.createdAt)}</td>
                       <td className='px-6 py-4 space-x-2'>
                         <button onClick={() => handleEditUser(user)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
