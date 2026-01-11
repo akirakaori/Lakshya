@@ -44,6 +44,10 @@ const userschema = new schema({
         required: true,
          
     },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
 
   
   resetOTP: String,
