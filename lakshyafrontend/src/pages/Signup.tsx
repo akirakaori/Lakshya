@@ -58,15 +58,28 @@ function Signup() {
     
     try {
       const url = "http://localhost:3000/auth/signup";
+      
+      // Prepare signup data based on role
+      const signupData: any = {
+        name,
+        email,
+        number,
+        password,
+        role: role === "recruiter" ? "recruiter" : "job_seeker",
+      };
+      
+      // Only add company fields for recruiters
+      if (role === "recruiter") {
+        signupData.companyName = companyName;
+        signupData.location = location;
+      }
+      
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...signupInfo,
-          role: role === "recruiter" ? "recruiter" : "job_seeker",
-        }),
+        body: JSON.stringify(signupData),
       });
       const result = await response.json();
        const { success, message, error } = result;
@@ -128,7 +141,16 @@ function Signup() {
             value={signupInfo.number}
           />
         </div>
-        
+        <div>
+          <label htmlFor='password'>Password:</label>
+          <input 
+            onChange={handleChange}
+            type='password' 
+            name='password' 
+            placeholder='Enter your password'
+            value={signupInfo.password}
+          />
+        </div>
         
         {role === "recruiter" && (
           <>
@@ -152,16 +174,6 @@ function Signup() {
                 value={signupInfo.location}
               />
             </div>
-            <div>
-          <label htmlFor='password'>Password:</label>
-          <input 
-            onChange={handleChange}
-            type='password' 
-            name='password' 
-            placeholder='Enter your password'
-            value={signupInfo.password}
-          />
-        </div>
           </>
         )}
         
