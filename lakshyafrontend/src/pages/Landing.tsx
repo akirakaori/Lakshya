@@ -12,11 +12,11 @@ function Landing() {
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 w-full left-0">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-row justify-between items-center gap-8">
           {/* Logo - Left */}
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-primary rounded flex items-center justify-center text-white text-sm font-bold">
-              L
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
+              <span className="text-xl">💼</span>
             </div>
-            <span className="text-xl font-semibold text-gray-800 cursor-default select-none" draggable="false">
+            <span className="text-xl font-bold text-gray-800 cursor-default select-none" draggable="false">
               Lakshya
             </span>
           </div>
