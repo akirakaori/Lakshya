@@ -11,12 +11,49 @@ function AdminDashboard() {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [jobSearchQuery, setJobSearchQuery] = useState('');
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoggedInUser(localStorage.getItem("loggedInUser") || 'Admin');
     setRole(localStorage.getItem("role"));
-  }, [])
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:8080/admin/users", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        setUsers(result.users);
+      } else {
+        console.error("Failed to fetch users:", result.message);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -28,21 +65,15 @@ function AdminDashboard() {
     }, 1000);
   }
 
-  // Dummy data for statistics
+  // Statistics data
+  const jobSeekers = users.filter(u => u.role === 'job_seeker');
+  const recruiters = users.filter(u => u.role === 'recruiter');
+  
   const stats = [
-    { title: 'Total Job Seekers', value: '12,450', description: 'Registered users on the platform', icon: '👥', color: 'bg-blue-500' },
-    { title: 'Total Employers', value: '875', description: 'Companies actively hiring', icon: '🏢', color: 'bg-green-500' },
-    { title: 'Total Jobs', value: '3,210', description: 'Currently active job postings', icon: '💼', color: 'bg-purple-500' },
-    { title: 'Total Applications', value: '48,900', description: 'Applications submitted this month', icon: '📄', color: 'bg-orange-500' },
-  ];
-
-  // Dummy user data
-  const users = [
-    { name: 'Kiran Sharma', email: 'kiran.sharma@example.com', role: 'Job Seeker', joinDate: '2023-01-15' },
-    { name: 'Priya Gurung', email: 'priya.gurung@example.com', role: 'Employer', joinDate: '2023-02-20' },
-    { name: 'Samir Thapa', email: 'samir.thapa@example.com', role: 'Job Seeker', joinDate: '2023-03-18' },
-    { name: 'Aisha Rai', email: 'aisha.rai@example.com', role: 'Employer', joinDate: '2023-04-05' },
-    { name: 'Deepak Yadav', email: 'deepak.yadav@example.com', role: 'Job Seeker', joinDate: '2023-05-22' },
+    { title: 'Total Job Seekers', value: jobSeekers.length.toString(), description: 'Registered users on the platform', icon: '👥', color: 'bg-blue-500' },
+    { title: 'Total Employers', value: recruiters.length.toString(), description: 'Companies actively hiring', icon: '🏢', color: 'bg-green-500' },
+    { title: 'Total Jobs', value: '0', description: 'Currently active job postings', icon: '💼', color: 'bg-purple-500' },
+    { title: 'Total Applications', value: '0', description: 'Applications submitted this month', icon: '📄', color: 'bg-orange-500' },
   ];
 
   return (
@@ -284,8 +315,23 @@ function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {users.map((user, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition-colors">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                        Loading users...
+                      </td>
+                    </tr>
+                  ) : users.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                        No users found
+                      </td>
+                    </tr>
+                  ) : users.filter(user => 
+                    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).map((user, index) => (
+                    <tr key={user._id || index} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{user.name}</div>
                       </td>
@@ -294,15 +340,17 @@ function AdminDashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          user.role === 'Employer' 
+                          user.role === 'recruiter' 
                             ? 'bg-green-100 text-green-800' 
-                            : 'bg-blue-100 text-blue-800'
+                            : user.role === 'job_seeker'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-purple-100 text-purple-800'
                         }`}>
-                          {user.role}
+                          {user.role === 'job_seeker' ? 'Job Seeker' : user.role === 'recruiter' ? 'Recruiter' : 'Admin'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {user.joinDate}
+                        {formatDate(user.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                         <button className="text-indigo-600 hover:text-indigo-900 transition-colors p-2 hover:bg-indigo-50 rounded-lg">
