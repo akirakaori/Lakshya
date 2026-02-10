@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { handleSuccess, handleError } from '../utils';
-import { ToastContainer } from 'react-toastify';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../api/api-client';
 
@@ -496,8 +495,6 @@ function AdminDashboard() {
           </div>
         </div>
       )}
-
-      <ToastContainer />
     </div>
   );
 }

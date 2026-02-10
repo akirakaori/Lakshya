@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom'
-import { ToastContainer } from 'react-toastify';
 import { handleError } from '../utils';
 import { handleSuccess } from '../utils';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api-client';
+import { toast } from 'react-toastify';
 
 
 function Login() {
@@ -30,6 +30,7 @@ function Login() {
         localStorage.setItem("role", role);
         
         setTimeout(() => {
+          toast.dismiss(); // Dismiss all toasts before navigating
           if (role === "admin") {
             navigate("/AdminDashboard", { replace: true });
           } else if (role === "recruiter") {
@@ -37,7 +38,7 @@ function Login() {
           } else {
             navigate("/JobSeekerDashboard", { replace: true });
           }
-        }, 1000);
+        }, 1500);
       } else if (error) {
         const details = error?.details[0].message;
         handleError(details);
@@ -110,7 +111,6 @@ function Login() {
           <Link to="/signup-choice">Signup</Link>
         </span>
       </form>
-      <ToastContainer />      
     </div>
   );
 }

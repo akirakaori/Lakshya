@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { handleSuccess } from "../utils";
-import { ToastContainer } from 'react-toastify';
 
 function JobSeekerDashboard() {
   const [loggedInUser, setLoggedInUser] = useState('');
@@ -29,7 +28,6 @@ function JobSeekerDashboard() {
       <button onClick={handleLogout}>Logout</button>
       <h2>Job Seeker Dashboard</h2>
       <p>Search jobs, apply, track applications</p>
-      <ToastContainer />
     </div>
   );
 }

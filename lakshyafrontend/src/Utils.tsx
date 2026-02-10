@@ -1,13 +1,65 @@
-import { toast} from 'react-toastify';
+import { toast, type ToastOptions } from 'react-toastify';
 
-export const handleSuccess = (msg:string|number) =>{
-    toast.success(msg,{
-        position:"top-right",
-    });
+// Default toast configuration
+const defaultToastConfig: ToastOptions = {
+  position: "top-center",
+  autoClose: 3000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: false,
+  pauseOnFocusLoss: false,
+  draggable: true,
+  progress: undefined,
+  theme: "light",
 };
 
-export const handleError = (msg:string|number) => {
-    toast.error(msg,{
-        position:"top-right",
-    });
+// Enhanced toast helper functions
+export const handleSuccess = (msg: string | number) => {
+  toast.success(msg, {
+    ...defaultToastConfig,
+  });
+};
+
+export const handleError = (msg: string | number) => {
+  toast.error(msg, {
+    ...defaultToastConfig,
+  });
+};
+
+export const handleInfo = (msg: string | number) => {
+  toast.info(msg, {
+    ...defaultToastConfig,
+  });
+};
+
+export const handleWarning = (msg: string | number) => {
+  toast.warning(msg, {
+    ...defaultToastConfig,
+  });
+};
+
+// Generic toast helper with custom type
+export const showToast = (
+  type: 'success' | 'error' | 'info' | 'warning',
+  message: string | number,
+  options?: ToastOptions
+) => {
+  const config = { ...defaultToastConfig, ...options };
+  
+  switch (type) {
+    case 'success':
+      toast.success(message, config);
+      break;
+    case 'error':
+      toast.error(message, config);
+      break;
+    case 'info':
+      toast.info(message, config);
+      break;
+    case 'warning':
+      toast.warning(message, config);
+      break;
+    default:
+      toast(message, config);
+  }
 };

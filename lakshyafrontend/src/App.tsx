@@ -1,4 +1,7 @@
 import { Navigate,Route, Routes } from "react-router-dom";
+import { ToastContainer, Slide } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './styles/toast.css';
 
 import Login from "./pages/login";
 import Signup from "./pages/signup";
@@ -22,7 +25,21 @@ function App() {
   return (
     <div className ="App">
       <RefreshHandler setIsAuthenticated={setIsAuthenticated} />
-      {/* <h1>Lakshya Frontend Running 🚀</h1> */}
+      {/* Global Toast Container */}
+      <ToastContainer
+        position="top-center"
+        autoClose={2500}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable={false}
+        pauseOnHover={false}
+        theme="colored"
+        transition={Slide}
+        limit={1}
+      />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

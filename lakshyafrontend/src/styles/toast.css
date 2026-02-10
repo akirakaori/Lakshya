@@ -1,0 +1,197 @@
+/* Custom Toast Styles - Fixed Width, Colors, and Text Display */
+
+/* ============================================
+   TOAST CONTAINER - Fixed width issue
+   ============================================ */
+.Toastify__toast-container {
+  width: 400px !important;
+  min-width: 350px !important;
+  max-width: 500px !important;
+  padding: 10px !important;
+}
+
+.Toastify__toast-container--top-center {
+  top: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+/* ============================================
+   TOAST BOX - Base styles
+   ============================================ */
+.Toastify__toast {
+  width: 100% !important;
+  min-width: 320px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+  padding: 14px 16px !important;
+  min-height: 60px !important;
+  margin-bottom: 10px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  position: relative !important;
+}
+
+/* ============================================
+   TEXT DISPLAY - FIX VERTICAL LETTERS
+   ============================================ */
+.Toastify__toast-body {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  padding: 0 12px !important;
+  margin: 0 !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+.Toastify__toast-body > div {
+  display: block !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  writing-mode: horizontal-tb !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: #ffffff !important;
+}
+
+/* ============================================
+   SUCCESS TOAST - Green
+   ============================================ */
+.Toastify__toast--success {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+  color: #ffffff !important;
+}
+
+.Toastify__toast--success .Toastify__toast-icon svg {
+  fill: #ffffff !important;
+}
+
+/* ============================================
+   ERROR TOAST - Red
+   ============================================ */
+.Toastify__toast--error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: #ffffff !important;
+}
+
+.Toastify__toast--error .Toastify__toast-icon svg {
+  fill: #ffffff !important;
+}
+
+/* ============================================
+   WARNING TOAST - Orange
+   ============================================ */
+.Toastify__toast--warning {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+  color: #ffffff !important;
+}
+
+.Toastify__toast--warning .Toastify__toast-icon svg {
+  fill: #ffffff !important;
+}
+
+/* ============================================
+   INFO TOAST - Blue
+   ============================================ */
+.Toastify__toast--info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+}
+
+.Toastify__toast--info .Toastify__toast-icon svg {
+  fill: #ffffff !important;
+}
+
+/* ============================================
+   TOAST ICON
+   ============================================ */
+.Toastify__toast-icon {
+  width: 22px !important;
+  min-width: 22px !important;
+  flex-shrink: 0 !important;
+  margin-right: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* ============================================
+   CLOSE BUTTON - Fixed inside container
+   ============================================ */
+.Toastify__close-button {
+  color: #ffffff !important;
+  opacity: 0.9 !important;
+  align-self: center !important;
+  padding: 6px !important;
+  margin-left: 10px !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  top: 0 !important;
+  right: 0 !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 50% !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.Toastify__close-button > svg {
+  height: 14px !important;
+  width: 14px !important;
+  fill: #ffffff !important;
+}
+
+/* ============================================
+   PROGRESS BAR
+   ============================================ */
+.Toastify__progress-bar {
+  height: 4px !important;
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+
+.Toastify__progress-bar--success,
+.Toastify__progress-bar--error,
+.Toastify__progress-bar--warning,
+.Toastify__progress-bar--info {
+  background: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ============================================
+   RESPONSIVE - Mobile
+   ============================================ */
+@media only screen and (max-width: 480px) {
+  .Toastify__toast-container {
+    width: calc(100vw - 20px) !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    left: 10px !important;
+    right: 10px !important;
+    transform: none !important;
+    padding: 0 !important;
+  }
+
+  .Toastify__toast {
+    min-width: unset !important;
+    width: 100% !important;
+    border-radius: 8px !important;
+  }
+
+  .Toastify__toast-body > div {
+    font-size: 14px !important;
+  }
+}

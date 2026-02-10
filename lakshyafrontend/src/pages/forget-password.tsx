@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { handleError, handleSuccess } from "../utils";
-import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api-client';
@@ -55,8 +54,6 @@ function ForgotPassword() {
       <button type="button" onClick={sendOtp} disabled={forgotPasswordMutation.isPending}>
         Resend OTP
       </button>
-
-      <ToastContainer />
     </div>
   );
 }

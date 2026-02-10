@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { handleSuccess } from "../utils";
-import {ToastContainer} from 'react-toastify';
 import JobSeekerDashboard from "./job-seeker-dashboard";
 import RecruiterDashboard from "./recruiter-dashboard";
 import AdminDashboard from "./admin-dashboard";
@@ -33,8 +32,6 @@ function Home() {
           {/* {role === "job_seeker" && <JobSeekerDashboard />}
           {role === "recruiter" && <RecruiterDashboard />}
           {role === "admin" && <AdminDashboard />} */}
-
-          <ToastContainer/>
         </div>
         
       );
