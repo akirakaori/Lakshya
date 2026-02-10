@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { handleError, handleSuccess } from "../Utils";
+import { handleError, handleSuccess } from "../utils";
 import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 

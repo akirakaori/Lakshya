@@ -4,10 +4,10 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 
-const AuthRouter = require('./Routes/AuthRouter');
-const AdminRoutes = require('./Routes/AdminRoutes');
-const RecruiterRoutes = require('./Routes/RecruiterRoutes');
-const JobSeekerRoutes = require('./Routes/JobSeekerRoutes');
+const AuthRouter = require('./Routes/auth-router');
+const AdminRoutes = require('./Routes/admin-routes');
+const RecruiterRoutes = require('./Routes/recruiter-routes');
+const JobSeekerRoutes = require('./Routes/job-seeker-routes');
 
 
 dotenv.config();

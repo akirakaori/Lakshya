@@ -1,8 +1,8 @@
 const router = require("express").Router();
-const authenticate = require("../Middleware/authMiddleware");
-const authorizeRoles = require("../Middleware/roleMiddleware");
-const ROLES = require("../Library/Roles").ROLES;
-const { getAllUsers, getAllPosts, deletePost, editUser, deleteUser, editPost } = require("../Controller/AdminController");
+const authenticate = require("../Middleware/auth-middleware");
+const authorizeRoles = require("../Middleware/role-middleware");
+const ROLES = require("../Library/roles").ROLES;
+const { getAllUsers, getAllPosts, deletePost, editUser, deleteUser, editPost } = require("../Controller/admin-controller");
 
 // Get all users
 router.get(

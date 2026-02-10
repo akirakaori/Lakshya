@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import { handleSuccess } from "../Utils";
+import { handleSuccess } from "../utils";
 import {ToastContainer} from 'react-toastify';
-import JobSeekerDashboard from "./JobSeekerDashboard";
-import RecruiterDashboard from "./RecruiterDashboard";
-import AdminDashboard from "./AdminDashboard";
+import JobSeekerDashboard from "./job-seeker-dashboard";
+import RecruiterDashboard from "./recruiter-dashboard";
+import AdminDashboard from "./admin-dashboard";
 
 function Home() {
 

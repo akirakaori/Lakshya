@@ -1,18 +1,18 @@
 import { Navigate,Route, Routes } from "react-router-dom";
 
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Home from "./pages/Home";
+import Login from "./pages/login";
+import Signup from "./pages/signup";
+import Home from "./pages/home";
 import { useState } from "react";
-import RefreshHandler from "./RefreshHandler";
-import SignupChoice from "./pages/SignupChoice";
-import Landing from "./pages/Landing";
-import ForgotPassword from "./pages/ForgetPassword";  
-import ResetPassword from "./pages/ResetPassword";
-import AdminDashboard from "./pages/AdminDashboard";
-import RecruiterDashboard from "./pages/RecruiterDashboard";
-import JobSeekerDashboard from "./pages/JobSeekerDashboard";
-import PrivateRoute from "./components/PrivateRoute";
+import RefreshHandler from "./refresh-handler";
+import SignupChoice from "./pages/signup-choice";
+import Landing from "./pages/landing";
+import ForgotPassword from "./pages/forget-password";  
+import ResetPassword from "./pages/reset-password";
+import AdminDashboard from "./pages/admin-dashboard";
+import RecruiterDashboard from "./pages/recruiter-dashboard";
+import JobSeekerDashboard from "./pages/job-seeker-dashboard";
+import PrivateRoute from "./components/private-route";
 
 
 function App() {

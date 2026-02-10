@@ -1,6 +1,6 @@
-const UserModel = require("../models/User");
-const PostModel = require("../models/Post");
-const AuditLogModel = require("../models/AuditLog");
+const UserModel = require("../models/user");
+const PostModel = require("../models/post");
+const AuditLogModel = require("../models/audit-log");
 const bcrypt = require('bcrypt');
 
 // Helper function to create audit log

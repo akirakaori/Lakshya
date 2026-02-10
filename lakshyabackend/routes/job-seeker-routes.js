@@ -1,8 +1,8 @@
 const router = require("express").Router();
-const authenticate = require("../Middleware/authMiddleware"); // JWT verify
-const authorizeRoles = require("../Middleware/roleMiddleware");
+const authenticate = require("../Middleware/auth-middleware"); // JWT verify
+const authorizeRoles = require("../Middleware/role-middleware");
 
-const ROLES = require("../Library/Roles").ROLES;
+const ROLES = require("../Library/roles").ROLES;
 
 
 // Add this function or import from controller

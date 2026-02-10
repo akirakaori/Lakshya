@@ -1,8 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const UserModel = require('../models/User');
-const ROLES = require('../Library/Roles').ROLES;
-const sendEmail = require("../Library/sendEmails");
+const UserModel = require('../models/user');
+const ROLES = require('../Library/roles').ROLES;
+const sendEmail = require("../Library/send-emails");
 const crypto = require("crypto");
 
 

@@ -1,5 +1,5 @@
 const joi = require("joi");
-const ROLES = require("../Library/Roles").ROLES;
+const ROLES = require("../Library/roles").ROLES;
 
 const signupValidation = (req, res, next) => {
   const schema = joi.object({

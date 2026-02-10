@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const ROLES = require("../Library/Roles").ROLES;
+const ROLES = require("../Library/roles").ROLES;
 
 const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
