@@ -37,7 +37,7 @@ function Landing() {
           {/* Auth Buttons - Right */}
           <div className="flex flex-row items-center gap-3">
             <button 
-              className="text-sm text-white hover:text-white hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm px-4 py-2 rounded transition-all duration-200 ease-in-out select-none"
+              className="text-sm text-white bg-indigo-400 hover:bg-indigo-500 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm px-4 py-2 rounded-lg transition-all duration-200 ease-in-out select-none"
               onClick={() => navigate("/login")}
             >
               Login
@@ -151,6 +151,7 @@ function Landing() {
             <p className="text-sm text-gray-600 leading-relaxed mb-6 select-none">
               Access top talent that perfectly matches your job requirements.
             </p>
+            <br></br>
             <button 
               className="w-full px-6 py-3 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out cursor-pointer select-none"
               onClick={() => navigate("/signup-choice")}

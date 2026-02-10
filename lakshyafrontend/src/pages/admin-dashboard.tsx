@@ -213,11 +213,13 @@ function AdminDashboard() {
   return (
     <div className='flex h-screen bg-gray-50'>
       <aside className={`{${isSidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-indigo-900 via-indigo-800 to-indigo-900 text-white transition-all duration-300 flex flex-col shadow-2xl`}>
+
         <div className='p-6 flex items-center justify-between border-b border-indigo-700'>
           {isSidebarOpen && (
-            <div className='flex items-center space-x-3'>
+            <div onClick={() => navigate("/landing")}
+            className='flex items-center space-x-3 cursor-pointer hover:opacity-80 transition'>
               <div className='w-10 h-10 bg-white rounded-lg flex items-center justify-center'>
-                <span className='text-2xl'></span>
+                <span className='text-2xl'>💼</span>
               </div>
               <h1 className='text-xl font-bold'>Lakshya</h1>
             </div>
