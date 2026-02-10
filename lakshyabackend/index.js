@@ -24,7 +24,10 @@ app.use(bodyParser.json());
 app.use(cors());
 
 app.use((req, res, next) => {
-  console.log(req.method, req.url);
+  console.log('=== INCOMING REQUEST ===');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Body:', req.body);
   next();
 });
 
