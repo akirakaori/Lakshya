@@ -4,6 +4,8 @@ import { ToastContainer } from 'react-toastify';
 import { handleError } from '../utils';
 import { handleSuccess } from '../utils';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../api/api-client';
 
 
 function Login() {
@@ -15,7 +17,38 @@ function Login() {
     
     password: ""
   })
-  const navigate = useNavigate(); // Add this line
+  const navigate = useNavigate();
+
+  const loginMutation = useMutation({
+    mutationFn: authApi.login,
+    onSuccess: (result: any) => {
+      const { success, message, jwtToken, name, role, error } = result;
+      if (success) {
+        handleSuccess(message);
+        localStorage.setItem("token", jwtToken);
+        localStorage.setItem("loggedInUser", name);
+        localStorage.setItem("role", role);
+        
+        setTimeout(() => {
+          if (role === "admin") {
+            navigate("/AdminDashboard", { replace: true });
+          } else if (role === "recruiter") {
+            navigate("/RecruiterDashboard", { replace: true });
+          } else {
+            navigate("/JobSeekerDashboard", { replace: true });
+          }
+        }, 1000);
+      } else if (error) {
+        const details = error?.details[0].message;
+        handleError(details);
+      } else if (!success) {
+        handleError(message);
+      }
+    },
+    onError: (error: any) => {
+      handleError(error.message || 'Login failed');
+    }
+  });
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -32,43 +65,8 @@ function Login() {
       return handleError("All fields are required");
     }
     
-    try {
-      const url = "http://localhost:3000/auth/login";
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(loginInfo),
-      });
-      const result = await response.json();
-       const { success, message,jwtToken,name, error } = result;
-            if (success) {
-                handleSuccess(message);
-                localStorage.setItem("token", result.jwtToken);
-                localStorage.setItem("loggedInUser", result.name);
-                localStorage.setItem("role", result.role);
-                
-                setTimeout(() => {
-                  if (result.role === "admin") {
-                    navigate("/AdminDashboard", { replace: true });
-                  } else if (result.role === "recruiter") {
-                    navigate("/RecruiterDashboard", { replace: true });
-                  } else {
-                    navigate("/JobSeekerDashboard", { replace: true });
-                  }
-                }, 1000);
-              } else if (error) {
-                const details = error?.details[0].message;
-                handleError(details);
-            } else if (!success) {
-                handleError(message);
-            }
-            console.log(result);
-        } catch (err) {
-            handleError(err as string | number);
-        }
-    }
+    loginMutation.mutate(loginInfo);
+  }
 // ...existing code...
 // ...existing code...
   
@@ -105,7 +103,9 @@ function Login() {
           <Link to="/forgot-password">Forgot Password?</Link>
         </div>
         
-        <button type='submit'>Login</button><br></br>
+        <button type='submit' disabled={loginMutation.isPending}>
+          {loginMutation.isPending ? 'Logging in...' : 'Login'}
+        </button><br></br>
         <span> Don't have an account?
           <Link to="/signup-choice">Signup</Link>
         </span>

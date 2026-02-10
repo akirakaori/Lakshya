@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { handleSuccess, handleError } from '../utils';
 import { ToastContainer } from 'react-toastify';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { adminApi } from '../api/api-client';
 
 interface User {
   _id: string;
@@ -35,11 +37,6 @@ function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [postSearchQuery, setPostSearchQuery] = useState('');
   
-  const [users, setUsers] = useState<User[]>([]);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const [loadingPosts, setLoadingPosts] = useState(true);
-  
   const [showEditUserModal, setShowEditUserModal] = useState(false);
   const [showEditPostModal, setShowEditPostModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -52,64 +49,78 @@ function AdminDashboard() {
   const [editPostData, setEditPostData] = useState({ title: '', description: '', company: '', location: '', salary: '', jobType: '' });
   
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Fetch users with useQuery
+  const { data: usersData, isLoading: loadingUsers } = useQuery<{ success: boolean; users: User[] }>({
+    queryKey: ['admin-users'],
+    queryFn: adminApi.getUsers,
+  });
+
+  const users = usersData?.users || [];
+
+  // Fetch posts with useQuery
+  const { data: postsData, isLoading: loadingPosts } = useQuery<{ success: boolean; posts: Post[] }>({
+    queryKey: ['admin-posts'],
+    queryFn: adminApi.getPosts,
+  });
+
+  const posts = postsData?.posts || [];
+
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: ({ userId, userData }: { userId: string; userData: any }) =>
+      adminApi.updateUser(userId, userData),
+    onSuccess: () => {
+      handleSuccess('User updated successfully');
+      setShowEditUserModal(false);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: any) => {
+      handleError(error.message || 'Failed to update user');
+    }
+  });
+
+  // Update post mutation
+  const updatePostMutation = useMutation({
+    mutationFn: ({ postId, postData }: { postId: string; postData: any }) =>
+      adminApi.updatePost(postId, postData),
+    onSuccess: () => {
+      handleSuccess('Post updated successfully');
+      setShowEditPostModal(false);
+      queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
+    },
+    onError: (error: any) => {
+      handleError(error.message || 'Failed to update post');
+    }
+  });
+
+  // Delete mutation (for both users and posts)
+  const deleteMutation = useMutation({
+    mutationFn: ({ type, id, reason }: { type: 'user' | 'post'; id: string; reason: string }) => {
+      if (type === 'user') {
+        return adminApi.deleteUser(id, reason);
+      } else {
+        return adminApi.deletePost(id, reason);
+      }
+    },
+    onSuccess: (_, variables) => {
+      handleSuccess(`${variables.type === 'user' ? 'User' : 'Post'} deleted successfully`);
+      setShowDeleteConfirm(false);
+      if (variables.type === 'user') {
+        queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
+      }
+    },
+    onError: (error: any) => {
+      handleError(error.message || 'Failed to delete');
+    }
+  });
 
   useEffect(() => {
     setLoggedInUser(localStorage.getItem('loggedInUser') || 'Admin');
-    fetchUsers();
-    fetchPosts();
   }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoadingUsers(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/admin/users', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      const result = await response.json();
-      if (result.success) {
-        setUsers(result.users);
-      } else {
-        handleError(result.message || 'Failed to fetch users');
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      handleError('Error fetching users');
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
-
-  const fetchPosts = async () => {
-    try {
-      setLoadingPosts(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/admin/posts', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      const result = await response.json();
-      if (result.success) {
-        setPosts(result.posts);
-      } else {
-        handleError(result.message || 'Failed to fetch posts');
-      }
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      handleError('Error fetching posts');
-    } finally {
-      setLoadingPosts(false);
-    }
-  };
 
   const handleEditUser = (user: User) => {
     setEditingUser(user);
@@ -136,58 +147,12 @@ function AdminDashboard() {
 
   const handleSaveUser = async () => {
     if (!editingUser) return;
-    
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/admin/users/${editingUser._id}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editUserData),
-      });
-      
-      const result = await response.json();
-      if (result.success) {
-        handleSuccess('User updated successfully');
-        setShowEditUserModal(false);
-        fetchUsers();
-      } else {
-        handleError(result.message || 'Failed to update user');
-      }
-    } catch (error) {
-      console.error('Error updating user:', error);
-      handleError('Error updating user');
-    }
+    updateUserMutation.mutate({ userId: editingUser._id, userData: editUserData });
   };
 
   const handleSavePost = async () => {
     if (!editingPost) return;
-    
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/admin/posts/${editingPost._id}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editPostData),
-      });
-      
-      const result = await response.json();
-      if (result.success) {
-        handleSuccess('Post updated successfully');
-        setShowEditPostModal(false);
-        fetchPosts();
-      } else {
-        handleError(result.message || 'Failed to update post');
-      }
-    } catch (error) {
-      console.error('Error updating post:', error);
-      handleError('Error updating post');
-    }
+    updatePostMutation.mutate({ postId: editingPost._id, postData: editPostData });
   };
 
   const handleDeleteClick = (type: 'user' | 'post', id: string) => {
@@ -198,38 +163,11 @@ function AdminDashboard() {
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
-    
-    try {
-      const token = localStorage.getItem('token');
-      const endpoint = deleteTarget.type === 'user' 
-        ? `http://localhost:3000/admin/users/${deleteTarget.id}`
-        : `http://localhost:3000/admin/posts/${deleteTarget.id}`;
-        
-      const response = await fetch(endpoint, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reason: deleteReason }),
-      });
-      
-      const result = await response.json();
-      if (result.success) {
-        handleSuccess(`{${deleteTarget.type === 'user' ? 'User' : 'Post'} deleted successfully`);
-        setShowDeleteConfirm(false);
-        if (deleteTarget.type === 'user') {
-          fetchUsers();
-        } else {
-          fetchPosts();
-        }
-      } else {
-        handleError(result.message || 'Failed to delete');
-      }
-    } catch (error) {
-      console.error('Error deleting:', error);
-      handleError('Error deleting');
-    }
+    deleteMutation.mutate({ 
+      type: deleteTarget.type, 
+      id: deleteTarget.id, 
+      reason: deleteReason 
+    });
   };
 
   const formatDate = (dateString: string) => {

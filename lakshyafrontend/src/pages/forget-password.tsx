@@ -2,45 +2,39 @@ import { useState } from "react";
 import { handleError, handleSuccess } from "../utils";
 import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../api/api-client';
 
 function ForgotPassword() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const sendOtp = async () => {
-    if (!email) {
-      return handleError("Email is required");
-    }
-
-    try {
-      setLoading(true);
-
-      const res = await fetch("http://localhost:3000/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await res.json();
-
+  const forgotPasswordMutation = useMutation({
+    mutationFn: authApi.forgotPassword,
+    onSuccess: (data: any) => {
       if (data.success) {
         handleSuccess(data.message);
-
-        // ✅ AUTO-NAVIGATE
+        // Auto-navigate
         setTimeout(() => {
           navigate("/reset-password", {
-            state: { email }, // pass email
+            state: { email },
           });
         }, 1000);
       } else {
         handleError(data.message);
       }
-    } catch (err) {
+    },
+    onError: () => {
       handleError("Something went wrong");
-    } finally {
-      setLoading(false);
     }
+  });
+
+  const sendOtp = async () => {
+    if (!email) {
+      return handleError("Email is required");
+    }
+    
+    forgotPasswordMutation.mutate(email);
   };
 
   return (
@@ -54,11 +48,11 @@ function ForgotPassword() {
         onChange={(e) => setEmail(e.target.value)}
       />
 
-      <button onClick={sendOtp} disabled={loading}>
-        {loading ? "Sending..." : "Send OTP"}
+      <button onClick={sendOtp} disabled={forgotPasswordMutation.isPending}>
+        {forgotPasswordMutation.isPending ? "Sending..." : "Send OTP"}
       </button>
 
-      <button type="button" onClick={sendOtp}>
+      <button type="button" onClick={sendOtp} disabled={forgotPasswordMutation.isPending}>
         Resend OTP
       </button>
 

@@ -2,12 +2,29 @@ import { useState } from "react";
 import { handleError, handleSuccess } from "../utils";
 import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../api/api-client';
 
 function ResetPassword() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const navigate = useNavigate();
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: authApi.resetPassword,
+    onSuccess: (data: any) => {
+      if (data.success) {
+        handleSuccess(data.message);
+        setTimeout(() => navigate("/login"), 1500);
+      } else {
+        handleError(data.message);
+      }
+    },
+    onError: () => {
+      handleError("Something went wrong");
+    }
+  });
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -16,24 +33,7 @@ function ResetPassword() {
       return handleError("All fields are required");
     }
 
-    try {
-      const res = await fetch("http://localhost:3000/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp, newPassword }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        handleSuccess(data.message);
-        setTimeout(() => navigate("/login"), 1500);
-      } else {
-        handleError(data.message);
-      }
-    } catch (err) {
-      handleError("Something went wrong");
-    }
+    resetPasswordMutation.mutate({ email, otp, newPassword });
   };
 
   return (
@@ -62,7 +62,9 @@ function ResetPassword() {
           onChange={(e) => setNewPassword(e.target.value)}
         />
 
-        <button type="submit">Reset Password</button>
+        <button type="submit" disabled={resetPasswordMutation.isPending}>
+          {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
+        </button>
       </form>
 
       <ToastContainer />

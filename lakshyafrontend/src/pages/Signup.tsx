@@ -5,11 +5,13 @@ import { handleError } from '../utils';
 import { handleSuccess } from '../utils';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from "react-router-dom";
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../api/api-client';
 
 
 function Signup() {
    const { role } = useParams(); // jobseeker | recruiter
-   const navigate = useNavigate(); // Add this line
+   const navigate = useNavigate();
    
 
    const [signupInfo, setSignupInfo] = useState({
@@ -21,6 +23,28 @@ function Signup() {
   location: "",
     role: role === "recruiter" ? "recruiter" : "job_seeker"
   })
+
+  const signupMutation = useMutation({
+    mutationFn: authApi.signup,
+    onSuccess: (result: any) => {
+      const { success, message, error } = result;
+      if (success) {
+        handleSuccess(message);
+        setTimeout(() => {
+          navigate('/login')
+        }, 1000)
+      } else if (error) {
+        const details = error?.details[0].message;
+        handleError(details);
+      } else if (!success) {
+        handleError(message);
+      }
+    },
+    onError: (error: any) => {
+      handleError(error.message || 'Signup failed');
+    }
+  });
+
 //VALIDATION COMES AFTER HOOKS
   if (!role) {
     return null; // wait for router param
@@ -30,12 +54,6 @@ function Signup() {
     return <h2>Invalid signup type</h2>;
   }
 
-
-
-
- 
-  
-  
   const handleChange = (e: any) => {
     const { name, value } = e.target;
     console.log(name, value);
@@ -56,49 +74,23 @@ function Signup() {
           return handleError("Company name and location are required for recruiters");
     }}
     
-    try {
-      const url = "http://localhost:3000/auth/signup";
-      
-      // Prepare signup data based on role
-      const signupData: any = {
-        name,
-        email,
-        number,
-        password,
-        role: role === "recruiter" ? "recruiter" : "job_seeker",
-      };
-      
-      // Only add company fields for recruiters
-      if (role === "recruiter") {
-        signupData.companyName = companyName;
-        signupData.location = location;
-      }
-      
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(signupData),
-      });
-      const result = await response.json();
-       const { success, message, error } = result;
-            if (success) {
-                handleSuccess(message);
-                setTimeout(() => {
-                    navigate('/login')
-                }, 1000)
-            } else if (error) {
-                const details = error?.details[0].message;
-                handleError(details);
-            } else if (!success) {
-                handleError(message);
-            }
-            console.log(result);
-        } catch (err) {
-            handleError(err as string | number);
-        }
+    // Prepare signup data based on role
+    const signupData: any = {
+      name,
+      email,
+      number,
+      password,
+      role: role === "recruiter" ? "recruiter" : "job_seeker",
+    };
+    
+    // Only add company fields for recruiters
+    if (role === "recruiter") {
+      signupData.companyName = companyName;
+      signupData.location = location;
     }
+    
+    signupMutation.mutate(signupData);
+  }
 // ...existing code...
 // ...existing code...
   
@@ -177,7 +169,9 @@ function Signup() {
           </>
         )}
         
-        <button type='submit'>Signup</button><br></br>
+        <button type='submit' disabled={signupMutation.isPending}>
+          {signupMutation.isPending ? 'Signing up...' : 'Signup'}
+        </button><br></br>
         <span> Already have an account?
           <Link to="/Login">Login</Link>
         </span>
