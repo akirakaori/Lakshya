@@ -1,172 +1,115 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const UserModel = require('../models/user');
-const ROLES = require('../Library/roles').ROLES;
-const sendEmail = require("../Library/send-emails");
-const crypto = require("crypto");
-
+const authService = require("../Services/auth-service");
 
 const signup = async (req, res) => {
-   try{
+  try {
     const { name, email, password, number, role, companyName, location } = req.body;
 
-    const user = await UserModel.findOne({email});
-    const ALLOWED_SIGNUP_ROLES = [
-      ROLES.JOB_SEEKER,
-      ROLES.RECRUITER,
-    ];
-    if (!role || !ALLOWED_SIGNUP_ROLES.includes(role)) {
-      return res.status(403).json({
-        success: false,
-        error: "Invalid role for signup",
-      });
-    }
-    if (role === ROLES.RECRUITER) {
-      if (!companyName || !location) {
-        return res.status(400).json({
-          success: false,
-          message: "Company name and location are required for recruiters",
-        });
-      }
-    }
-    if (!ALLOWED_SIGNUP_ROLES.includes(role)) {
-      return res.status(403).json({
-        success: false,
-        message: "Admin signup is not allowed",
-      });
-    }
+    const result = await authService.signupService({
+      name,
+      email,
+      password,
+      number,
+      role,
+      companyName,
+      location,
+    });
 
-    const userExists = await UserModel.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({
-        error: "User already exists",
-        success: false,
-      });
-    }
-    const userModel = new UserModel({name, email, password, number,role, companyName: role === ROLES.RECRUITER ? companyName : undefined,
-  location: role === ROLES.RECRUITER ? location : undefined,});
-    userModel.password = await bcrypt.hash(password, 10);
-    
-    await userModel.save();
-    return res.status(201)
-        .json({
-            message:"User registered successfully",
-            success:true
-        })
-
-   } catch (err){
+    return res.status(201).json(result);
+  } catch (err) {
     console.error("Signup error:", err);
-    return res.status(500)
-    .json({
-        error:"Internal server error",
-        success:false});
+    
+    if (err.statusCode) {
+      const response = {
+        success: err.success !== undefined ? err.success : false,
+      };
+      response[err.errorField || "error"] = err.message;
+      return res.status(err.statusCode).json(response);
+    }
 
-   }
-}
+    return res.status(500).json({
+      error: "Internal server error",
+      success: false,
+    });
+  }
+};
 
 const login = async (req, res) => {
-    try{
-        const {email, password} = req.body;
-        const user = await UserModel.findOne({email});
-        const errorMsg = "Auth failed, email or password is wrong";
-        if(!user){
-            return res.status(403).json({message:errorMsg ,success:false});
-        }
-        const isPassEqual = await bcrypt.compare(password, user.password);
-        if(!isPassEqual){
-            return res.status(403)
-                .json({message:errorMsg ,success:false});
-        }
-        const jwtToken = jwt.sign(
-                    {email: user.email, id: user._id,role: user.role}, 
-                    process.env.JWT_SECRET, 
-                    {expiresIn: '1h'}
-                )
-        return res.status(200)
-            .json({
-                message:"Login successful",
-                success:true,
-                jwtToken,
-                email: user.email,
-                name: user.name,
-                role: user.role
-            });   /////////added the semi column
-    } catch (err){
-        console.error("Login error:", err);
-        return res.status(500)
-        .json({
-            error:"Internal server error",
-            success:false});
-    }
-}
+  try {
+    const { email, password } = req.body;
 
-//for the forgot password functionality
+    const result = await authService.loginService({
+      email,
+      password,
+    });
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("Login error:", err);
+    
+    if (err.statusCode) {
+      const response = {
+        success: err.success !== undefined ? err.success : false,
+      };
+      response[err.errorField || "error"] = err.message;
+      return res.status(err.statusCode).json(response);
+    }
+
+    return res.status(500).json({
+      error: "Internal server error",
+      success: false,
+    });
+  }
+};
 
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    const user = await UserModel.findOne({ email });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-// Generate NEW OTP every time (send or resend)
-    const otp = crypto.randomInt(100000, 999999).toString();
-
-    user.resetOTP = otp;
-    user.resetOTPExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
-    await user.save();
-
-    await sendEmail(
-      user.email,
-      "Password Reset OTP",
-      `Your OTP is ${otp}. It will expire in 10 minutes.`
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "OTP sent to your email",
+    const result = await authService.forgotPasswordService({
+      email,
     });
 
+    return res.status(200).json(result);
   } catch (err) {
     console.error("Forgot password error:", err);
+    
+    if (err.statusCode) {
+      const response = {
+        success: err.success !== undefined ? err.success : false,
+      };
+      response[err.errorField || "error"] = err.message;
+      return res.status(err.statusCode).json(response);
+    }
+
     return res.status(500).json({
       success: false,
       message: "Server error",
     });
   }
 };
- //reset password functionality
 
 const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
 
-    const user = await UserModel.findOne({ email });
-    if (
-      !user ||
-      user.resetOTP !== otp ||
-      user.resetOTPExpiry < Date.now()
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or expired OTP",
-      });
+    const result = await authService.resetPasswordService({
+      email,
+      otp,
+      newPassword,
+    });
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("Reset password error:", err);
+    
+    if (err.statusCode) {
+      const response = {
+        success: err.success !== undefined ? err.success : false,
+      };
+      response[err.errorField || "error"] = err.message;
+      return res.status(err.statusCode).json(response);
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
-    user.resetOTP = undefined;
-    user.resetOTPExpiry = undefined;
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Password reset successful",
-    });
-  } catch (err) {
     return res.status(500).json({
       success: false,
       message: "Server error",
@@ -174,10 +117,9 @@ const resetPassword = async (req, res) => {
   }
 };
 
-
 module.exports = { 
-    signup,
-    login,
-    forgotPassword,
-  resetPassword
+  signup,
+  login,
+  forgotPassword,
+  resetPassword,
 };
