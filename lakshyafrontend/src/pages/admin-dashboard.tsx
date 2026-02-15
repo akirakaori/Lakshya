@@ -31,7 +31,6 @@ interface Post {
 function AdminDashboard() {
   const [loggedInUser, setLoggedInUser] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [postSearchQuery, setPostSearchQuery] = useState('');
@@ -259,6 +258,15 @@ function AdminDashboard() {
               <h2 className='text-2xl font-bold text-gray-800'>{activeNav === 'dashboard' ? 'Overview' : activeNav === 'users' ? 'User Management' : 'Post Management'}</h2>
             </div>
             <div className='flex items-center space-x-3'>
+              <button
+                onClick={() => navigate('/admin/profile')}
+                className='px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors flex items-center space-x-2'
+              >
+                <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' />
+                </svg>
+                <span>Profile</span>
+              </button>
               <div className='w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold'>{loggedInUser.charAt(0).toUpperCase()}</div>
             </div>
           </div>
