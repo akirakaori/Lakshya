@@ -1,5 +1,5 @@
-const UserModel = require("../models/user");
-const PostModel = require("../models/post");
+const UserModel = require("../models/user-model");
+const PostModel = require("../models/post-model");
 const AuditLogModel = require("../models/audit-log");
 const bcrypt = require('bcrypt');
 
@@ -35,6 +35,9 @@ const getAllUsersService = async (filters = {}) => {
   // Build MongoDB query object
   const query = {};
   
+  // EXCLUDE admin users from the list
+  query.role = { $ne: 'admin' };
+  
   // Text search across name and email
   if (search) {
     query.$or = [
@@ -43,8 +46,8 @@ const getAllUsersService = async (filters = {}) => {
     ];
   }
   
-  // Filter by role
-  if (role) {
+  // Filter by role (if specified and not admin)
+  if (role && role !== 'admin') {
     query.role = role;
   }
   
