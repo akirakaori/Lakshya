@@ -33,11 +33,17 @@ export interface Job {
 export interface JobFilters {
   keyword?: string;
   location?: string;
+  category?: string;
   skill?: string;
   skills?: string[];
   jobType?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  experienceLevels?: string[];
+  aiMatchMin?: number;
   page?: number;
   limit?: number;
+  sort?: string;
 }
 
 export interface JobsResponse {
@@ -71,21 +77,58 @@ export interface CreateJobData {
   jobType?: string;
 }
 
+// Helper: Build query params from filters (removes empty/undefined values)
+const buildQueryParams = (filters: JobFilters): URLSearchParams => {
+  const params = new URLSearchParams();
+  
+  // Search keyword
+  if (filters.keyword?.trim()) params.append('keyword', filters.keyword.trim());
+  
+  // Category/Skill
+  if (filters.category?.trim()) params.append('category', filters.category.trim());
+  if (filters.skill?.trim()) params.append('skill', filters.skill.trim());
+  if (filters.skills?.length) {
+    filters.skills.forEach(s => params.append('skill', s));
+  }
+  
+  // Job Type
+  if (filters.jobType?.trim()) params.append('jobType', filters.jobType.trim());
+  
+  // Salary Range
+  if (filters.salaryMin !== undefined && filters.salaryMin > 0) {
+    params.append('salaryMin', filters.salaryMin.toString());
+  }
+  if (filters.salaryMax !== undefined && filters.salaryMax > 0) {
+    params.append('salaryMax', filters.salaryMax.toString());
+  }
+  
+  // Location
+  if (filters.location?.trim()) params.append('location', filters.location.trim());
+  
+  // Experience Levels (array)
+  if (filters.experienceLevels?.length) {
+    filters.experienceLevels.forEach(level => params.append('experienceLevel', level));
+  }
+  
+  // AI Match Score
+  if (filters.aiMatchMin !== undefined && filters.aiMatchMin > 0) {
+    params.append('aiMatchMin', filters.aiMatchMin.toString());
+  }
+  
+  // Pagination
+  if (filters.page) params.append('page', filters.page.toString());
+  if (filters.limit) params.append('limit', filters.limit.toString());
+  
+  // Sort
+  if (filters.sort) params.append('sort', filters.sort);
+  
+  return params;
+};
+
 export const jobService = {
   // Get all jobs with filters (public)
   getJobs: async (filters: JobFilters = {}): Promise<JobsResponse> => {
-    const params = new URLSearchParams();
-    
-    if (filters.keyword) params.append('keyword', filters.keyword);
-    if (filters.location) params.append('location', filters.location);
-    if (filters.skill) params.append('skill', filters.skill);
-    if (filters.skills?.length) {
-      filters.skills.forEach(s => params.append('skill', s));
-    }
-    if (filters.jobType) params.append('jobType', filters.jobType);
-    if (filters.page) params.append('page', filters.page.toString());
-    if (filters.limit) params.append('limit', filters.limit.toString());
-
+    const params = buildQueryParams(filters);
     const response = await axiosInstance.get(`/jobs?${params.toString()}`);
     return response.data;
   },

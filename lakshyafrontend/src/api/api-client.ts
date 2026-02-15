@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'http://localhost:3000/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -26,8 +26,8 @@ async function apiRequest<T>(
   const response = await fetch(url, config);
   const data = await response.json();
 
-  if (!response.ok && !data.success) {
-    throw new Error(data.message || 'API request failed');
+  if (!response.ok) {
+    throw new Error(data.message || data.error || 'API request failed');
   }
 
   return data;
@@ -50,7 +50,7 @@ export const authApi = {
     companyName?: string;
     location?: string;
   }) =>
-    apiRequest('/auth/signup', {
+    apiRequest('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     }),

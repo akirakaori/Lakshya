@@ -63,3 +63,9 @@ export const showToast = (
       toast(message, config);
   }
 };
+
+// Re-export image utilities
+export { getFileUrl, getInitials } from './utils/image-utils';
+
+// Re-export currency utilities
+export { formatCurrencyNPR, formatCurrencyShort } from './utils/currency';
