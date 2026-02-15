@@ -1,8 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require("crypto");
-const UserModel = require('../models/user');
-const ROLES = require('../Library/roles').ROLES;
+const UserModel = require('../models/user-model');
+const { ROLES } = require('../Library/roles');
 const sendEmail = require("../Library/send-emails");
 
 /**
@@ -91,8 +91,8 @@ const signupService = async (data) => {
 const loginService = async (data) => {
   const { email, password } = data;
 
-  // Find user by email
-  const user = await UserModel.findOne({ email });
+  // Find user by email (include password field which is hidden by default)
+  const user = await UserModel.findOne({ email }).select('+password');
   const errorMsg = "Auth failed, email or password is wrong";
 
   if (!user) {
@@ -126,6 +126,7 @@ const loginService = async (data) => {
     jwtToken,
     email: user.email,
     name: user.name,
+    fullName: user.name, // Add fullName for frontend compatibility
     role: user.role,
   };
 };
