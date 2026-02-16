@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { handleSuccess, handleError } from '../../utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/api-client';
+import { Footer } from '../../components';
 
 interface User {
   _id: string;
@@ -272,7 +273,8 @@ function AdminDashboard() {
           </div>
         </header>
 
-        <main className='flex-1 overflow-y-auto bg-gray-50 p-8'>
+        <div className='flex-1 overflow-y-auto bg-gray-50'>
+          <main className='min-h-screen p-8'>
           {activeNav === 'dashboard' && (
             <>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
@@ -455,7 +457,9 @@ function AdminDashboard() {
               </table>
             </div>
           )}
-        </main>
+          </main>
+          <Footer variant="dashboard" />
+        </div>
       </div>
 
       {showEditUserModal && editingUser && (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/auth-context';
 import { profileService } from '../../services';
 import { toast } from 'react-toastify';
+import { Footer } from '../../components';
 
 const AdminProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -112,9 +113,10 @@ const AdminProfile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
+    <div className="h-screen bg-gray-50 overflow-hidden">
+      <div className="h-full overflow-y-auto">
+        {/* Header */}
+        <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <button
@@ -136,8 +138,8 @@ const AdminProfile: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content */}
+        <main className="min-h-screen max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Info Card */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="flex justify-between items-start mb-6">
@@ -234,7 +236,9 @@ const AdminProfile: React.FC = () => {
             Change Password
           </button>
         </div>
-      </main>
+        </main>
+        <Footer variant="dashboard" />
+      </div>
 
       {/* Password Change Modal */}
       {showPasswordModal && (
