@@ -1,23 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DashboardLayout, LoadingSpinner } from '../../components';
-import { useProfile, useUpdateProfile, useChangePassword } from '../../hooks';
+import { useProfile, useUpdateProfile, useChangePassword, useUploadProfileImage } from '../../hooks';
 import { toast } from 'react-toastify';
+import { getFileUrl, getInitials } from '../../utils';
 
 const RecruiterProfile: React.FC = () => {
   const { data: profileData, isLoading } = useProfile();
   const updateProfileMutation = useUpdateProfile();
   const changePasswordMutation = useChangePassword();
+  const uploadImageMutation = useUploadProfileImage();
   
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const profile = profileData?.data;
 
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
+    companyName: '',
+    location: '',
     recruiter: {
-      companyName: '',
       companyWebsite: '',
       companyDescription: '',
       position: '',
@@ -35,10 +39,11 @@ const RecruiterProfile: React.FC = () => {
   useEffect(() => {
     if (profile) {
       setFormData({
-        fullName: profile.fullName || '',
-        phone: profile.phone || '',
+        fullName: profile.fullName || profile.name || '',
+        phone: profile.phone || profile.number || '',
+        companyName: profile.companyName || '',
+        location: profile.location || '',
         recruiter: {
-          companyName: profile.recruiter?.companyName || '',
           companyWebsite: profile.recruiter?.companyWebsite || '',
           companyDescription: profile.recruiter?.companyDescription || '',
           position: profile.recruiter?.position || '',
@@ -77,6 +82,31 @@ const RecruiterProfile: React.FC = () => {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please upload a valid image file (JPG, PNG, or WebP)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    try {
+      await uploadImageMutation.mutateAsync(file);
+      toast.success('Profile photo updated successfully!');
+    } catch {
+      toast.error('Failed to upload profile photo');
+    }
+  };
+
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error('Passwords do not match');
@@ -108,6 +138,10 @@ const RecruiterProfile: React.FC = () => {
     );
   }
 
+  const avatarUrl = getFileUrl(profile?.profileImageUrl);
+  const displayName = profile?.fullName || profile?.name || 'Recruiter';
+  const initials = getInitials(displayName);
+
   return (
     <DashboardLayout variant="recruiter" title="Profile">
       <div className="max-w-4xl mx-auto">
@@ -116,14 +150,47 @@ const RecruiterProfile: React.FC = () => {
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-32"></div>
           <div className="px-6 pb-6">
             <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-12">
-              <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                <span className="text-3xl font-bold text-indigo-600">
-                  {profile?.fullName?.charAt(0) || 'R'}
-                </span>
+              {/* Avatar */}
+              <div className="relative">
+                <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-lg overflow-hidden">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={displayName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-indigo-600">
+                        {initials}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 shadow-lg"
+                  title="Upload profile photo"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
               </div>
+              
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900">{profile?.fullName || 'Recruiter'}</h1>
-                <p className="text-gray-600">{formData.recruiter.position || 'Recruiter'} at {formData.recruiter.companyName || 'Company'}</p>
+                <h1 className="text-2xl font-bold text-gray-900">{displayName}</h1>
+                <p className="text-gray-600">
+                  {formData.recruiter.position || 'Recruiter'} at {formData.companyName || 'Company'}
+                </p>
               </div>
               <div className="flex gap-2">
                 {isEditing ? (
@@ -173,7 +240,7 @@ const RecruiterProfile: React.FC = () => {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.fullName || '-'}</p>
+                    <p className="text-gray-900">{profile?.fullName || profile?.name || '-'}</p>
                   )}
                 </div>
                 <div>
@@ -191,18 +258,18 @@ const RecruiterProfile: React.FC = () => {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.phone || '-'}</p>
+                    <p className="text-gray-900">{profile?.phone || profile?.number || '-'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Position/Title</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="recruiter.position"
                       value={formData.recruiter.position}
                       onChange={handleInputChange}
-                      placeholder="e.g. Senior HR Manager"
+                      placeholder="e.g., Senior HR Manager"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
@@ -217,7 +284,7 @@ const RecruiterProfile: React.FC = () => {
                       name="recruiter.department"
                       value={formData.recruiter.department}
                       onChange={handleInputChange}
-                      placeholder="e.g. Human Resources"
+                      placeholder="e.g., Human Resources"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
@@ -236,14 +303,29 @@ const RecruiterProfile: React.FC = () => {
                   {isEditing ? (
                     <input
                       type="text"
-                      name="recruiter.companyName"
-                      value={formData.recruiter.companyName}
+                      name="companyName"
+                      value={formData.companyName}
                       onChange={handleInputChange}
-                      placeholder="e.g. Tech Corp Inc."
+                      placeholder="e.g., Tech Corp Inc."
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.recruiter?.companyName || '-'}</p>
+                    <p className="text-gray-900">{profile?.companyName || '-'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      placeholder="e.g., Kathmandu, Nepal"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{profile?.location || '-'}</p>
                   )}
                 </div>
                 <div>
