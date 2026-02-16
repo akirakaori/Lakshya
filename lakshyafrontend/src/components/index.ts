@@ -1,5 +1,5 @@
 // Layout components
-export { Sidebar, Navbar, DashboardLayout } from './layout';
+export { Sidebar, Navbar, DashboardLayout, Footer } from './layout';
 
 // Job components
 export { JobCard, JobFilter } from './jobs';

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Sidebar from './sidebar';
 import Navbar from './navbar';
+import Footer from './footer';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -12,11 +13,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, variant, ti
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar variant={variant} />
-      <div className="flex-1 flex flex-col ml-64 min-w-0 h-full overflow-hidden">
+      <div className="flex-1 flex flex-col ml-64 overflow-hidden">
         <Navbar title={title} />
-        <main className="flex-1 p-6 overflow-y-auto overflow-x-hidden">
-          {children}
-        </main>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50">
+          <main className="min-h-screen p-6">
+            {children}
+          </main>
+          <Footer variant="dashboard" />
+        </div>
       </div>
     </div>
   );

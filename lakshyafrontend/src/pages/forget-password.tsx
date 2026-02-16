@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api-client';
+import { Footer } from '../components';
 
 function ForgotPassword() {
   const navigate = useNavigate();
@@ -57,8 +58,10 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
+      <div className="h-full overflow-y-auto">
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
         {/* Card Container */}
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
           {/* Logo Section */}
@@ -140,6 +143,9 @@ function ForgotPassword() {
             </div>
           </form>
         </div>
+          </div>
+        </div>
+        <Footer variant="public" />
       </div>
     </div>
   );

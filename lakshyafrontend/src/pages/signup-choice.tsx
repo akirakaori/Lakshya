@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
+import { Footer } from '../components';
 
 function SignupChoice() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
+    <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-4xl">
         {/* Logo and Header Section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
@@ -79,7 +81,9 @@ function SignupChoice() {
             </div>
           </div>
         </div>
+        </div>
       </div>
+      <Footer variant="public" />
     </div>
   );
 }
