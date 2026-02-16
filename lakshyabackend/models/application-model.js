@@ -22,8 +22,17 @@ const applicationSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['applied', 'shortlisted', 'rejected'],
+    enum: ['applied', 'shortlisted', 'interview', 'rejected'],
     default: 'applied'
+  },
+  notes: {
+    type: String,
+    default: ''
+  },
+  interview: {
+    date: { type: Date },
+    mode: { type: String }, // 'virtual', 'in-person', 'phone'
+    link: { type: String }
   }
 }, { 
   timestamps: true 

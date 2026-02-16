@@ -1,21 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { handleSuccess } from "../utils";
-import JobSeekerDashboard from "./job-seeker-dashboard";
-import RecruiterDashboard from "./recruiter-dashboard";
-import AdminDashboard from "./admin-dashboard";
 
 function Home() {
 
       const [loggedInUser, setLoggedInUser] = useState('');
-      const [role, setRole] = useState<string | null>(null);
       const navigate = useNavigate();
 
       useEffect(() => {
         setLoggedInUser(localStorage.getItem("loggedInUser") || '');
-        setRole(localStorage.getItem("role"));
       }, [])
-      const handleLogout = (e:any) => {
+      const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("loggedInUser");
         localStorage.removeItem("role");

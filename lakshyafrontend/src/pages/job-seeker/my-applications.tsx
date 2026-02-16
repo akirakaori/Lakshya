@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState } from '../../components';
 import { useMyApplications } from '../../hooks';
 import type { Job } from '../../services';
+import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStatus';
 
 // Helper function to generate deterministic AI match score from jobId
 const calculateAIMatch = (jobId: string): number => {
@@ -18,7 +19,7 @@ const calculateAIMatch = (jobId: string): number => {
 
 const MyApplications: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'applied' | 'shortlisted' | 'rejected'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected'>('all');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // Debounce search input
@@ -45,36 +46,11 @@ const MyApplications: React.FC = () => {
     return {
       total: allApps.length,
       pending: allApps.filter(a => a.status === 'applied').length,
-      interview: allApps.filter(a => a.status === 'shortlisted').length,
+      shortlisted: allApps.filter(a => a.status === 'shortlisted').length,
+      interview: allApps.filter(a => a.status === 'interview').length,
       rejected: allApps.filter(a => a.status === 'rejected').length,
     };
   }, [applications]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'applied':
-        return 'bg-blue-100 text-blue-700';
-      case 'shortlisted':
-        return 'bg-green-100 text-green-700';
-      case 'rejected':
-        return 'bg-red-100 text-red-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'applied':
-        return 'Pending';
-      case 'shortlisted':
-        return 'Interview';
-      case 'rejected':
-        return 'Rejected';
-      default:
-        return status;
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -125,7 +101,8 @@ const MyApplications: React.FC = () => {
             >
               <option value="all">All Statuses</option>
               <option value="applied">Pending</option>
-              <option value="shortlisted">Interview</option>
+              <option value="shortlisted">Shortlisted</option>
+              <option value="interview">Interview</option>
               <option value="rejected">Rejected</option>
             </select>
           </div>
@@ -191,7 +168,7 @@ const MyApplications: React.FC = () => {
                         <td className="px-6 py-4 text-gray-600">{job?.companyName || 'Company'}</td>
                         <td className="px-6 py-4 text-gray-600">{formatDate(application.createdAt)}</td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
+                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
                             {getStatusLabel(application.status)}
                           </span>
                         </td>

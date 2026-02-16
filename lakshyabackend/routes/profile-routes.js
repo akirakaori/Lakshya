@@ -22,6 +22,13 @@ router.use((req, res, next) => {
 router.get('/', verifyToken, userController.getProfile);
 
 /**
+ * @route   GET /api/profile/candidate/:userId
+ * @desc    Get candidate profile by user ID (for recruiters viewing job seekers)
+ * @access  Private (All authenticated users)
+ */
+router.get('/candidate/:userId', verifyToken, userController.getCandidateProfile);
+
+/**
  * @route   PUT /api/profile
  * @desc    Update user profile
  * @access  Private (All authenticated users)

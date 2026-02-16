@@ -7,13 +7,32 @@ export interface Application {
   applicant: {
     _id: string;
     name: string;
+    fullName?: string;
     email: string;
     number: string;
+    phone?: string;
     resume?: string;
+    profileImageUrl?: string;
+    jobSeeker?: {
+      title?: string;
+      skills?: string[];
+      resumeUrl?: string;
+      bio?: string;
+      experience?: string;
+      education?: string;
+      preferredLocation?: string;
+      expectedSalary?: string;
+    };
   } | string;
   resume?: string;
   coverLetter?: string;
-  status: 'applied' | 'shortlisted' | 'rejected';
+  status: 'applied' | 'shortlisted' | 'interview' | 'rejected';
+  notes?: string;
+  interview?: {
+    date?: string;
+    mode?: string;
+    link?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -25,7 +44,7 @@ export interface ApplyJobData {
 
 export interface ApplicationFilters {
   q?: string;
-  status?: 'all' | 'applied' | 'shortlisted' | 'rejected';
+  status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected';
   page?: number;
   limit?: number;
 }
@@ -79,7 +98,7 @@ export const applicationService = {
   // Update application status (recruiter only)
   updateApplicationStatus: async (
     applicationId: string, 
-    status: 'applied' | 'shortlisted' | 'rejected'
+    status: 'applied' | 'shortlisted' | 'interview' | 'rejected'
   ): Promise<{ success: boolean; data: Application }> => {
     const response = await axiosInstance.patch(`/applications/${applicationId}/status`, { status });
     return response.data;
@@ -102,6 +121,36 @@ export const applicationService = {
     } catch {
       return false;
     }
+  },
+
+  // Shortlist candidate (recruiter only)
+  shortlistCandidate: async (applicationId: string): Promise<{ success: boolean; data: Application }> => {
+    const response = await axiosInstance.patch(`/applications/${applicationId}/shortlist`);
+    return response.data;
+  },
+
+  // Schedule interview (recruiter only)
+  scheduleInterview: async (
+    applicationId: string,
+    interviewData?: { date?: string; mode?: string; link?: string }
+  ): Promise<{ success: boolean; data: Application }> => {
+    const response = await axiosInstance.patch(`/applications/${applicationId}/interview`, interviewData || {});
+    return response.data;
+  },
+
+  // Update recruiter notes (recruiter only)
+  updateNotes: async (applicationId: string, notes: string): Promise<{ success: boolean; data: Application }> => {
+    const response = await axiosInstance.patch(`/applications/${applicationId}/notes`, { notes });
+    return response.data;
+  },
+
+  // Get application by job and candidate (recruiter only)
+  getApplicationByJobAndCandidate: async (
+    jobId: string,
+    candidateId: string
+  ): Promise<{ success: boolean; data: Application | null }> => {
+    const response = await axiosInstance.get(`/applications/job/${jobId}/candidate/${candidateId}`);
+    return response.data;
   },
 };
 

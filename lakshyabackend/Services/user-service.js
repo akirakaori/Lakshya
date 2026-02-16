@@ -199,10 +199,33 @@ const changePassword = async (userId, oldPassword, newPassword) => {
   }
 };
 
+/**
+ * Get candidate/job seeker profile by user ID (for recruiters)
+ */
+const getCandidateProfile = async (userId) => {
+  try {
+    const user = await UserModel.findOne({ 
+      _id: userId, 
+      role: 'job_seeker' 
+    }).select('-password -resetOTP -resetOTPExpiry');
+    
+    if (!user) {
+      const error = new Error('Candidate not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
   updateUserResume,
   updateUserProfileImage,
-  changePassword
+  changePassword,
+  getCandidateProfile
 };

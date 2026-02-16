@@ -124,7 +124,7 @@ function App() {
               }
             />
             <Route
-              path="/job-seeker/applications"
+              path="/job-seeker/my-applications"
               element={
                 <ProtectedRoute allowedRoles={['job_seeker']}>
                   <MyApplications />
@@ -156,6 +156,14 @@ function App() {
             />
             <Route
               path="/recruiter/post-job"
+              element={
+                <ProtectedRoute allowedRoles={['recruiter']}>
+                  <PostJob />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/recruiter/jobs/:jobId/edit"
               element={
                 <ProtectedRoute allowedRoles={['recruiter']}>
                   <PostJob />

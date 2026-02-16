@@ -46,4 +46,32 @@ router.get('/:id', authorizeRoles(ROLES.JOB_SEEKER, ROLES.RECRUITER), applicatio
  */
 router.delete('/:id', authorizeRoles(ROLES.JOB_SEEKER), applicationController.withdrawApplication);
 
+/**
+ * @route   PATCH /api/applications/:id/shortlist
+ * @desc    Shortlist candidate
+ * @access  Private (Recruiter only - must be the job creator)
+ */
+router.patch('/:id/shortlist', authorizeRoles(ROLES.RECRUITER), applicationController.shortlistCandidate);
+
+/**
+ * @route   PATCH /api/applications/:id/interview
+ * @desc    Schedule interview
+ * @access  Private (Recruiter only - must be the job creator)
+ */
+router.patch('/:id/interview', authorizeRoles(ROLES.RECRUITER), applicationController.scheduleInterview);
+
+/**
+ * @route   PATCH /api/applications/:id/notes
+ * @desc    Update recruiter notes
+ * @access  Private (Recruiter only - must be the job creator)
+ */
+router.patch('/:id/notes', authorizeRoles(ROLES.RECRUITER), applicationController.updateRecruiterNotes);
+
+/**
+ * @route   GET /api/applications/job/:jobId/candidate/:candidateId
+ * @desc    Get application by job and candidate
+ * @access  Private (Recruiter only - must be the job creator)
+ */
+router.get('/job/:jobId/candidate/:candidateId', authorizeRoles(ROLES.RECRUITER), applicationController.getApplicationByJobAndCandidate);
+
 module.exports = router;

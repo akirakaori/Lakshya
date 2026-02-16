@@ -163,10 +163,40 @@ const changePassword = async (req, res) => {
   }
 };
 
+/**
+ * Get candidate profile by user ID (for recruiters viewing job seekers)
+ */
+const getCandidateProfile = async (req, res) => {
+  try {
+    const candidateId = req.params.userId;
+    
+    if (!candidateId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+    
+    const candidate = await userService.getCandidateProfile(candidateId);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Candidate profile retrieved successfully',
+      data: candidate
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
   uploadResume,
   uploadAvatar,
-  changePassword
+  changePassword,
+  getCandidateProfile
 };

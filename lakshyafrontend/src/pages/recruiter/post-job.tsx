@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { DashboardLayout } from '../../components';
-import { useCreateJob } from '../../hooks';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { DashboardLayout, LoadingSpinner } from '../../components';
+import { useCreateJob, useUpdateJob, useJob } from '../../hooks';
 import { toast } from 'react-toastify';
+import SearchableSelect from '../../components/ui/searchable-select';
+
+const CURRENCY_OPTIONS = [
+  { value: 'USD', label: 'USD ($) - US Dollar' },
+  { value: 'EUR', label: 'EUR (€) - Euro' },
+  { value: 'GBP', label: 'GBP (£) - British Pound' },
+  { value: 'INR', label: 'INR (₹) - Indian Rupee' },
+  { value: 'NPR', label: 'NPR (Rs) - Nepalese Rupee' },
+  { value: 'JPY', label: 'JPY (¥) - Japanese Yen' },
+  { value: 'CNY', label: 'CNY (¥) - Chinese Yuan' },
+  { value: 'AUD', label: 'AUD ($) - Australian Dollar' },
+  { value: 'CAD', label: 'CAD ($) - Canadian Dollar' },
+];
 
 const PostJob: React.FC = () => {
   const navigate = useNavigate();
+  const { jobId } = useParams<{ jobId: string }>();
+  const isEditMode = !!jobId;
+  
   const createJobMutation = useCreateJob();
+  const updateJobMutation = useUpdateJob();
+  const { data: jobData, isLoading: isLoadingJob } = useJob(jobId || '');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -26,6 +44,29 @@ const PostJob: React.FC = () => {
   });
 
   const [newSkill, setNewSkill] = useState('');
+
+  // Prefill form when editing
+  useEffect(() => {
+    if (isEditMode && jobData?.data) {
+      const job = jobData.data;
+      setFormData({
+        title: job.title || '',
+        description: job.description || '',
+        companyName: job.companyName || '',
+        location: job.location || '',
+        type: job.type || job.jobType || 'full-time',
+        experienceLevel: job.experienceLevel || 'mid',
+        salary: {
+          min: job.salary?.min?.toString() || '',
+          max: job.salary?.max?.toString() || '',
+          currency: job.salary?.currency || 'USD',
+        },
+        skills: job.skills || job.skillsRequired || [],
+        requirements: Array.isArray(job.requirements) ? job.requirements.join('\n') : '',
+        benefits: Array.isArray(job.benefits) ? job.benefits.join('\n') : '',
+      });
+    }
+  }, [isEditMode, jobData]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -75,32 +116,53 @@ const PostJob: React.FC = () => {
     }
 
     // Prepare data
-    const jobData = {
+    const jobPayload = {
       ...formData,
       salary: {
         min: parseInt(formData.salary.min) || 0,
         max: parseInt(formData.salary.max) || 0,
         currency: formData.salary.currency,
       },
+      skillsRequired: formData.skills,
       requirements: formData.requirements.split('\n').filter(r => r.trim()),
       benefits: formData.benefits.split('\n').filter(b => b.trim()),
     };
 
     try {
-      await createJobMutation.mutateAsync(jobData);
-      toast.success('Job posted successfully!');
+      if (isEditMode && jobId) {
+        await updateJobMutation.mutateAsync({ jobId, data: jobPayload });
+        toast.success('Job updated successfully!');
+      } else {
+        await createJobMutation.mutateAsync(jobPayload);
+        toast.success('Job posted successfully!');
+      }
       navigate('/recruiter/manage-jobs');
     } catch {
-      toast.error('Failed to post job');
+      toast.error(isEditMode ? 'Failed to update job' : 'Failed to post job');
     }
   };
 
+  // Show loading spinner while fetching job data in edit mode
+  if (isEditMode && isLoadingJob) {
+    return (
+      <DashboardLayout variant="recruiter" title={isEditMode ? 'Edit Job' : 'Post New Job'}>
+        <LoadingSpinner text="Loading job details..." />
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout variant="recruiter" title="Post New Job">
+    <DashboardLayout variant="recruiter" title={isEditMode ? 'Edit Job' : 'Post New Job'}>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Post a New Job</h1>
-          <p className="text-gray-600 mt-1">Fill in the details below to create a new job posting.</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isEditMode ? 'Edit Job' : 'Post a New Job'}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {isEditMode 
+              ? 'Update the job details below.' 
+              : 'Fill in the details below to create a new job posting.'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -208,17 +270,15 @@ const PostJob: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-                <select
-                  name="salary.currency"
+                <SearchableSelect
                   value={formData.salary.currency}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
-                  <option value="INR">INR (₹)</option>
-                </select>
+                  onChange={(value) => setFormData(prev => ({
+                    ...prev,
+                    salary: { ...prev.salary, currency: value }
+                  }))}
+                  options={CURRENCY_OPTIONS}
+                  placeholder="Select currency"
+                />
               </div>
             </div>
           </div>
@@ -330,10 +390,12 @@ const PostJob: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={createJobMutation.isPending}
+              disabled={createJobMutation.isPending || updateJobMutation.isPending}
               className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
             >
-              {createJobMutation.isPending ? 'Posting...' : 'Post Job'}
+              {isEditMode
+                ? (updateJobMutation.isPending ? 'Updating...' : 'Update Job')
+                : (createJobMutation.isPending ? 'Posting...' : 'Post Job')}
             </button>
           </div>
         </form>

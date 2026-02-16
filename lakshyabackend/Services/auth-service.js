@@ -124,10 +124,12 @@ const loginService = async (data) => {
     message: "Login successful",
     success: true,
     jwtToken,
+    _id: user._id.toString(), // Return _id for frontend query keys
     email: user.email,
     name: user.name,
     fullName: user.name, // Add fullName for frontend compatibility
     role: user.role,
+    profileImageUrl: user.profileImageUrl || null, // Include avatar
   };
 };
 

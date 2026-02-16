@@ -41,7 +41,7 @@ const JobApplications: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleStatusChange = async (applicationId: string, status: 'applied' | 'shortlisted' | 'rejected') => {
+  const handleStatusChange = async (applicationId: string, status: 'applied' | 'shortlisted' | 'interview' | 'rejected') => {
     try {
       await updateStatusMutation.mutateAsync({ applicationId, status });
       toast.success(`Application status updated to ${status}`);
@@ -56,6 +56,8 @@ const JobApplications: React.FC = () => {
         return 'bg-blue-100 text-blue-700';
       case 'shortlisted':
         return 'bg-green-100 text-green-700';
+      case 'interview':
+        return 'bg-purple-100 text-purple-700';
       case 'rejected':
         return 'bg-red-100 text-red-700';
       default:
@@ -135,6 +137,7 @@ const JobApplications: React.FC = () => {
               <option value="all">All Statuses</option>
               <option value="applied">Applied</option>
               <option value="shortlisted">Shortlisted</option>
+              <option value="interview">Interview</option>
               <option value="rejected">Rejected</option>
             </select>
           </div>
@@ -238,13 +241,14 @@ const JobApplications: React.FC = () => {
                           >
                             <option value="applied">Applied</option>
                             <option value="shortlisted">Shortlisted</option>
+                            <option value="interview">Interview</option>
                             <option value="rejected">Rejected</option>
                           </select>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <Link
-                              to={`/recruiter/candidate/${applicant?._id}`}
+                              to={`/recruiter/candidate/${applicant?._id}?jobId=${jobId}`}
                               className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
                             >
                               View Profile

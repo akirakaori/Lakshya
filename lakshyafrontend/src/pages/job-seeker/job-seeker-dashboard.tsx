@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { DashboardLayout, StatsCard, LoadingSpinner } from '../../components';
 import { useAuth } from '../../context/auth-context';
 import { useMyApplications } from '../../hooks';
+import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStatus';
 
 const JobSeekerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -127,13 +128,8 @@ const JobSeekerDashboard: React.FC = () => {
                             <p className="text-sm text-gray-500">{job?.companyName || 'Company'}</p>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              application.status === 'shortlisted' ? 'bg-green-100 text-green-700' :
-                              application.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                              'bg-blue-100 text-blue-700'
-                            }`}>
-                              {application.status === 'shortlisted' ? 'Interview' :
-                               application.status === 'rejected' ? 'Rejected' : 'Pending'}
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
+                              {getStatusLabel(application.status)}
                             </span>
                             <span className="text-green-600 text-sm font-medium">✓ {matchScore}% Match</span>
                           </div>

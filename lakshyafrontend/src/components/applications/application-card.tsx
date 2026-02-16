@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Application } from '../../services/application-service';
 import type { Job } from '../../services/job-service';
+import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStatus';
 
 interface ApplicationCardProps {
   application: Application;
@@ -9,32 +10,6 @@ interface ApplicationCardProps {
 
 const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, variant = 'card' }) => {
   const job = typeof application.jobId === 'object' ? application.jobId as Job : null;
-  
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'applied':
-        return 'bg-blue-100 text-blue-700';
-      case 'shortlisted':
-        return 'bg-green-100 text-green-700';
-      case 'rejected':
-        return 'bg-red-100 text-red-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'applied':
-        return 'Pending';
-      case 'shortlisted':
-        return 'Interview';
-      case 'rejected':
-        return 'Rejected';
-      default:
-        return status;
-    }
-  };
 
   // Generate a random match score (for demo)
   const aiMatchScore = Math.floor(Math.random() * 25) + 75;
@@ -56,7 +31,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, variant 
         <td className="px-6 py-4 text-gray-600">{job?.companyName || 'Company'}</td>
         <td className="px-6 py-4 text-gray-600">{formatDate(application.createdAt)}</td>
         <td className="px-6 py-4">
-          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
+          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
             {getStatusLabel(application.status)}
           </span>
         </td>
@@ -83,7 +58,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, variant 
             <p className="text-sm text-gray-600 mt-0.5">{job?.companyName || 'Company'}</p>
           </div>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
           {getStatusLabel(application.status)}
         </span>
       </div>

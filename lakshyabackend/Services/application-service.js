@@ -135,7 +135,7 @@ const getJobApplications = async (jobId, recruiterId) => {
     }
     
     const applications = await ApplicationModel.find({ jobId })
-      .populate('applicant', 'name email number resume')
+      .populate('applicant', 'name fullName email number phone resume profileImageUrl jobSeeker')
       .sort({ createdAt: -1 });
     
     return applications;
@@ -166,7 +166,7 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
     }
     
     // Valid status values
-    const validStatuses = ['applied', 'shortlisted', 'rejected'];
+    const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected'];
     if (!validStatuses.includes(newStatus)) {
       const error = new Error('Invalid status value');
       error.statusCode = 400;
@@ -230,11 +230,143 @@ const withdrawApplication = async (applicationId, applicantId) => {
   }
 };
 
+/**
+ * Shortlist candidate (recruiter only)
+ */
+const shortlistCandidate = async (applicationId, recruiterId) => {
+  try {
+    const application = await ApplicationModel.findById(applicationId)
+      .populate('jobId');
+    
+    if (!application) {
+      const error = new Error('Application not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Verify the job belongs to the recruiter
+    if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
+      const error = new Error('Unauthorized');
+      error.statusCode = 403;
+      throw error;
+    }
+    
+    application.status = 'shortlisted';
+    await application.save();
+    
+    await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
+    
+    return application;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Schedule interview (recruiter only)
+ */
+const scheduleInterview = async (applicationId, recruiterId, interviewData) => {
+  try {
+    const application = await ApplicationModel.findById(applicationId)
+      .populate('jobId');
+    
+    if (!application) {
+      const error = new Error('Application not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Verify the job belongs to the recruiter
+    if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
+      const error = new Error('Unauthorized');
+      error.statusCode = 403;
+      throw error;
+    }
+    
+    application.status = 'interview';
+    application.interview = {
+      date: interviewData.date || new Date(),
+      mode: interviewData.mode || 'virtual',
+      link: interviewData.link || ''
+    };
+    await application.save();
+    
+    await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
+    
+    return application;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Update recruiter notes (recruiter only)
+ */
+const updateRecruiterNotes = async (applicationId, recruiterId, notes) => {
+  try {
+    const application = await ApplicationModel.findById(applicationId)
+      .populate('jobId');
+    
+    if (!application) {
+      const error = new Error('Application not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Verify the job belongs to the recruiter
+    if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
+      const error = new Error('Unauthorized');
+      error.statusCode = 403;
+      throw error;
+    }
+    
+    application.notes = notes;
+    await application.save();
+    
+    await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
+    
+    return application;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Get application by candidate and job (for recruiter viewing candidate profile)
+ */
+const getApplicationByJobAndCandidate = async (jobId, candidateId, recruiterId) => {
+  try {
+    // First verify the recruiter owns the job
+    const job = await JobModel.findOne({ _id: jobId, createdBy: recruiterId });
+    
+    if (!job) {
+      const error = new Error('Job not found or unauthorized');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Find the application
+    const application = await ApplicationModel.findOne({
+      jobId,
+      applicant: candidateId
+    }).populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
+    
+    // Return null if not found (not an error - candidate may not have applied)
+    return application;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   applyForJob,
   getMyApplications,
   getJobApplications,
   updateApplicationStatus,
   getApplicationById,
-  withdrawApplication
+  withdrawApplication,
+  shortlistCandidate,
+  scheduleInterview,
+  updateRecruiterNotes,
+  getApplicationByJobAndCandidate
 };

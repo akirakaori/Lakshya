@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom'
 import { handleError } from '../utils';
 import { handleSuccess } from '../utils';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../api/api-client';
 import { toast } from 'react-toastify';
+import { useAuth } from '../context/auth-context';
 
 
 function Login() {
@@ -15,14 +16,24 @@ function Login() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
+  const queryClient = useQueryClient();
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
-    onSuccess: (result: any) => {
-      const { success, message, jwtToken, name, role, error } = result;
+    onSuccess: async (result: any) => {
+      const { success, message, jwtToken, name, email, role, _id, error } = result;
       if (success) {
+        // CRITICAL: Clear all stale queries before setting new auth state
+        await queryClient.cancelQueries(); // Cancel all in-flight queries
+        queryClient.clear(); // Remove all cached data from previous user
+        
         handleSuccess(message);
-        localStorage.setItem("token", jwtToken);
+        
+        // Update AuthContext with user data including _id
+        authLogin(jwtToken, { _id, email, name, role });
+        
+        // Also set legacy localStorage items for backward compatibility
         localStorage.setItem("loggedInUser", name);
         localStorage.setItem("role", role);
         
@@ -31,9 +42,9 @@ function Login() {
           if (role === "admin") {
             navigate("/AdminDashboard", { replace: true });
           } else if (role === "recruiter") {
-            navigate("/RecruiterDashboard", { replace: true });
+            navigate("/recruiter/dashboard", { replace: true });
           } else {
-            navigate("/JobSeekerDashboard", { replace: true });
+            navigate("/job-seeker/dashboard", { replace: true });
           }
         }, 1500);
       } else if (error) {

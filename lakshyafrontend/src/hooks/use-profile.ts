@@ -1,0 +1,129 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { profileService } from '../services';
+import type { UpdateProfileData } from '../services';
+import { useAuth } from '../context/auth-context';
+
+// Query keys with userId and role for proper cache isolation
+export const profileKeys = {
+  all: ['profile'] as const,
+  detail: (userId?: string, role?: string) => [...profileKeys.all, 'detail', userId, role] as const,
+};
+
+// Get user profile with proper cache keying
+export const useProfile = () => {
+  const { user } = useAuth();
+  const userId = user?._id;
+  const role = user?.role;
+  
+  return useQuery({
+    queryKey: profileKeys.detail(userId, role),
+    queryFn: () => profileService.getProfile(),
+    enabled: !!userId, // Only fetch when user is authenticated
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: 'always',
+  });
+};
+
+// Update profile mutation
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?._id;
+  const role = user?.role;
+  
+  return useMutation({
+    mutationFn: (data: UpdateProfileData) => {
+      console.log('useUpdateProfile mutation - sending data:', data);
+      return profileService.updateProfile(data);
+    },
+    onSuccess: (response) => {
+      console.log('useUpdateProfile success - response:', response);
+      
+      // Update the cache immediately with the new data
+      if (response?.data && userId && role) {
+        queryClient.setQueryData(profileKeys.detail(userId, role), response);
+      }
+      
+      // Also invalidate to ensure fresh data on next fetch
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    },
+    onError: (error) => {
+      console.error('useUpdateProfile error:', error);
+    }
+  });
+};
+
+// Upload resume mutation
+export const useUploadResume = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?._id;
+  const role = user?.role;
+  
+  return useMutation({
+    mutationFn: (file: File) => {
+      console.log('useUploadResume - uploading file:', file.name, file.size);
+      return profileService.uploadResume(file);
+    },
+    onSuccess: (response) => {
+      console.log('useUploadResume success - response:', response);
+      
+      // Update the cache immediately with the new data
+      if (response?.data && userId && role) {
+        queryClient.setQueryData(profileKeys.detail(userId, role), response);
+      }
+      
+      // Also invalidate to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    },
+    onError: (error) => {
+      console.error('useUploadResume error:', error);
+    }
+  });
+};
+
+// Change password mutation
+export const useChangePassword = () => {
+  return useMutation({
+    mutationFn: (data: { oldPassword: string; newPassword: string }) =>
+      profileService.changePassword(data),
+  });
+};
+
+// Upload profile image mutation
+export const useUploadProfileImage = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?._id;
+  const role = user?.role;
+  
+  return useMutation({
+    mutationFn: (file: File) => {
+      console.log('useUploadProfileImage - uploading file:', file.name, file.size);
+      return profileService.uploadProfileImage(file);
+    },
+    onSuccess: (response) => {
+      console.log('useUploadProfileImage success - response:', response);
+      
+      // Update cache with new profile image URL
+      if (response?.data?.profileImageUrl && userId && role) {
+        const currentData = queryClient.getQueryData<{ success: boolean; data: any }>(profileKeys.detail(userId, role));
+        if (currentData?.data) {
+          queryClient.setQueryData(profileKeys.detail(userId, role), {
+            ...currentData,
+            data: {
+              ...currentData.data,
+              profileImageUrl: response.data.profileImageUrl
+            }
+          });
+        }
+      }
+      
+      // Also invalidate to ensure consistency
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    },
+    onError: (error) => {
+      console.error('useUploadProfileImage error:', error);
+    }
+  });
+};

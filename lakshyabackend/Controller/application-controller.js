@@ -150,11 +150,109 @@ const withdrawApplication = async (req, res) => {
   }
 };
 
+/**
+ * Shortlist candidate (recruiter only)
+ */
+const shortlistCandidate = async (req, res) => {
+  try {
+    const recruiterId = req.user.id;
+    const applicationId = req.params.id;
+    
+    const application = await applicationService.shortlistCandidate(applicationId, recruiterId);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Candidate shortlisted successfully',
+      data: application
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Schedule interview (recruiter only)
+ */
+const scheduleInterview = async (req, res) => {
+  try {
+    const recruiterId = req.user.id;
+    const applicationId = req.params.id;
+    const interviewData = req.body;
+    
+    const application = await applicationService.scheduleInterview(applicationId, recruiterId, interviewData);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Interview scheduled successfully',
+      data: application
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Update recruiter notes (recruiter only)
+ */
+const updateRecruiterNotes = async (req, res) => {
+  try {
+    const recruiterId = req.user.id;
+    const applicationId = req.params.id;
+    const { notes } = req.body;
+    
+    const application = await applicationService.updateRecruiterNotes(applicationId, recruiterId, notes);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Notes updated successfully',
+      data: application
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Get application by job and candidate (recruiter only)
+ */
+const getApplicationByJobAndCandidate = async (req, res) => {
+  try {
+    const recruiterId = req.user.id;
+    const { jobId, candidateId } = req.params;
+    
+    const application = await applicationService.getApplicationByJobAndCandidate(jobId, candidateId, recruiterId);
+    
+    res.status(200).json({
+      success: true,
+      message: application ? 'Application found' : 'No application found',
+      data: application
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   applyForJob,
   getMyApplications,
   getJobApplications,
   updateApplicationStatus,
   getApplicationById,
-  withdrawApplication
+  withdrawApplication,
+  shortlistCandidate,
+  scheduleInterview,
+  updateRecruiterNotes,
+  getApplicationByJobAndCandidate
 };
