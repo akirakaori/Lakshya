@@ -25,7 +25,7 @@ const getAllUsers = async (req, res) => {
 // Get all posts
 const getAllPosts = async (req, res) => {
   try {
-    const { search, status, isActive, jobType, company, location } = req.query;
+    const { search, status, isActive, jobType, company, location, page, limit } = req.query;
     
     const result = await adminService.getAllPostsService({
       search,
@@ -34,6 +34,8 @@ const getAllPosts = async (req, res) => {
       jobType,
       company,
       location,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 50,
     });
     
     res.json(result);

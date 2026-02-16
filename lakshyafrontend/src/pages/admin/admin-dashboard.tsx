@@ -35,6 +35,7 @@ function AdminDashboard() {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [postSearchQuery, setPostSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   
   const [showEditUserModal, setShowEditUserModal] = useState(false);
   const [showEditPostModal, setShowEditPostModal] = useState(false);
@@ -59,12 +60,13 @@ function AdminDashboard() {
   const users = usersData?.users || [];
 
   // Fetch posts with useQuery
-  const { data: postsData, isLoading: loadingPosts } = useQuery<{ success: boolean; posts: Post[] }>({
+  const { data: postsData, isLoading: loadingPosts } = useQuery<{ success: boolean; posts: Post[]; total?: number }>({
     queryKey: ['admin-posts'],
     queryFn: adminApi.getPosts,
   });
 
   const posts = postsData?.posts || [];
+  const totalPosts = postsData?.total || posts.length;
 
   // Update user mutation
   const updateUserMutation = useMutation({
@@ -191,13 +193,14 @@ function AdminDashboard() {
   const activeUsers = users.filter(u => u.isActive);
   const jobSeekers = activeUsers.filter(u => u.role === 'job_seeker');
   const recruiters = activeUsers.filter(u => u.role === 'recruiter');
-  const activePosts = posts.filter(p => p.isActive && p.status === 'active');
+  const openJobs = posts.filter(p => p.status === 'open');
+  const closedJobs = posts.filter(p => p.status === 'closed');
   
   const stats = [
     { title: 'Total Users', value: activeUsers.length.toString(), description: 'Active users', icon: '', color: 'bg-blue-500' },
     { title: 'Job Seekers', value: jobSeekers.length.toString(), description: 'Active job seekers', icon: '', color: 'bg-green-500' },
     { title: 'Recruiters', value: recruiters.length.toString(), description: 'Active recruiters', icon: '', color: 'bg-purple-500' },
-    { title: 'Total Posts', value: activePosts.length.toString(), description: 'Active job postings', icon: '', color: 'bg-orange-500' },
+    { title: 'Open Jobs', value: openJobs.length.toString(), description: `${closedJobs.length} closed`, icon: '', color: 'bg-orange-500' },
   ];
 
   const filteredUsers = users.filter(user =>
@@ -205,10 +208,16 @@ function AdminDashboard() {
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredPosts = posts.filter(post =>
-    post.title.toLowerCase().includes(postSearchQuery.toLowerCase()) ||
-    post.company.toLowerCase().includes(postSearchQuery.toLowerCase())
-  );
+  const filteredPosts = posts.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(postSearchQuery.toLowerCase()) ||
+      post.company.toLowerCase().includes(postSearchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'open' && post.status === 'open') ||
+      (statusFilter === 'closed' && post.status === 'closed');
+    
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className='flex h-screen bg-gray-50'>
@@ -340,7 +349,7 @@ function AdminDashboard() {
                 <h3 className='text-xl font-bold text-gray-800 mb-4'>Job Management Overview</h3>
                 <div className='bg-white rounded-xl shadow-sm border border-gray-100'>
                   <div className='p-6 border-b'>
-                    <input type='text' placeholder='Search posts...' value={postSearchQuery} onChange={(e) => setPostSearchQuery(e.target.value)} className='w-full px-4 py-3 border rounded-lg' />
+                    <input type='text' placeholder='Search jobs...' value={postSearchQuery} onChange={(e) => setPostSearchQuery(e.target.value)} className='w-full px-4 py-3 border rounded-lg' />
                   </div>
                   <div className='overflow-x-auto'>
                     <table className='w-full'>
@@ -349,20 +358,36 @@ function AdminDashboard() {
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Title</th>
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Company</th>
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Posted By</th>
+                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Status</th>
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Date</th>
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Actions</th>
                         </tr>
                       </thead>
                       <tbody className='divide-y'>
                         {loadingPosts ? (
-                          <tr><td colSpan={5} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
+                          <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
                         ) : filteredPosts.length === 0 ? (
-                          <tr><td colSpan={5} className='px-6 py-8 text-center text-gray-500'>No posts found</td></tr>
+                          <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>No jobs found</td></tr>
                         ) : filteredPosts.slice(0, 5).map((post) => (
                           <tr key={post._id} className='hover:bg-gray-50'>
-                            <td className='px-6 py-4'><div className='text-sm font-medium text-gray-900'>{post.title}</div></td>
-                            <td className='px-6 py-4'><div className='text-sm text-gray-900'>{post.company}</div></td>
+                            <td className='px-6 py-4'>
+                              <div className='text-sm font-medium text-gray-900'>{post.title}</div>
+                              <div className='text-xs text-gray-500'>{post.jobType}</div>
+                            </td>
+                            <td className='px-6 py-4'>
+                              <div className='text-sm text-gray-900'>{post.company}</div>
+                              <div className='text-xs text-gray-500'>{post.location}</div>
+                            </td>
                             <td className='px-6 py-4'><div className='text-sm text-gray-600'>{post.createdByName}</div></td>
+                            <td className='px-6 py-4'>
+                              <span className={`px-3 py-1 text-xs rounded-full ${
+                                post.status === 'open' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {post.status === 'open' ? 'Open' : 'Closed'}
+                              </span>
+                            </td>
                             <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(post.createdAt)}</td>
                             <td className='px-6 py-4 space-x-2'>
                               <button onClick={() => handleEditPost(post)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
@@ -424,7 +449,27 @@ function AdminDashboard() {
           {activeNav === 'posts' && (
             <div className='bg-white rounded-xl shadow-sm border border-gray-100'>
               <div className='p-6 border-b'>
-                <input type='text' placeholder='Search posts...' value={postSearchQuery} onChange={(e) => setPostSearchQuery(e.target.value)} className='w-full px-4 py-3 pl-11 border rounded-lg' />
+                <div className='flex flex-col md:flex-row gap-4'>
+                  <input 
+                    type='text' 
+                    placeholder='Search jobs by title or company...' 
+                    value={postSearchQuery} 
+                    onChange={(e) => setPostSearchQuery(e.target.value)} 
+                    className='flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent' 
+                  />
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className='px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                  >
+                    <option value='all'>All Status</option>
+                    <option value='open'>Open</option>
+                    <option value='closed'>Closed</option>
+                  </select>
+                </div>
+                <div className='mt-3 text-sm text-gray-600'>
+                  Showing {filteredPosts.length} of {totalPosts} jobs
+                </div>
               </div>
               <table className='w-full'>
                 <thead className='bg-gray-50 border-b'>
@@ -432,20 +477,38 @@ function AdminDashboard() {
                     <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Title</th>
                     <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Company</th>
                     <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Posted By</th>
+                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Status</th>
                     <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Date</th>
                     <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Actions</th>
                   </tr>
                 </thead>
                 <tbody className='divide-y'>
                   {loadingPosts ? (
-                    <tr><td colSpan={5} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
+                    <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
                   ) : filteredPosts.length === 0 ? (
-                    <tr><td colSpan={5} className='px-6 py-8 text-center text-gray-500'>No posts found</td></tr>
+                    <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>No jobs found</td></tr>
                   ) : filteredPosts.map((post) => (
                     <tr key={post._id} className='hover:bg-gray-50'>
-                      <td className='px-6 py-4'><div className='text-sm font-medium text-gray-900'>{post.title}</div></td>
-                      <td className='px-6 py-4'><div className='text-sm text-gray-900'>{post.company}</div></td>
-                      <td className='px-6 py-4'><div className='text-sm text-gray-600'>{post.createdByName}</div></td>
+                      <td className='px-6 py-4'>
+                        <div className='text-sm font-medium text-gray-900'>{post.title}</div>
+                        <div className='text-xs text-gray-500'>{post.jobType}</div>
+                      </td>
+                      <td className='px-6 py-4'>
+                        <div className='text-sm text-gray-900'>{post.company}</div>
+                        <div className='text-xs text-gray-500'>{post.location}</div>
+                      </td>
+                      <td className='px-6 py-4'>
+                        <div className='text-sm text-gray-600'>{post.createdByName}</div>
+                      </td>
+                      <td className='px-6 py-4'>
+                        <span className={`px-3 py-1 text-xs rounded-full ${
+                          post.status === 'open' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {post.status === 'open' ? 'Open' : 'Closed'}
+                        </span>
+                      </td>
                       <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(post.createdAt)}</td>
                       <td className='px-6 py-4 space-x-2'>
                         <button onClick={() => handleEditPost(post)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>

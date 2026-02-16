@@ -1,6 +1,7 @@
 const UserModel = require("../models/user-model");
-const PostModel = require("../models/post-model");
+const JobModel = require("../models/job-model");
 const AuditLogModel = require("../models/audit-log");
+const jobService = require("./job-service");
 const bcrypt = require('bcrypt');
 
 /**
@@ -67,35 +68,37 @@ const getAllUsersService = async (filters = {}) => {
 };
 
 /**
- * Service function to get all posts
- * @param {Object} filters - { search, status, isActive, jobType, company, location }
- * @returns {Promise<Object>} - { success: true, posts: [...] }
+ * Service function to get all posts/jobs
+ * @param {Object} filters - { search, status, isActive, jobType, company, location, page, limit }
+ * @returns {Promise<Object>} - { success: true, posts: [...], page, limit, total, totalPages }
  * @throws {Error} - Error with statusCode and message properties
  */
 const getAllPostsService = async (filters = {}) => {
-  const { search, status, isActive, jobType, company, location } = filters;
+  const { search, status, isActive, jobType, company, location, page = 1, limit = 50 } = filters;
   
   // Build MongoDB query object
   const query = {};
   
-  // Text search across title, company, and location
+  // Text search across title, companyName, and location
   if (search) {
     query.$or = [
       { title: { $regex: search, $options: 'i' } },
-      { company: { $regex: search, $options: 'i' } },
+      { companyName: { $regex: search, $options: 'i' } },
       { location: { $regex: search, $options: 'i' } },
       { description: { $regex: search, $options: 'i' } },
     ];
   }
   
-  // Filter by status
+  // Filter by status (JobModel uses 'open' or 'closed')
   if (status) {
     query.status = status;
   }
   
-  // Filter by isActive
+  // Note: JobModel doesn't have isActive field, we use status instead
+  // If isActive is specified, map to status
   if (isActive !== undefined && isActive !== null && isActive !== '') {
-    query.isActive = isActive === 'true' || isActive === true;
+    const activeStatus = isActive === 'true' || isActive === true;
+    query.status = activeStatus ? 'open' : 'closed';
   }
   
   // Filter by jobType
@@ -105,7 +108,7 @@ const getAllPostsService = async (filters = {}) => {
   
   // Filter by company (exact match)
   if (company && !search) {
-    query.company = { $regex: company, $options: 'i' };
+    query.companyName = { $regex: company, $options: 'i' };
   }
   
   // Filter by location (exact match)
@@ -113,35 +116,50 @@ const getAllPostsService = async (filters = {}) => {
     query.location = { $regex: location, $options: 'i' };
   }
   
-  const posts = await PostModel.find(query)
-    .populate("createdBy", "name email role")
-    .sort({ createdAt: -1 });
+  // Get total count for pagination
+  const total = await JobModel.countDocuments(query);
   
-  // Format posts to include createdByName from populated data
-  const formattedPosts = posts.map(post => ({
-    _id: post._id,
-    title: post.title,
-    description: post.description,
-    company: post.company,
-    location: post.location,
-    salary: post.salary,
-    jobType: post.jobType,
-    createdByName: post.createdBy?.name || post.createdByName || 'Unknown',
-    status: post.status,
-    isActive: post.isActive,
-    editedByAdmin: post.editedByAdmin,
-    createdAt: post.createdAt,
-    updatedAt: post.updatedAt
+  // Calculate pagination
+  const skip = (page - 1) * limit;
+  const totalPages = Math.ceil(total / limit);
+  
+  const jobs = await JobModel.find(query)
+    .populate("createdBy", "name email role recruiter")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+  
+  // Format jobs to match frontend expectations (map companyName to company)
+  const formattedPosts = jobs.map(job => ({
+    _id: job._id,
+    title: job.title,
+    description: job.description,
+    company: job.companyName, // Map companyName to company for frontend
+    location: job.location,
+    salary: job.salary ? `${job.salary.currency} ${job.salary.min || ''}-${job.salary.max || ''}`.trim() : '',
+    jobType: job.jobType,
+    createdByName: job.createdBy?.name || 'Unknown',
+    createdByEmail: job.createdBy?.email || '',
+    status: job.status,
+    isActive: job.isActive, // Use actual isActive field
+    isDeleted: job.isDeleted, // Include isDeleted flag
+    editedByAdmin: false, // JobModel doesn't have this field
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt
   }));
   
   return {
     success: true,
     posts: formattedPosts,
+    page,
+    limit,
+    total,
+    totalPages
   };
 };
 
 /**
- * Service function to delete a post (soft delete)
+ * Service function to delete a post/job (soft delete)
  * @param {Object} data - { adminUser: { id, name }, id, reason }
  * @returns {Promise<Object>} - { success: true, message: "..." }
  * @throws {Error} - Error with statusCode and message properties
@@ -149,33 +167,23 @@ const getAllPostsService = async (filters = {}) => {
 const deletePostService = async (data) => {
   const { adminUser, id, reason } = data;
   
-  const post = await PostModel.findById(id);
-  
-  if (!post) {
-    const error = new Error("Post not found");
-    error.statusCode = 404;
-    throw error;
-  }
-  
-  // Soft delete
-  post.isActive = false;
-  post.status = 'deleted';
-  await post.save();
+  // Use the jobService softDeleteJob method with admin privileges
+  const job = await jobService.softDeleteJob(id, adminUser.id, true);
   
   // Create audit log
   await createAuditLog(
     adminUser.id,
     adminUser.name || 'Admin',
     id,
-    'Post',
-    'delete_post',
-    reason || 'Post deleted by admin',
-    { postTitle: post.title, company: post.company }
+    'Job',
+    'delete_job',
+    reason || 'Job deleted by admin',
+    { jobTitle: job.title, company: job.companyName }
   );
   
   return {
     success: true,
-    message: "Post deleted successfully",
+    message: "Job deleted successfully",
   };
 };
 
@@ -289,7 +297,7 @@ const deleteUserService = async (data) => {
 };
 
 /**
- * Service function to edit a post
+ * Service function to edit a post/job
  * @param {Object} data - { adminUser: { id, name }, id, title, description, company, location, salary, jobType }
  * @returns {Promise<Object>} - { success: true, message: "...", post: {...} }
  * @throws {Error} - Error with statusCode and message properties
@@ -297,10 +305,10 @@ const deleteUserService = async (data) => {
 const editPostService = async (data) => {
   const { adminUser, id, title, description, company, location, salary, jobType } = data;
   
-  const post = await PostModel.findById(id);
+  const job = await JobModel.findById(id);
   
-  if (!post) {
-    const error = new Error("Post not found");
+  if (!job) {
+    const error = new Error("Job not found");
     error.statusCode = 404;
     throw error;
   }
@@ -308,60 +316,60 @@ const editPostService = async (data) => {
   const changes = {};
   const oldValues = {};
   
-  if (title && title !== post.title) {
-    oldValues.title = post.title;
-    post.title = title;
+  if (title && title !== job.title) {
+    oldValues.title = job.title;
+    job.title = title;
     changes.title = `Changed from "${oldValues.title}" to "${title}"`;
   }
   
-  if (description && description !== post.description) {
-    oldValues.description = post.description;
-    post.description = description;
+  if (description && description !== job.description) {
+    oldValues.description = job.description;
+    job.description = description;
     changes.description = 'Description updated';
   }
   
-  if (company && company !== post.company) {
-    oldValues.company = post.company;
-    post.company = company;
-    changes.company = `Changed from "${oldValues.company}" to "${company}"`;
+  if (company && company !== job.companyName) {
+    oldValues.companyName = job.companyName;
+    job.companyName = company; // Map company to companyName
+    changes.companyName = `Changed from "${oldValues.companyName}" to "${company}"`;
   }
   
-  if (location && location !== post.location) {
-    oldValues.location = post.location;
-    post.location = location;
+  if (location && location !== job.location) {
+    oldValues.location = job.location;
+    job.location = location;
     changes.location = `Changed from "${oldValues.location}" to "${location}"`;
   }
   
-  if (salary && salary !== post.salary) {
-    oldValues.salary = post.salary;
-    post.salary = salary;
+  if (salary && salary !== job.salary) {
+    oldValues.salary = job.salary;
+    job.salary = salary;
     changes.salary = 'Salary updated';
   }
   
-  if (jobType && jobType !== post.jobType) {
-    oldValues.jobType = post.jobType;
-    post.jobType = jobType;
+  if (jobType && jobType !== job.jobType) {
+    oldValues.jobType = job.jobType;
+    job.jobType = jobType;
     changes.jobType = `Changed from "${oldValues.jobType}" to "${jobType}"`;
   }
   
-  post.editedByAdmin = true;
-  await post.save();
+  // Note: JobModel doesn't have editedByAdmin field, so we skip it
+  await job.save();
   
   // Create audit log
   await createAuditLog(
     adminUser.id,
     adminUser.name || 'Admin',
     id,
-    'Post',
-    'edit_post',
+    'Job',
+    'edit_job',
     Object.values(changes).join(', '),
     { oldValues, newValues: { title, description, company, location, salary, jobType } }
   );
   
   return {
     success: true,
-    message: "Post updated successfully",
-    post
+    message: "Job updated successfully",
+    post: job
   };
 };
 

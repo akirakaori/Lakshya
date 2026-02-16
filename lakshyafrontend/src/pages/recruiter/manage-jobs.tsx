@@ -22,8 +22,8 @@ const ManageJobs: React.FC = () => {
       job.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = 
       statusFilter === 'all' || 
-      (statusFilter === 'active' && job.isActive) ||
-      (statusFilter === 'inactive' && !job.isActive);
+      (statusFilter === 'active' && job.isActive && !job.isDeleted) ||
+      (statusFilter === 'inactive' && (!job.isActive || job.isDeleted));
     return matchesSearch && matchesStatus;
   });
 
@@ -169,11 +169,13 @@ const ManageJobs: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            job.isActive 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-gray-100 text-gray-600'
+                            job.isDeleted
+                              ? 'bg-red-100 text-red-700'
+                              : job.isActive 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {job.isActive ? 'Active' : 'Inactive'}
+                            {job.isDeleted ? 'Deleted' : job.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </div>
                         <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
@@ -233,24 +235,32 @@ const ManageJobs: React.FC = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleToggleStatus(job._id, job.isActive)}
-                        disabled={toggleStatusMutation.isPending}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                        disabled={toggleStatusMutation.isPending || job.isDeleted}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
                           job.isActive
                             ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
                             : 'bg-green-100 text-green-700 hover:bg-green-200'
                         }`}
+                        title={job.isDeleted ? 'Cannot toggle deleted jobs' : ''}
                       >
                         {job.isActive ? 'Deactivate' : 'Activate'}
                       </button>
                       <Link
                         to={`/recruiter/jobs/${job._id}/edit`}
-                        className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                        className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                          job.isDeleted
+                            ? 'bg-gray-50 text-gray-400 cursor-not-allowed pointer-events-none'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        title={job.isDeleted ? 'Cannot edit deleted jobs' : ''}
                       >
                         Edit
                       </Link>
                       <button
                         onClick={() => setDeleteConfirmId(job._id)}
-                        className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm font-medium"
+                        disabled={job.isDeleted}
+                        className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={job.isDeleted ? 'Already deleted' : ''}
                       >
                         Delete
                       </button>
@@ -264,22 +274,28 @@ const ManageJobs: React.FC = () => {
 
         {/* Stats Summary */}
         {jobs.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
               <p className="text-2xl font-bold text-gray-900">{jobs.length}</p>
               <p className="text-sm text-gray-500">Total Jobs</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
               <p className="text-2xl font-bold text-green-600">
-                {jobs.filter(j => j.isActive).length}
+                {jobs.filter(j => j.isActive && !j.isDeleted).length}
               </p>
               <p className="text-sm text-gray-500">Active</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
               <p className="text-2xl font-bold text-gray-600">
-                {jobs.filter(j => !j.isActive).length}
+                {jobs.filter(j => !j.isActive && !j.isDeleted).length}
               </p>
               <p className="text-sm text-gray-500">Inactive</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+              <p className="text-2xl font-bold text-red-600">
+                {jobs.filter(j => j.isDeleted).length}
+              </p>
+              <p className="text-sm text-gray-500">Deleted</p>
             </div>
           </div>
         )}
@@ -292,7 +308,7 @@ const ManageJobs: React.FC = () => {
           <div className="relative bg-white rounded-xl p-6 w-full max-w-md">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Delete Job Post</h2>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this job post? This action cannot be undone and all applications will be removed.
+              Are you sure you want to delete this job post? The job will be marked as deleted and will no longer be visible to job seekers. Applications will be preserved.
             </p>
             <div className="flex gap-3">
               <button

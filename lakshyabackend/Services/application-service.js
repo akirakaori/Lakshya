@@ -16,6 +16,13 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
       throw error;
     }
     
+    // Check if job is deleted or inactive
+    if (job.isDeleted || !job.isActive) {
+      const error = new Error('This job is no longer available');
+      error.statusCode = 400;
+      throw error;
+    }
+    
     if (job.status !== 'open') {
       const error = new Error('This job is no longer accepting applications');
       error.statusCode = 400;
@@ -84,7 +91,7 @@ const getMyApplications = async (applicantId, filters = {}) => {
     
     // Execute query with population
     let applicationsQuery = ApplicationModel.find(query)
-      .populate('jobId', 'title companyName location salary jobType status')
+      .populate('jobId', 'title companyName location salary jobType status isActive isDeleted deletedAt')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -191,7 +198,7 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
 const getApplicationById = async (applicationId) => {
   try {
     const application = await ApplicationModel.findById(applicationId)
-      .populate('jobId', 'title companyName location salary jobType')
+      .populate('jobId', 'title companyName location salary jobType isActive isDeleted deletedAt')
       .populate('applicant', 'name email number resume');
     
     if (!application) {
