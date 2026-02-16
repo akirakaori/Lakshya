@@ -90,8 +90,13 @@ const getMyApplications = async (applicantId, filters = {}) => {
     const skip = (page - 1) * limit;
     
     // Execute query with population
+    // Note: Populate job even if it's soft-deleted (isDeleted=true)
+    // This allows job seekers to see their application history
     let applicationsQuery = ApplicationModel.find(query)
-      .populate('jobId', 'title companyName location salary jobType status isActive isDeleted deletedAt')
+      .populate({
+        path: 'jobId',
+        select: 'title companyName location salary jobType status isActive isDeleted deletedAt deletedBy deletedByRole'
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));

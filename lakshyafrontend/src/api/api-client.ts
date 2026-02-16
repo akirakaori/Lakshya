@@ -109,4 +109,10 @@ export const adminApi = {
       method: 'DELETE',
       body: JSON.stringify({ reason }),
     }),
+
+  // Soft delete job (new method using job routes)
+  deleteJob: (jobId: string): Promise<{ success: boolean; message: string }> =>
+    apiRequest(`/admin/jobs/${jobId}/soft-delete`, {
+      method: 'PATCH',
+    }),
 };

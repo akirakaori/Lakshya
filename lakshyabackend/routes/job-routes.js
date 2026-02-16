@@ -41,10 +41,17 @@ router.put('/:id', authorizeRoles(ROLES.RECRUITER), jobController.updateJob);
 
 /**
  * @route   DELETE /api/jobs/:id
- * @desc    Delete a job
+ * @desc    Delete a job (hard delete - DEPRECATED)
  * @access  Private (Recruiter only - must be the creator)
  */
 router.delete('/:id', authorizeRoles(ROLES.RECRUITER), jobController.deleteJob);
+
+/**
+ * @route   PATCH /api/jobs/:id/soft-delete
+ * @desc    Soft delete a job (recommended)
+ * @access  Private (Recruiter only - must be the creator)
+ */
+router.patch('/:id/soft-delete', authorizeRoles(ROLES.RECRUITER), jobController.softDeleteJob);
 
 /**
  * @route   PATCH /api/jobs/:id/toggle-status

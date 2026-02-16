@@ -25,6 +25,8 @@ interface Post {
   createdByName: string;
   status: string;
   isActive: boolean;
+  isDeleted?: boolean;
+  deletedAt?: string;
   editedByAdmin: boolean;
   createdAt: string;
 }
@@ -96,26 +98,32 @@ function AdminDashboard() {
     }
   });
 
-  // Delete mutation (for both users and posts)
+  // Delete mutation (for both users and posts/jobs)
   const deleteMutation = useMutation({
-    mutationFn: ({ type, id, reason }: { type: 'user' | 'post'; id: string; reason: string }) => {
+    mutationFn: ({ type, id, reason }: { type: 'user' | 'post'; id: string; reason?: string }) => {
       if (type === 'user') {
-        return adminApi.deleteUser(id, reason);
+        return adminApi.deleteUser(id, reason || '');
       } else {
-        return adminApi.deletePost(id, reason);
+        // Use new job soft delete endpoint (no reason needed)
+        return adminApi.deleteJob(id);
       }
     },
     onSuccess: (_, variables) => {
-      handleSuccess(`${variables.type === 'user' ? 'User' : 'Post'} deleted successfully`);
+      handleSuccess(`${variables.type === 'user' ? 'User' : 'Job'} deleted successfully`);
       setShowDeleteConfirm(false);
+      setDeleteTarget(null);
+      setDeleteReason('');
       if (variables.type === 'user') {
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       } else {
         queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
+        queryClient.invalidateQueries({ queryKey: ['jobs'] });
+        queryClient.invalidateQueries({ queryKey: ['applications'] });
       }
     },
     onError: (error: any) => {
-      handleError(error.message || 'Failed to delete');
+      handleError(error.response?.data?.message || error.message || 'Failed to delete');
+      console.error('Delete error:', error);
     }
   });
 
@@ -167,7 +175,7 @@ function AdminDashboard() {
     deleteMutation.mutate({ 
       type: deleteTarget.type, 
       id: deleteTarget.id, 
-      reason: deleteReason 
+      reason: deleteTarget.type === 'user' ? deleteReason : undefined
     });
   };
 
@@ -501,18 +509,47 @@ function AdminDashboard() {
                         <div className='text-sm text-gray-600'>{post.createdByName}</div>
                       </td>
                       <td className='px-6 py-4'>
-                        <span className={`px-3 py-1 text-xs rounded-full ${
-                          post.status === 'open' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {post.status === 'open' ? 'Open' : 'Closed'}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={`px-3 py-1 text-xs rounded-full inline-block ${
+                            post.status === 'open' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {post.status === 'open' ? 'Open' : 'Closed'}
+                          </span>
+                          {post.isDeleted && (
+                            <span className="px-3 py-1 text-xs rounded-full inline-block bg-red-100 text-red-800">
+                              Deleted
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(post.createdAt)}</td>
                       <td className='px-6 py-4 space-x-2'>
-                        <button onClick={() => handleEditPost(post)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
-                        <button onClick={() => handleDeleteClick('post', post._id)} className='text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50'>Delete</button>
+                        <button 
+                          onClick={() => handleEditPost(post)} 
+                          disabled={post.isDeleted}
+                          className={`p-2 rounded-lg ${
+                            post.isDeleted 
+                              ? 'text-gray-400 cursor-not-allowed' 
+                              : 'text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50'
+                          }`}
+                          title={post.isDeleted ? 'Cannot edit deleted jobs' : 'Edit job'}
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteClick('post', post._id)} 
+                          disabled={post.isDeleted}
+                          className={`p-2 rounded-lg ${
+                            post.isDeleted 
+                              ? 'text-gray-400 cursor-not-allowed' 
+                              : 'text-red-600 hover:text-red-900 hover:bg-red-50'
+                          }`}
+                          title={post.isDeleted ? 'Already deleted' : 'Delete job'}
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}

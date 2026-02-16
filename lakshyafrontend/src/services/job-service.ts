@@ -20,6 +20,10 @@ export interface Job {
   experienceLevel?: string;
   status: 'open' | 'closed';
   isActive: boolean;
+  isDeleted?: boolean;
+  deletedAt?: string | null;
+  deletedBy?: string | null;
+  deletedByRole?: 'admin' | 'recruiter' | null;
   createdBy: {
     _id: string;
     name: string;
@@ -133,6 +137,12 @@ export const jobService = {
     return response.data;
   },
 
+  // Get all jobs (admin view - includes inactive/deleted)
+  getAllJobsAdmin: async (): Promise<{ success: boolean; data: Job[] }> => {
+    const response = await axiosInstance.get('/admin/jobs');
+    return response.data;
+  },
+
   // Get single job by ID (public)
   getJobById: async (jobId: string): Promise<{ success: boolean; data: Job }> => {
     const response = await axiosInstance.get(`/jobs/${jobId}`);
@@ -157,9 +167,27 @@ export const jobService = {
     return response.data;
   },
 
-  // Delete a job (recruiter only)
+  // Delete a job (recruiter only) - DEPRECATED: Use soft delete
   deleteJob: async (jobId: string): Promise<{ success: boolean; message: string }> => {
     const response = await axiosInstance.delete(`/jobs/${jobId}`);
+    return response.data;
+  },
+
+  // Soft delete a job (recruiter only)
+  softDeleteJob: async (jobId: string): Promise<{ success: boolean; data: Job }> => {
+    const response = await axiosInstance.patch(`/jobs/${jobId}/soft-delete`);
+    return response.data;
+  },
+
+  // Admin soft delete a job (admin only)
+  adminSoftDeleteJob: async (jobId: string): Promise<{ success: boolean; data: Job }> => {
+    const response = await axiosInstance.patch(`/admin/jobs/${jobId}/soft-delete`);
+    return response.data;
+  },
+
+  // Admin edit job (admin only)
+  adminEditJob: async (jobId: string, jobData: Partial<CreateJobData>): Promise<{ success: boolean; data: Job }> => {
+    const response = await axiosInstance.patch(`/admin/jobs/${jobId}`, jobData);
     return response.data;
   },
 

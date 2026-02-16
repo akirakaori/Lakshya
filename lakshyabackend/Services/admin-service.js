@@ -79,6 +79,9 @@ const getAllPostsService = async (filters = {}) => {
   // Build MongoDB query object
   const query = {};
   
+  // NOTE: Do NOT filter by isActive or isDeleted here
+  // Admin needs to see ALL jobs including soft-deleted ones
+  
   // Text search across title, companyName, and location
   if (search) {
     query.$or = [
@@ -94,11 +97,11 @@ const getAllPostsService = async (filters = {}) => {
     query.status = status;
   }
   
-  // Note: JobModel doesn't have isActive field, we use status instead
-  // If isActive is specified, map to status
+  // If isActive filter is provided, use it
+  // This allows admin to filter by active/inactive status
   if (isActive !== undefined && isActive !== null && isActive !== '') {
     const activeStatus = isActive === 'true' || isActive === true;
-    query.status = activeStatus ? 'open' : 'closed';
+    query.isActive = activeStatus;
   }
   
   // Filter by jobType

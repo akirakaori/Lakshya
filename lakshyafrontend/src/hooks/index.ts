@@ -5,9 +5,12 @@ export {
   useMyJobs, 
   useCreateJob, 
   useUpdateJob, 
-  useDeleteJob, 
+  useDeleteJob,
+  useSoftDeleteJob,
+  useAdminSoftDeleteJob,
+  useAdminEditJob,
   useToggleJobStatus,
-  jobKeys 
+  jobKeys
 } from './use-jobs';
 
 // Application hooks

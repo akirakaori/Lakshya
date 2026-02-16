@@ -71,16 +71,33 @@ const jobSchema = new Schema({
     type: String,
     enum: ['open', 'closed'],
     default: 'open'
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: {
+    type: Date,
+    default: null
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  deletedByRole: {
+    type: String,
+    enum: ['admin', 'recruiter', null],
+    default: null
   }
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
-});
-
-// Virtual field for isActive (computed from status)
-jobSchema.virtual('isActive').get(function() {
-  return this.status === 'open';
 });
 
 // Indexes for better query performance

@@ -160,10 +160,23 @@ const MyApplications: React.FC = () => {
                     const jobId = typeof application.jobId === 'string' ? application.jobId : job?._id;
                     const aiMatchScore = jobId ? calculateAIMatch(jobId) : 80;
                     
+                    // Check if job is deleted or inactive
+                    const isJobInactive = job?.isDeleted || (job && !job.isActive);
+                    
                     return (
                       <tr key={application._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
-                          <div className="font-medium text-gray-900">{job?.title || 'Job Title'}</div>
+                          <div>
+                            <div className="font-medium text-gray-900">{job?.title || 'Job Title'}</div>
+                            {isJobInactive && (
+                              <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Job Removed
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-gray-600">{job?.companyName || 'Company'}</td>
                         <td className="px-6 py-4 text-gray-600">{formatDate(application.createdAt)}</td>
@@ -178,13 +191,16 @@ const MyApplications: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          {job && (
+                          {job && jobId && (
                             <Link
-                              to={`/job-seeker/jobs/${job._id}`}
+                              to={`/job-seeker/jobs/${jobId}`}
                               className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
                             >
                               View Job
                             </Link>
+                          )}
+                          {!job && (
+                            <span className="text-gray-400 text-sm">N/A</span>
                           )}
                         </td>
                       </tr>

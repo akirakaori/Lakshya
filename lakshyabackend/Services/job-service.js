@@ -45,7 +45,7 @@ const updateJob = async (jobId, recruiterId, updateData) => {
 };
 
 /**
- * Delete a job posting
+ * Delete a job posting (DEPRECATED - use softDeleteJob instead)
  */
 const deleteJob = async (jobId, recruiterId) => {
   try {
@@ -67,11 +67,156 @@ const deleteJob = async (jobId, recruiterId) => {
 };
 
 /**
- * Get all jobs posted by a recruiter
+ * Soft delete a job posting (recruiter)
+ * Recruiter can only delete their own jobs
  */
-const getRecruiterJobs = async (recruiterId) => {
+const softDeleteJob = async (jobId, actorUser) => {
   try {
-    const jobs = await JobModel.find({ createdBy: recruiterId })
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      const error = new Error('Invalid job ID format');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Find job by ID AND ownership (recruiter can only delete their own jobs)
+    const job = await JobModel.findOne({
+      _id: jobId,
+      createdBy: actorUser.id
+    });
+    
+    if (!job) {
+      const error = new Error('Job not found or unauthorized');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (job.isDeleted) {
+      const error = new Error('Job is already deleted');
+      error.statusCode = 400;
+      throw error;
+    }
+    
+    // Soft delete: set flags but keep the document
+    job.isActive = false;
+    job.isDeleted = true;
+    job.deletedAt = new Date();
+    job.deletedBy = actorUser.id;
+    job.deletedByRole = 'recruiter';
+    
+    await job.save();
+    
+    console.log('[Service] Recruiter soft deleted job:', job._id, 'by', actorUser.email);
+    
+    return job;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Soft delete a job posting (admin)
+ * Admin can delete any job regardless of ownership
+ */
+const adminSoftDeleteJob = async (jobId, actorUser) => {
+  try {
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      const error = new Error('Invalid job ID format');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Find job by ID only (no ownership check for admin)
+    const job = await JobModel.findById(jobId);
+    
+    if (!job) {
+      const error = new Error('Job not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (job.isDeleted) {
+      const error = new Error('Job is already deleted');
+      error.statusCode = 400;
+      throw error;
+    }
+    
+    // Soft delete: set flags but keep the document
+    job.isActive = false;
+    job.isDeleted = true;
+    job.deletedAt = new Date();
+    job.deletedBy = actorUser.id;
+    job.deletedByRole = 'admin';
+    
+    await job.save();
+    
+    console.log('[Service] Admin soft deleted job:', job._id, 'by', actorUser.email);
+    
+    return job;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Admin edit job
+ * Admin can edit any job regardless of ownership
+ */
+const adminEditJob = async (jobId, updateData) => {
+  try {
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      const error = new Error('Invalid job ID format');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Don't allow changing creator or soft delete fields via this route
+    delete updateData.createdBy;
+    delete updateData.isDeleted;
+    delete updateData.deletedAt;
+    delete updateData.deletedBy;
+    delete updateData.deletedByRole;
+    
+    const job = await JobModel.findByIdAndUpdate(
+      jobId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!job) {
+      const error = new Error('Job not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    return job;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Get all jobs posted by a recruiter
+ * @param {string} recruiterId - The recruiter's user ID
+ * @param {object} options - Query options
+ * @param {boolean} options.includeInactive - Whether to include inactive/deleted jobs
+ */
+const getRecruiterJobs = async (recruiterId, options = {}) => {
+  try {
+    const { includeInactive = true } = options;
+    
+    const query = { createdBy: recruiterId };
+    
+    // By default, show all jobs (active and inactive) for recruiter to manage
+    // If includeInactive is false, only show active jobs
+    if (!includeInactive) {
+      query.isActive = true;
+      query.isDeleted = false;
+    }
+    
+    const jobs = await JobModel.find(query)
       .sort({ createdAt: -1 })
       .populate('createdBy', 'name email companyName');
     
@@ -108,7 +253,12 @@ const searchJobs = async (filters) => {
   try {
     const { keyword, location, skills, jobType, page = 1, limit = 10 } = filters;
     
-    const query = { status: 'open' };
+    // Only show active, non-deleted jobs to job seekers
+    const query = { 
+      status: 'open',
+      isActive: true,
+      isDeleted: false
+    };
     
     // Keyword search (title and description)
     if (keyword) {
@@ -180,12 +330,31 @@ const toggleJobStatus = async (jobId, recruiterId) => {
   }
 };
 
+/**
+ * Get all jobs for admin (includes inactive and deleted)
+ */
+const getAllJobsForAdmin = async () => {
+  try {
+    const jobs = await JobModel.find({})
+      .sort({ createdAt: -1 })
+      .populate('createdBy', 'name email companyName role');
+    
+    return jobs;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   createJob,
   updateJob,
   deleteJob,
+  softDeleteJob,
+  adminSoftDeleteJob,
+  adminEditJob,
   getRecruiterJobs,
   getJobById,
   searchJobs,
-  toggleJobStatus
+  toggleJobStatus,
+  getAllJobsForAdmin
 };

@@ -48,7 +48,7 @@ const updateJob = async (req, res) => {
 };
 
 /**
- * Delete a job (recruiter only)
+ * Delete a job (recruiter only) - DEPRECATED: Use soft delete instead
  */
 const deleteJob = async (req, res) => {
   try {
@@ -62,6 +62,35 @@ const deleteJob = async (req, res) => {
       message: 'Job deleted successfully'
     });
   } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Soft delete a job (recruiter only)
+ * Recruiter can only delete their own jobs
+ */
+const softDeleteJob = async (req, res) => {
+  try {
+    const actorUser = req.user;
+    const jobId = req.params.id;
+    
+    console.log('[Recruiter Delete Job] JobId:', jobId, 'Recruiter:', actorUser.email);
+    
+    const job = await jobService.softDeleteJob(jobId, actorUser);
+    
+    console.log('[Recruiter Delete Job] Success - Job deleted:', job._id);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Job deleted successfully',
+      data: job
+    });
+  } catch (error) {
+    console.error('[Recruiter Delete Job] Error:', error.message);
     res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || 'Internal server error'
@@ -168,6 +197,7 @@ module.exports = {
   createJob,
   updateJob,
   deleteJob,
+  softDeleteJob,
   getMyJobs,
   getJobById,
   searchJobs,

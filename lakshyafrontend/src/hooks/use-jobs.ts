@@ -76,6 +76,48 @@ export const useDeleteJob = () => {
   });
 };
 
+// Soft delete job mutation (recruiter)
+export const useSoftDeleteJob = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (jobId: string) => jobService.softDeleteJob(jobId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: jobKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+    },
+  });
+};
+
+// Admin soft delete job mutation
+export const useAdminSoftDeleteJob = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (jobId: string) => jobService.adminSoftDeleteJob(jobId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: jobKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['adminJobs'] });
+    },
+  });
+};
+
+// Admin edit job mutation
+export const useAdminEditJob = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ jobId, data }: { jobId: string; data: Partial<CreateJobData> }) =>
+      jobService.adminEditJob(jobId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: jobKeys.detail(variables.jobId) });
+      queryClient.invalidateQueries({ queryKey: jobKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['adminJobs'] });
+    },
+  });
+};
+
 // Toggle job status mutation
 export const useToggleJobStatus = () => {
   const queryClient = useQueryClient();

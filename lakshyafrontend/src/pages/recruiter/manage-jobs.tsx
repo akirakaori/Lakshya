@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState } from '../../components';
-import { useMyJobs, useDeleteJob, useToggleJobStatus } from '../../hooks';
+import { useMyJobs, useSoftDeleteJob, useToggleJobStatus } from '../../hooks';
 import { toast } from 'react-toastify';
+import type { Job } from '../../services';
 
 const ManageJobs: React.FC = () => {
   const { data: jobsData, isLoading } = useMyJobs();
-  const deleteJobMutation = useDeleteJob();
+  const softDeleteJobMutation = useSoftDeleteJob();
   const toggleStatusMutation = useToggleJobStatus();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,7 +17,7 @@ const ManageJobs: React.FC = () => {
   const jobs = jobsData?.data || [];
 
   // Filter jobs
-  const filteredJobs = jobs.filter(job => {
+  const filteredJobs = jobs.filter((job: Job) => {
     const matchesSearch = 
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.location.toLowerCase().includes(searchTerm.toLowerCase());
@@ -36,13 +37,14 @@ const ManageJobs: React.FC = () => {
     }
   };
 
-  const handleDelete = async (jobId: string) => {
+  const handleSoftDelete = async (jobId: string) => {
     try {
-      await deleteJobMutation.mutateAsync(jobId);
+      await softDeleteJobMutation.mutateAsync(jobId);
       toast.success('Job deleted successfully!');
       setDeleteConfirmId(null);
-    } catch {
-      toast.error('Failed to delete job');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete job');
+      setDeleteConfirmId(null);
     }
   };
 
@@ -155,7 +157,7 @@ const ManageJobs: React.FC = () => {
         ) : (
           /* Job Cards */
           <div className="space-y-4">
-            {filteredJobs.map((job) => (
+            {filteredJobs.map((job: Job) => (
               <div key={job._id} className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                   <div className="flex-1">
@@ -206,7 +208,7 @@ const ManageJobs: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex flex-wrap gap-2 mt-3">
-                          {job.skills?.slice(0, 4).map((skill, index) => (
+                          {job.skillsRequired?.slice(0, 4).map((skill: string, index: number) => (
                             <span
                               key={index}
                               className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs"
@@ -214,9 +216,9 @@ const ManageJobs: React.FC = () => {
                               {skill}
                             </span>
                           ))}
-                          {(job.skills?.length ?? 0) > 4 && (
+                          {(job.skillsRequired?.length ?? 0) > 4 && (
                             <span className="px-2 py-1 text-gray-500 text-xs">
-                              +{(job.skills?.length ?? 0) - 4} more
+                              +{(job.skillsRequired?.length ?? 0) - 4} more
                             </span>
                           )}
                         </div>
@@ -281,19 +283,19 @@ const ManageJobs: React.FC = () => {
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
               <p className="text-2xl font-bold text-green-600">
-                {jobs.filter(j => j.isActive && !j.isDeleted).length}
+                {jobs.filter((j: Job) => j.isActive && !j.isDeleted).length}
               </p>
               <p className="text-sm text-gray-500">Active</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
               <p className="text-2xl font-bold text-gray-600">
-                {jobs.filter(j => !j.isActive && !j.isDeleted).length}
+                {jobs.filter((j: Job) => !j.isActive && !j.isDeleted).length}
               </p>
               <p className="text-sm text-gray-500">Inactive</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
               <p className="text-2xl font-bold text-red-600">
-                {jobs.filter(j => j.isDeleted).length}
+                {jobs.filter((j: Job) => j.isDeleted).length}
               </p>
               <p className="text-sm text-gray-500">Deleted</p>
             </div>
@@ -318,11 +320,11 @@ const ManageJobs: React.FC = () => {
                 Cancel
               </button>
               <button
-                onClick={() => handleDelete(deleteConfirmId)}
-                disabled={deleteJobMutation.isPending}
+                onClick={() => handleSoftDelete(deleteConfirmId)}
+                disabled={softDeleteJobMutation.isPending}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
               >
-                {deleteJobMutation.isPending ? 'Deleting...' : 'Delete'}
+                {softDeleteJobMutation.isPending ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
