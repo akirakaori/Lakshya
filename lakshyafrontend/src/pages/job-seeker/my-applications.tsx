@@ -1,25 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState } from '../../components';
 import { useMyApplications } from '../../hooks';
 import type { Job } from '../../services';
 
+// Helper function to generate deterministic AI match score from jobId
+const calculateAIMatch = (jobId: string): number => {
+  let hash = 0;
+  for (let i = 0; i < jobId.length; i++) {
+    const char = jobId.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  // Map hash to 75-99 range
+  return 75 + (Math.abs(hash) % 25);
+};
+
 const MyApplications: React.FC = () => {
-  const { data: applicationsData, isLoading } = useMyApplications();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'applied' | 'shortlisted' | 'rejected'>('all');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const applications = applicationsData?.data || [];
+  // Debounce search input
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  // Filter applications
-  const filteredApplications = applications.filter(app => {
-    const job = typeof app.jobId === 'object' ? app.jobId as Job : null;
-    const matchesSearch = 
-      job?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job?.companyName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  // Fetch applications with backend filtering
+  const { data: response, isLoading } = useMyApplications({
+    q: debouncedSearch,
+    status: statusFilter,
+    page: 1,
+    limit: 100,
   });
+
+  const applications = response?.data || [];
+
+  // Calculate stats
+  const stats = useMemo(() => {
+    const allApps = applications;
+    return {
+      total: allApps.length,
+      pending: allApps.filter(a => a.status === 'applied').length,
+      interview: allApps.filter(a => a.status === 'shortlisted').length,
+      rejected: allApps.filter(a => a.status === 'rejected').length,
+    };
+  }, [applications]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -91,7 +120,7 @@ const MyApplications: React.FC = () => {
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="all">All Statuses</option>
@@ -104,16 +133,16 @@ const MyApplications: React.FC = () => {
 
         {isLoading ? (
           <LoadingSpinner text="Loading your applications..." />
-        ) : filteredApplications.length === 0 ? (
+        ) : applications.length === 0 ? (
           <EmptyState
-            title={applications.length === 0 ? "No applications yet" : "No matching applications"}
+            title={statusFilter === 'all' && !debouncedSearch ? "No applications yet" : "No matching applications"}
             description={
-              applications.length === 0
+              statusFilter === 'all' && !debouncedSearch
                 ? "Start applying to jobs to see your applications here."
                 : "Try adjusting your search or filter criteria."
             }
             action={
-              applications.length === 0 ? (
+              statusFilter === 'all' && !debouncedSearch ? (
                 <Link
                   to="/job-seeker/browse-jobs"
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -149,9 +178,10 @@ const MyApplications: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredApplications.map((application) => {
+                  {applications.map((application) => {
                     const job = typeof application.jobId === 'object' ? application.jobId as Job : null;
-                    const aiMatchScore = Math.floor(Math.random() * 25) + 75;
+                    const jobId = typeof application.jobId === 'string' ? application.jobId : job?._id;
+                    const aiMatchScore = jobId ? calculateAIMatch(jobId) : 80;
                     
                     return (
                       <tr key={application._id} className="hover:bg-gray-50">
@@ -190,28 +220,22 @@ const MyApplications: React.FC = () => {
         )}
 
         {/* Stats Summary */}
-        {applications.length > 0 && (
+        {stats.total > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900">{applications.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
               <p className="text-sm text-gray-500">Total Applications</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-2xl font-bold text-blue-600">
-                {applications.filter(a => a.status === 'applied').length}
-              </p>
+              <p className="text-2xl font-bold text-blue-600">{stats.pending}</p>
               <p className="text-sm text-gray-500">Pending</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-2xl font-bold text-green-600">
-                {applications.filter(a => a.status === 'shortlisted').length}
-              </p>
+              <p className="text-2xl font-bold text-green-600">{stats.interview}</p>
               <p className="text-sm text-gray-500">Interview</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-2xl font-bold text-red-600">
-                {applications.filter(a => a.status === 'rejected').length}
-              </p>
+              <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
               <p className="text-sm text-gray-500">Rejected</p>
             </div>
           </div>
