@@ -22,10 +22,30 @@ const JobDetails: React.FC = () => {
   const [coverLetter, setCoverLetter] = useState('');
   const [showApplyModal, setShowApplyModal] = useState(false);
 
-  const { data: jobData, isLoading, error } = useJob(jobId || '');
+  // Guard: Invalid jobId parameter
+  if (!jobId) {
+    return (
+      <DashboardLayout variant="job-seeker" title="Job Details">
+        <EmptyState
+          title="Invalid Job"
+          description="The job link is invalid or incomplete."
+          action={
+            <Link
+              to="/job-seeker/browse-jobs"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Browse Jobs
+            </Link>
+          }
+        />
+      </DashboardLayout>
+    );
+  }
+
+  const { data: jobData, isLoading, error } = useJob(jobId);
   const { data: relatedJobsData } = useJobs({ limit: 4 });
   const applyMutation = useApplyForJob();
-  const hasApplied = useHasApplied(jobId || '');
+  const hasApplied = useHasApplied(jobId);
 
   const job = jobData?.data;
   const relatedJobs = relatedJobsData?.data?.filter(j => j._id !== jobId).slice(0, 4) || [];

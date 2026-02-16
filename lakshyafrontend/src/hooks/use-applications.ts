@@ -78,11 +78,28 @@ export const useWithdrawApplication = () => {
 export const useHasApplied = (jobId: string) => {
   const { data: applications } = useMyApplications();
   
-  if (!applications?.data) return false;
+  // Guard: no data or empty jobId
+  if (!jobId || !applications?.data || !Array.isArray(applications.data)) {
+    return false;
+  }
   
   return applications.data.some((app) => {
-    const appJobId = typeof app.jobId === 'string' ? app.jobId : app.jobId._id;
-    return appJobId === jobId;
+    // Guard: skip invalid applications
+    if (!app || !app.jobId) {
+      return false;
+    }
+    
+    // Handle string jobId
+    if (typeof app.jobId === 'string') {
+      return app.jobId === jobId;
+    }
+    
+    // Handle populated jobId object with optional chaining
+    if (typeof app.jobId === 'object' && app.jobId !== null) {
+      return (app.jobId as any)?._id === jobId;
+    }
+    
+    return false;
   });
 };
 

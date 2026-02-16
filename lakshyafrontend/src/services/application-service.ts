@@ -3,7 +3,7 @@ import type { Job } from './job-service';
 
 export interface Application {
   _id: string;
-  jobId: Job | string;
+  jobId: Job | string | null;
   applicant: {
     _id: string;
     name: string;
@@ -115,8 +115,22 @@ export const applicationService = {
     try {
       const response = await applicationService.getMyApplications();
       return response.data.some((app) => {
-        const appJobId = typeof app.jobId === 'string' ? app.jobId : app.jobId._id;
-        return appJobId === jobId;
+        // Guard: skip invalid applications
+        if (!app || !app.jobId) {
+          return false;
+        }
+        
+        // Handle string jobId
+        if (typeof app.jobId === 'string') {
+          return app.jobId === jobId;
+        }
+        
+        // Handle populated jobId object
+        if (typeof app.jobId === 'object' && app.jobId !== null) {
+          return (app.jobId as any)?._id === jobId;
+        }
+        
+        return false;
       });
     } catch {
       return false;
