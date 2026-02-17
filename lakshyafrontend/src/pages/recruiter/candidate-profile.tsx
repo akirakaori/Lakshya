@@ -10,6 +10,7 @@ import {
 } from '../../hooks';
 import axiosInstance from '../../services/axios-instance';
 import { toast } from 'react-toastify';
+import { getFileUrl, getInitials } from '../../utils';
 
 interface CandidateProfile {
   _id: string;
@@ -58,6 +59,10 @@ const CandidateProfile: React.FC = () => {
 
   const candidate: CandidateProfile | null = data?.data || null;
   const application = applicationData?.data;
+
+  // Extract avatar URL and initials
+  const avatarUrl = candidate?.profileImageUrl ? getFileUrl(candidate.profileImageUrl) : null;
+  const initials = candidate ? getInitials(candidate.fullName) : 'U';
 
   // Load existing notes when application data is available
   useEffect(() => {
@@ -167,17 +172,19 @@ const CandidateProfile: React.FC = () => {
               <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-24"></div>
               <div className="px-6 pb-6">
                 <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-10">
-                  <div className="w-20 h-20 bg-white rounded-full border-4 border-white shadow-lg flex items-center justify-center overflow-hidden">
-                    {candidate.profileImageUrl ? (
+                  <div className="w-20 h-20 bg-white rounded-full border-4 border-white shadow-lg overflow-hidden">
+                    {avatarUrl ? (
                       <img
-                        src={`http://localhost:3000${candidate.profileImageUrl}`}
+                        src={avatarUrl}
                         alt={candidate.fullName}
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-2xl font-bold text-indigo-600">
-                        {candidate.fullName?.charAt(0) || 'U'}
-                      </span>
+                      <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
+                        <span className="text-2xl font-bold text-indigo-600">
+                          {initials}
+                        </span>
+                      </div>
                     )}
                   </div>
                   <div className="flex-1">
@@ -206,7 +213,7 @@ const CandidateProfile: React.FC = () => {
                     </a>
                     {candidate.jobSeeker?.resumeUrl && (
                       <a
-                        href={candidate.jobSeeker.resumeUrl}
+                        href={getFileUrl(candidate.jobSeeker.resumeUrl) || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium"
