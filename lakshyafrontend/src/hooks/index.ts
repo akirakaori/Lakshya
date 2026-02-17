@@ -39,6 +39,9 @@ export {
   profileKeys 
 } from './use-profile';
 
+// Edit mode hook
+export { useEditMode } from './use-edit-mode';
+
 // Auth hooks
 export { 
   useLogin, 

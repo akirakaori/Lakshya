@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DashboardLayout, LoadingSpinner } from '../../components';
-import { useProfile, useUpdateProfile, useChangePassword, useUploadProfileImage } from '../../hooks';
+import { useProfile, useUpdateProfile, useChangePassword, useUploadProfileImage, useEditMode } from '../../hooks';
 import { toast } from 'react-toastify';
 import { getFileUrl, getInitials } from '../../utils';
 
@@ -10,7 +10,7 @@ const RecruiterProfile: React.FC = () => {
   const changePasswordMutation = useChangePassword();
   const uploadImageMutation = useUploadProfileImage();
   
-  const [isEditing, setIsEditing] = useState(false);
+  const { isEditing, enterEditMode, exitEditMode, guardAction } = useEditMode();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,16 +73,23 @@ const RecruiterProfile: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (!guardAction('save')) return;
+    
     try {
       await updateProfileMutation.mutateAsync(formData);
       toast.success('Profile updated successfully!');
-      setIsEditing(false);
+      exitEditMode();
     } catch {
       toast.error('Failed to update profile');
     }
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!guardAction('upload avatar')) {
+      if (e.target) e.target.value = '';
+      return;
+    }
+    
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -108,6 +115,8 @@ const RecruiterProfile: React.FC = () => {
   };
 
   const handlePasswordChange = async () => {
+    if (!guardAction('change password')) return;
+    
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -145,6 +154,17 @@ const RecruiterProfile: React.FC = () => {
   return (
     <DashboardLayout variant="recruiter" title="Profile">
       <div className="max-w-4xl mx-auto">
+        {/* Read-only mode banner */}
+        {!isEditing && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+            <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-blue-800">
+              <span className="font-medium">Read-only mode.</span> Click "Edit Profile" to make changes.
+            </p>
+          </div>
+        )}
         {/* Profile Header */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-32"></div>
@@ -168,9 +188,16 @@ const RecruiterProfile: React.FC = () => {
                   )}
                 </div>
                 <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-0 right-0 p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 shadow-lg"
-                  title="Upload profile photo"
+                  onClick={() => {
+                    if (!isEditing) {
+                      toast.info('Please click "Edit Profile" to upload photo');
+                      return;
+                    }
+                    fileInputRef.current?.click();
+                  }}
+                  disabled={!isEditing}
+                  className="absolute bottom-0 right-0 p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={isEditing ? "Upload profile photo" : "Enable edit mode to upload photo"}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -196,7 +223,7 @@ const RecruiterProfile: React.FC = () => {
                 {isEditing ? (
                   <>
                     <button
-                      onClick={() => setIsEditing(false)}
+                      onClick={exitEditMode}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                     >
                       Cancel
@@ -211,7 +238,7 @@ const RecruiterProfile: React.FC = () => {
                   </>
                 ) : (
                   <button
-                    onClick={() => setIsEditing(true)}
+                    onClick={enterEditMode}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                   >
                     Edit Profile
@@ -405,8 +432,15 @@ const RecruiterProfile: React.FC = () => {
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Security</h2>
               <button
-                onClick={() => setShowPasswordModal(true)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                onClick={() => {
+                  if (!isEditing) {
+                    toast.info('Please click "Edit Profile" to change password');
+                    return;
+                  }
+                  setShowPasswordModal(true);
+                }}
+                disabled={!isEditing}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Change Password
               </button>
