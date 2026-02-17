@@ -6,5 +6,13 @@ export { profileService } from './profile-service';
 
 export type { LoginCredentials, RegisterData, AuthResponse } from './auth-service';
 export type { Job, JobFilters, JobsResponse, CreateJobData } from './job-service';
-export type { Application, ApplyJobData, ApplicationFilters, ApplicationsResponse } from './application-service';
+export type { 
+  Application, 
+  ApplyJobData, 
+  ApplicationFilters, 
+  ApplicationsResponse,
+  RecruiterApplicationFilters,
+  RecruiterApplicationsResponse,
+  RecruiterApplication
+} from './application-service';
 export type { UserProfile, UpdateProfileData } from './profile-service';

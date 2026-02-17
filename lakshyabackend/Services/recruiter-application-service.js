@@ -1,0 +1,166 @@
+const ApplicationModel = require('../models/application-model');
+const JobModel = require('../models/job-model');
+
+/**
+ * Get all applications for a specific job with filtering and sorting
+ */
+const getJobApplications = async (jobId, recruiterId, filters = {}) => {
+  const { status = 'all', sort = 'newest', search = '' } = filters;
+
+  // Validate job exists and recruiter owns it
+  const job = await JobModel.findById(jobId);
+  if (!job) {
+    throw { statusCode: 404, message: 'Job not found' };
+  }
+  if (job.createdBy.toString() !== recruiterId.toString()) {
+    throw { statusCode: 403, message: 'You are not authorized to view applications for this job' };
+  }
+
+  // Build query filter
+  const query = { jobId };
+  if (status !== 'all') {
+    query.status = status;
+  }
+
+  // Build sort criteria
+  let sortCriteria = {};
+  switch (sort) {
+    case 'match':
+      sortCriteria = { matchScore: -1, createdAt: -1 };
+      break;
+    case 'experience':
+      sortCriteria = { experienceYears: -1, createdAt: -1 };
+      break;
+    case 'newest':
+    default:
+      sortCriteria = { createdAt: -1 };
+      break;
+  }
+
+  // Fetch applications with applicant details
+  let applications = await ApplicationModel.find(query)
+    .populate({
+      path: 'applicant',
+      select: 'fullName name email profileImageUrl jobSeeker.skills jobSeeker.title jobSeeker.resumeUrl'
+    })
+    .sort(sortCriteria)
+    .lean();
+
+  // Apply search filter on populated data (post-query filtering for name/email)
+  if (search && search.trim()) {
+    const searchLower = search.toLowerCase().trim();
+    applications = applications.filter(app => {
+      if (!app.applicant) return false;
+      const name = (app.applicant.fullName || app.applicant.name || '').toLowerCase();
+      const email = (app.applicant.email || '').toLowerCase();
+      return name.includes(searchLower) || email.includes(searchLower);
+    });
+  }
+
+  // Calculate counts per status
+  const counts = await ApplicationModel.aggregate([
+    { $match: { jobId: job._id } },
+    { $group: { _id: '$status', count: { $sum: 1 } } }
+  ]);
+
+  const countMap = {
+    applied: 0,
+    shortlisted: 0,
+    interview: 0,
+    rejected: 0,
+    total: 0
+  };
+
+  counts.forEach(({ _id, count }) => {
+    countMap[_id] = count;
+    countMap.total += count;
+  });
+
+  return {
+    job: {
+      _id: job._id,
+      title: job.title,
+      companyName: job.companyName
+    },
+    counts: countMap,
+    applications
+  };
+};
+
+/**
+ * Update application status (single)
+ */
+const updateApplicationStatus = async (applicationId, recruiterId, newStatus) => {
+  // Validate status
+  const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected'];
+  if (!validStatuses.includes(newStatus)) {
+    throw { statusCode: 400, message: 'Invalid status value' };
+  }
+
+  // Find application and populate job to check ownership
+  const application = await ApplicationModel.findById(applicationId).populate('jobId');
+  if (!application) {
+    throw { statusCode: 404, message: 'Application not found' };
+  }
+
+  // Verify recruiter owns the job
+  if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
+    throw { statusCode: 403, message: 'You are not authorized to update this application' };
+  }
+
+  // Update status
+  application.status = newStatus;
+  await application.save();
+
+  // Return updated application with applicant details
+  const updatedApplication = await ApplicationModel.findById(applicationId)
+    .populate({
+      path: 'applicant',
+      select: 'fullName name email profileImageUrl jobSeeker.skills jobSeeker.title jobSeeker.resumeUrl'
+    })
+    .lean();
+
+  return updatedApplication;
+};
+
+/**
+ * Bulk update application statuses
+ */
+const bulkUpdateApplicationStatus = async (jobId, recruiterId, applicationIds, newStatus) => {
+  // Validate status
+  const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected'];
+  if (!validStatuses.includes(newStatus)) {
+    throw { statusCode: 400, message: 'Invalid status value' };
+  }
+
+  // Validate job exists and recruiter owns it
+  const job = await JobModel.findById(jobId);
+  if (!job) {
+    throw { statusCode: 404, message: 'Job not found' };
+  }
+  if (job.createdBy.toString() !== recruiterId.toString()) {
+    throw { statusCode: 403, message: 'You are not authorized to update applications for this job' };
+  }
+
+  // Bulk update
+  const result = await ApplicationModel.updateMany(
+    {
+      _id: { $in: applicationIds },
+      jobId: jobId
+    },
+    {
+      $set: { status: newStatus }
+    }
+  );
+
+  return {
+    modifiedCount: result.modifiedCount,
+    status: newStatus
+  };
+};
+
+module.exports = {
+  getJobApplications,
+  updateApplicationStatus,
+  bulkUpdateApplicationStatus
+};

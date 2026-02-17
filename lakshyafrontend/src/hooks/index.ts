@@ -26,6 +26,9 @@ export {
   useShortlistCandidate,
   useScheduleInterview,
   useUpdateApplicationNotes,
+  useRecruiterJobApplications,
+  useUpdateRecruiterApplicationStatus,
+  useBulkUpdateApplicationStatus,
   applicationKeys 
 } from './use-applications';
 

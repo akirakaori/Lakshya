@@ -49,6 +49,36 @@ export interface ApplicationFilters {
   limit?: number;
 }
 
+export interface RecruiterApplicationFilters {
+  status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected';
+  sort?: 'newest' | 'match' | 'experience';
+  search?: string;
+}
+
+export interface RecruiterApplicationsResponse {
+  success: boolean;
+  data: {
+    job: {
+      _id: string;
+      title: string;
+      companyName: string;
+    };
+    counts: {
+      applied: number;
+      shortlisted: number;
+      interview: number;
+      rejected: number;
+      total: number;
+    };
+    applications: RecruiterApplication[];
+  };
+}
+
+export interface RecruiterApplication extends Application {
+  matchScore?: number;
+  experienceYears?: number;
+}
+
 export interface ApplicationsResponse {
   success: boolean;
   data: Application[];
@@ -166,6 +196,51 @@ export const applicationService = {
     const response = await axiosInstance.get(`/applications/job/${jobId}/candidate/${candidateId}`);
     return response.data;
   },
+
+  // ===== NEW RECRUITER ATS ENDPOINTS =====
+
+  // Get applications for a job with filtering and sorting (recruiter only)
+  getRecruiterJobApplications: async (
+    jobId: string,
+    filters?: RecruiterApplicationFilters
+  ): Promise<RecruiterApplicationsResponse> => {
+    const params = new URLSearchParams();
+    
+    if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
+    if (filters?.sort) params.append('sort', filters.sort);
+    if (filters?.search && filters.search.trim()) params.append('search', filters.search.trim());
+    
+    const queryString = params.toString();
+    const url = queryString 
+      ? `/recruiter/jobs/${jobId}/applications?${queryString}` 
+      : `/recruiter/jobs/${jobId}/applications`;
+    
+    const response = await axiosInstance.get(url);
+    return response.data;
+  },
+
+  // Update application status (recruiter - new endpoint)
+  updateRecruiterApplicationStatus: async (
+    applicationId: string,
+    status: 'applied' | 'shortlisted' | 'interview' | 'rejected'
+  ): Promise<{ success: boolean; data: RecruiterApplication }> => {
+    const response = await axiosInstance.patch(`/recruiter/applications/${applicationId}/status`, { status });
+    return response.data;
+  },
+
+  // Bulk update application statuses (recruiter only)
+  bulkUpdateApplicationStatus: async (
+    jobId: string,
+    applicationIds: string[],
+    status: 'applied' | 'shortlisted' | 'interview' | 'rejected'
+  ): Promise<{ success: boolean; data: { modifiedCount: number; status: string } }> => {
+    const response = await axiosInstance.patch(`/recruiter/jobs/${jobId}/applications/bulk-status`, {
+      applicationIds,
+      status
+    });
+    return response.data;
+  },
+
 };
 
 export default applicationService;

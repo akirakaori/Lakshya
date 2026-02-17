@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { applicationService } from '../services';
-import type { ApplyJobData, ApplicationFilters } from '../services';
+import type { ApplyJobData, ApplicationFilters, RecruiterApplicationFilters } from '../services';
 
 // Query keys
 export const applicationKeys = {
@@ -154,3 +154,57 @@ export const useUpdateApplicationNotes = () => {
     },
   });
 };
+
+// ===== NEW RECRUITER ATS HOOKS =====
+
+// Get recruiter job applications with filtering and sorting
+export const useRecruiterJobApplications = (
+  jobId: string, 
+  filters?: RecruiterApplicationFilters
+) => {
+  return useQuery({
+    queryKey: ['recruiter-job-applications', jobId, filters?.status, filters?.sort, filters?.search],
+    queryFn: () => applicationService.getRecruiterJobApplications(jobId, filters),
+    enabled: !!jobId,
+  });
+};
+
+// Update application status (recruiter - new endpoint)
+export const useUpdateRecruiterApplicationStatus = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ 
+      applicationId, 
+      status 
+    }: { 
+      applicationId: string; 
+      status: 'applied' | 'shortlisted' | 'interview' | 'rejected' 
+    }) => applicationService.updateRecruiterApplicationStatus(applicationId, status),
+    onSuccess: () => {
+      // Invalidate all recruiter job applications queries
+      queryClient.invalidateQueries({ queryKey: ['recruiter-job-applications'] });
+    },
+  });
+};
+
+// Bulk update application statuses (recruiter)
+export const useBulkUpdateApplicationStatus = (jobId: string) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ 
+      applicationIds, 
+      status 
+    }: { 
+      applicationIds: string[]; 
+      status: 'applied' | 'shortlisted' | 'interview' | 'rejected' 
+    }) => applicationService.bulkUpdateApplicationStatus(jobId, applicationIds, status),
+    onSuccess: () => {
+      // Invalidate all recruiter job applications queries for this job
+      queryClient.invalidateQueries({ queryKey: ['recruiter-job-applications', jobId] });
+    },
+  });
+};
+
+

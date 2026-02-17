@@ -13,6 +13,7 @@ const profileRoutes = require('./Routes/profile-routes');
 const jobRoutes = require('./Routes/job-routes');
 const applicationRoutes = require('./Routes/application-routes');
 const adminRoutes = require('./Routes/admin-routes');
+const recruiterRoutes = require('./Routes/recruiter-routes');
 
 // Import middleware
 const errorHandler = require('./Middleware/error-handler');
@@ -51,6 +52,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/recruiter', recruiterRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {

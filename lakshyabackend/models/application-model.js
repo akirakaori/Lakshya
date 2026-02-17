@@ -29,6 +29,17 @@ const applicationSchema = new Schema({
     type: String,
     default: ''
   },
+  matchScore: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
+  },
+  experienceYears: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   interview: {
     date: { type: Date },
     mode: { type: String }, // 'virtual', 'in-person', 'phone'
