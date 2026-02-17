@@ -60,7 +60,9 @@ const userSchema = new Schema({
     education: { type: String, default: '' },
     preferredLocation: { type: String, default: '' },
     expectedSalary: { type: String, default: '' },
-    resumeUrl: { type: String, default: null }
+    resumeUrl: { type: String, default: null },
+    resumePublicId: { type: String, default: null },
+    resumeFormat: { type: String, default: null }
   },
   recruiter: {
     companyDescription: { type: String, default: '' },

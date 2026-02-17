@@ -1,5 +1,9 @@
 const UserModel = require('../models/user-model');
 const bcrypt = require('bcrypt');
+const cloudinary = require('../config/cloudinary');
+
+// Note: URL parsing for resumes removed. Use resumePublicId instead.
+// Avatar logic remains untouched.
 
 /**
  * Get user profile by ID
@@ -14,7 +18,7 @@ const getUserProfile = async (userId) => {
       throw error;
     }
     
-    return user;
+    return user.toObject();
   } catch (error) {
     throw error;
   }
@@ -93,26 +97,24 @@ const updateUserProfile = async (userId, updateData) => {
 };
 
 /**
- * Update user's resume path
+ * Update user's resume with Cloudinary data (URL + public_id + format)
  */
-const updateUserResume = async (userId, resumePath) => {
+const updateUserResume = async (userId, resumeData) => {
   try {
     console.log('=== UPDATE USER RESUME SERVICE ===');
     console.log('User ID:', userId);
-    console.log('Resume path:', resumePath);
+    console.log('Resume data:', resumeData);
     
-    // Store relative path from uploads directory
-    const relativeResumePath = resumePath.replace(/\\/g, '/').split('uploads/')[1] || resumePath;
-    const resumeUrl = `/uploads/${relativeResumePath}`;
+    const { resumeUrl, resumePublicId, resumeFormat } = resumeData;
     
-    console.log('Resume URL:', resumeUrl);
-    
-    // Update both resume (legacy) and jobSeeker.resumeUrl
+    // Update resume (legacy), jobSeeker.resumeUrl, resumePublicId, and resumeFormat
     const user = await UserModel.findByIdAndUpdate(
       userId,
       { 
         resume: resumeUrl,
-        'jobSeeker.resumeUrl': resumeUrl
+        'jobSeeker.resumeUrl': resumeUrl,
+        'jobSeeker.resumePublicId': resumePublicId,
+        'jobSeeker.resumeFormat': resumeFormat
       },
       { new: true }
     ).select('-password -resetOTP -resetOTPExpiry');
@@ -123,7 +125,7 @@ const updateUserResume = async (userId, resumePath) => {
       throw error;
     }
     
-    console.log('Updated user resume URL:', user.resume);
+    console.log('Updated user resume - PublicId:', user.jobSeeker.resumePublicId, 'Format:', user.jobSeeker.resumeFormat);
     
     return user;
   } catch (error) {
@@ -141,9 +143,10 @@ const updateUserProfileImage = async (userId, imagePath) => {
     console.log('User ID:', userId);
     console.log('Image path:', imagePath);
     
-    // Store relative path from uploads directory
-    const relativeImagePath = imagePath.replace(/\\/g, '/').split('uploads/')[1] || imagePath;
-    const imageUrl = `/uploads/${relativeImagePath}`;
+    // For Cloudinary URLs, use as-is. For local paths, add /uploads/ prefix
+    const imageUrl = imagePath.startsWith('http://') || imagePath.startsWith('https://') 
+      ? imagePath 
+      : `/uploads/${imagePath.replace(/\\/g, '/').split('uploads/')[1] || imagePath}`;
     
     console.log('Image URL:', imageUrl);
     
@@ -221,11 +224,57 @@ const getCandidateProfile = async (userId) => {
   }
 };
 
+/**
+ * Get signed resume URL for authenticated delivery
+ * Generates a temporary signed URL (10 min TTL) for downloading resumes
+ * Uses private_download_url for authenticated raw files
+ */
+const getMyResumeSignedUrl = async (userId) => {
+  try {
+    const user = await UserModel.findById(userId).select('jobSeeker.resumePublicId jobSeeker.resumeFormat');
+    
+    if (!user) {
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    const resumePublicId = user.jobSeeker?.resumePublicId;
+    const resumeFormat = user.jobSeeker?.resumeFormat || 'pdf';
+    
+    if (!resumePublicId) {
+      const error = new Error('Resume not uploaded');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Generate signed download URL using private_download_url
+    // This is the proper method for authenticated/private resources
+    const signedUrl = cloudinary.utils.private_download_url(
+      resumePublicId,
+      resumeFormat,
+      {
+        resource_type: 'raw',
+        type: 'authenticated',
+        expires_at: Math.floor(Date.now() / 1000) + 600, // 10 minutes
+        secure: true
+      }
+    );
+    
+    console.log('Generated signed resume download URL for user:', userId);
+    
+    return signedUrl;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
   updateUserResume,
   updateUserProfileImage,
   changePassword,
-  getCandidateProfile
+  getCandidateProfile,
+  getMyResumeSignedUrl
 };

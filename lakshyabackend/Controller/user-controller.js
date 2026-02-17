@@ -1,4 +1,6 @@
 const userService = require('../Services/user-service');
+const cloudinary = require('../config/cloudinary');
+const streamifier = require('streamifier');
 
 /**
  * Get user profile
@@ -50,28 +52,51 @@ const updateProfile = async (req, res) => {
 const uploadResume = async (req, res) => {
   try {
     console.log('=== UPLOAD RESUME CONTROLLER ===');
-    console.log('Request headers:', req.headers);
-    console.log('Content-Type:', req.get('content-type'));
     const userId = req.user.id;
     console.log('User ID:', userId);
-    console.log('req.file:', req.file);
-    console.log('req.files:', req.files);
     
     if (!req.file) {
-      console.log('ERROR: No resume file uploaded - req.file is undefined');
+      console.log('ERROR: No resume file uploaded');
       return res.status(400).json({
         success: false,
         message: 'No file uploaded'
       });
     }
     
-    const resumePath = req.file.path;
-    console.log('Resume path:', resumePath);
-    console.log('Resume filename:', req.file.filename);
-    console.log('Resume mimetype:', req.file.mimetype);
-    console.log('Resume size:', req.file.size);
+    console.log('File received:', req.file.originalname, 'Size:', req.file.size);
     
-    const user = await userService.updateUserResume(userId, resumePath);
+    // Upload to Cloudinary with AUTHENTICATED delivery
+    // This prevents public access and requires signed URLs
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'resumes',
+          resource_type: 'raw',
+          public_id: `resume_${userId}_${Date.now()}`,
+          type: 'authenticated', // CRITICAL: Use authenticated delivery
+          format: req.file.originalname.split('.').pop() // Preserve original extension
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      
+      // Pipe buffer to upload stream
+      streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
+    });
+    
+    console.log('Cloudinary upload result:', uploadResult.secure_url);
+    console.log('Public ID:', uploadResult.public_id);
+    console.log('Format:', uploadResult.format);
+    console.log('Resource type:', uploadResult.resource_type);
+    
+    // Update user with resumeUrl, resumePublicId, and resumeFormat
+    const user = await userService.updateUserResume(userId, {
+      resumeUrl: uploadResult.secure_url,
+      resumePublicId: uploadResult.public_id,
+      resumeFormat: uploadResult.format
+    });
     
     res.status(200).json({
       success: true,
@@ -192,11 +217,34 @@ const getCandidateProfile = async (req, res) => {
   }
 };
 
+/**
+ * Get signed resume URL for authenticated Cloudinary delivery
+ */
+const getMyResumeUrl = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const signedUrl = await userService.getMyResumeSignedUrl(userId);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        url: signedUrl
+      }
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
   uploadResume,
   uploadAvatar,
   changePassword,
-  getCandidateProfile
+  getCandidateProfile,
+  getMyResumeUrl
 };

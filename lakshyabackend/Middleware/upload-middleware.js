@@ -1,45 +1,27 @@
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('../config/cloudinary');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Ensure uploads directories exist
-const resumeUploadDir = path.join(__dirname, '../uploads/resumes');
-const avatarUploadDir = path.join(__dirname, '../uploads/avatars');
+// Use memoryStorage for resumes - we'll manually upload to Cloudinary
+// This is because multer-storage-cloudinary ignores resource_type: 'raw'
+const resumeStorage = multer.memoryStorage();
 
-if (!fs.existsSync(resumeUploadDir)) {
-  fs.mkdirSync(resumeUploadDir, { recursive: true });
-}
-if (!fs.existsSync(avatarUploadDir)) {
-  fs.mkdirSync(avatarUploadDir, { recursive: true });
-}
-
-// Configure storage for resumes
-const resumeStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, resumeUploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    const name = path.basename(file.originalname, ext);
-    cb(null, `resume-${uniqueSuffix}${ext}`);
-  }
-});
-
-// Configure storage for avatars
-const avatarStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, avatarUploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, `avatar-${uniqueSuffix}${ext}`);
+// Configure Cloudinary storage for avatars (Images only)
+const avatarStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'avatars',
+    resource_type: 'image',
+    allowed_formats: ['jpg', 'jpeg', 'png'],
+    use_filename: true,
+    unique_filename: true
   }
 });
 
 // File filter for resumes (PDF and DOC files)
 const resumeFileFilter = (req, file, cb) => {
+  console.log('Resume file filter - checking file:', file.originalname, 'mimetype:', file.mimetype);
   const allowedMimeTypes = [
     'application/pdf',
     'application/msword',
@@ -47,14 +29,17 @@ const resumeFileFilter = (req, file, cb) => {
   ];
   
   if (allowedMimeTypes.includes(file.mimetype)) {
+    console.log('Resume file filter - ACCEPTED');
     cb(null, true);
   } else {
+    console.log('Resume file filter - REJECTED');
     cb(new Error('Invalid file type. Only PDF, DOC, and DOCX files are allowed.'), false);
   }
 };
 
 // File filter for avatars (Images only)
 const avatarFileFilter = (req, file, cb) => {
+  console.log('Avatar file filter - checking file:', file.originalname, 'mimetype:', file.mimetype);
   const allowedMimeTypes = [
     'image/jpeg',
     'image/png',
@@ -62,8 +47,10 @@ const avatarFileFilter = (req, file, cb) => {
   ];
   
   if (allowedMimeTypes.includes(file.mimetype)) {
+    console.log('Avatar file filter - ACCEPTED');
     cb(null, true);
   } else {
+    console.log('Avatar file filter - REJECTED');
     cb(new Error('Invalid file type. Only JPG and PNG images are allowed.'), false);
   }
 };
@@ -90,15 +77,20 @@ const uploadAvatar = multer({
 const handleMulterError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     console.error('Multer Error:', err);
+    console.error('Multer Error Code:', err.code);
+    console.error('Multer Error Field:', err.field);
     return res.status(400).json({
       success: false,
-      message: `File upload error: ${err.message}`
+      message: `File upload error: ${err.message}`,
+      error: err.code
     });
   } else if (err) {
     console.error('Upload Error:', err);
+    console.error('Upload Error Stack:', err.stack);
     return res.status(400).json({
       success: false,
-      message: err.message || 'File upload failed'
+      message: err.message || 'File upload failed',
+      error: err.toString()
     });
   }
   next();

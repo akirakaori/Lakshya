@@ -43,6 +43,13 @@ router.put('/', verifyToken, userController.updateProfile);
 router.post('/upload-resume', verifyToken, uploadResume.single('resume'), handleMulterError, userController.uploadResume);
 
 /**
+ * @route   GET /api/profile/resume-url
+ * @desc    Get signed resume URL for viewing
+ * @access  Private (All authenticated users)
+ */
+router.get('/resume-url', verifyToken, userController.getMyResumeUrl);
+
+/**
  * @route   POST /api/profile/avatar
  * @desc    Upload profile avatar/photo
  * @access  Private (All authenticated users)

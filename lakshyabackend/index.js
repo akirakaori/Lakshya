@@ -4,6 +4,9 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 
+// Load environment variables FIRST before any other imports
+dotenv.config();
+
 // Import routes
 const authRoutes = require('./Routes/auth-routes');
 const profileRoutes = require('./Routes/profile-routes');
@@ -14,7 +17,6 @@ const adminRoutes = require('./Routes/admin-routes');
 // Import middleware
 const errorHandler = require('./Middleware/error-handler');
 
-dotenv.config();
 require('./models/database');
 
 const app = express();
