@@ -231,7 +231,7 @@ const getCandidateProfile = async (userId) => {
  */
 const getMyResumeSignedUrl = async (userId) => {
   try {
-    const user = await UserModel.findById(userId).select('jobSeeker.resumePublicId jobSeeker.resumeFormat');
+    const user = await UserModel.findById(userId).select('jobSeeker.resumeUrl jobSeeker.resumePublicId');
     
     if (!user) {
       const error = new Error('User not found');
@@ -239,31 +239,19 @@ const getMyResumeSignedUrl = async (userId) => {
       throw error;
     }
     
-    const resumePublicId = user.jobSeeker?.resumePublicId;
-    const resumeFormat = user.jobSeeker?.resumeFormat || 'pdf';
+    const resumeUrl = user.jobSeeker?.resumeUrl;
     
-    if (!resumePublicId) {
+    if (!resumeUrl) {
       const error = new Error('Resume not uploaded');
       error.statusCode = 404;
       throw error;
     }
     
-    // Generate signed download URL using private_download_url
-    // This is the proper method for authenticated/private resources
-    const signedUrl = cloudinary.utils.private_download_url(
-      resumePublicId,
-      resumeFormat,
-      {
-        resource_type: 'raw',
-        type: 'authenticated',
-        expires_at: Math.floor(Date.now() / 1000) + 600, // 10 minutes
-        secure: true
-      }
-    );
+    // Since resumes are uploaded as public (type: 'upload'), 
+    // return the direct Cloudinary URL
+    console.log('Returning direct resume URL for user:', userId);
     
-    console.log('Generated signed resume download URL for user:', userId);
-    
-    return signedUrl;
+    return resumeUrl;
   } catch (error) {
     throw error;
   }

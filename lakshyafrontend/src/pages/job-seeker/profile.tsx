@@ -1,6 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { DashboardLayout, LoadingSpinner } from '../../components';
-import { useProfile, useUpdateProfile, useUploadResume, useChangePassword, useUploadProfileImage, useEditMode } from '../../hooks';
+import { 
+  useProfile, 
+  useUpdateProfile, 
+  useUploadResume, 
+  useChangePassword, 
+  useUploadProfileImage, 
+  useEditMode,
+  useResumeParsePolling
+} from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
 import { getFileUrl, getInitials } from '../../utils';
@@ -18,6 +26,22 @@ const Profile: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  // Resume parsing status polling
+  const { parseStatus, startPolling } = useResumeParsePolling({
+    onParseComplete: (summary) => {
+      console.log('Resume parsing completed:', summary);
+      toast.success('Resume parsed! Profile updated automatically.', {
+        autoClose: 5000
+      });
+    },
+    onParseError: (error) => {
+      console.error('Resume parsing failed:', error);
+      toast.error(`Resume parsing failed: ${error}`, {
+        autoClose: 5000
+      });
+    }
+  });
 
   const profile = profileData?.data;
 
@@ -45,31 +69,91 @@ const Profile: React.FC = () => {
 
   // Track if form has been initialized to prevent race conditions
   const [formInitialized, setFormInitialized] = React.useState(false);
+  
+  // Track if user has modified form data (dirty flag)
+  const [isDirty, setIsDirty] = React.useState(false);
 
   // Initialize form data when profile loads (only once or after successful save)
+  // IMPORTANT: Depends on profileData?.data to update when cache refreshes
   React.useEffect(() => {
-    if (profile && (!formInitialized || !isEditing)) {
-      setFormData({
-        fullName: profile.fullName || profile.name || '',
-        phone: profile.phone || profile.number || '',
-        jobSeeker: {
-          title: profile.jobSeeker?.title || '',
-          bio: profile.jobSeeker?.bio || '',
-          skills: profile.jobSeeker?.skills || [],
-          experience: profile.jobSeeker?.experience || '',
-          education: profile.jobSeeker?.education || '',
-          preferredLocation: profile.jobSeeker?.preferredLocation || '',
-          expectedSalary: profile.jobSeeker?.expectedSalary || '',
-        },
-      });
-      if (!formInitialized) {
-        setFormInitialized(true);
+    const latestProfile = profileData?.data;
+    
+    if (!latestProfile) return;
+
+    const mapProfileToForm = () => ({
+      fullName: latestProfile.fullName || latestProfile.name || '',
+      phone: latestProfile.phone || latestProfile.number || '',
+      jobSeeker: {
+        title: latestProfile.jobSeeker?.title || '',
+        bio: latestProfile.jobSeeker?.bio || '',
+        skills: latestProfile.jobSeeker?.skills || [],
+        experience: latestProfile.jobSeeker?.experience || '',
+        education: latestProfile.jobSeeker?.education || '',
+        preferredLocation: latestProfile.jobSeeker?.preferredLocation || '',
+        expectedSalary: latestProfile.jobSeeker?.expectedSalary || '',
+      },
+    });
+
+    console.log('🔄 formData sync check:');
+    console.log('  isEditing:', isEditing, '| isDirty:', isDirty, '| formInitialized:', formInitialized);
+    console.log('  Server skills:', latestProfile.jobSeeker?.skills?.length || 0);
+    console.log('  Current formData skills:', formData.jobSeeker.skills.length);
+
+    setFormData(prev => {
+      // NOT in edit mode -> always replace with latest server data
+      if (!isEditing) {
+        console.log('  ✅ Not editing - syncing from server');
+        if (!formInitialized) setFormInitialized(true);
+        return mapProfileToForm();
       }
+
+      // In edit mode BUT user hasn't modified anything -> safe to replace
+      if (!isDirty) {
+        console.log('  ✅ Editing but not dirty - syncing from server');
+        return mapProfileToForm();
+      }
+
+      // Edge case: formData is completely empty (shouldn't happen but be safe)
+      const isFormEmpty = !prev.fullName && !prev.phone && 
+                          prev.jobSeeker.skills.length === 0 &&
+                          !prev.jobSeeker.title && !prev.jobSeeker.bio &&
+                          !prev.jobSeeker.experience && !prev.jobSeeker.education;
+      
+      if (isFormEmpty) {
+        console.log('  ⚠️  FormData is empty - forcing sync from server');
+        return mapProfileToForm();
+      }
+
+      // In edit mode AND user has modified -> merge only EMPTY fields (preserve user edits)
+      console.log('  ⚠️  Editing and dirty - merging only missing fields');
+      const merged = {
+        fullName: prev.fullName || latestProfile.fullName || latestProfile.name || '',
+        phone: prev.phone || latestProfile.phone || latestProfile.number || '',
+        jobSeeker: {
+          title: prev.jobSeeker.title || latestProfile.jobSeeker?.title || '',
+          bio: prev.jobSeeker.bio || latestProfile.jobSeeker?.bio || '',
+          skills: prev.jobSeeker.skills.length > 0 
+            ? prev.jobSeeker.skills 
+            : (latestProfile.jobSeeker?.skills || []),
+          experience: prev.jobSeeker.experience || latestProfile.jobSeeker?.experience || '',
+          education: prev.jobSeeker.education || latestProfile.jobSeeker?.education || '',
+          preferredLocation: prev.jobSeeker.preferredLocation || latestProfile.jobSeeker?.preferredLocation || '',
+          expectedSalary: prev.jobSeeker.expectedSalary || latestProfile.jobSeeker?.expectedSalary || '',
+        },
+      };
+      console.log('  Merged skills count:', merged.jobSeeker.skills.length);
+      return merged;
+    });
+
+    if (!formInitialized) {
+      setFormInitialized(true);
     }
-  }, [profile, isEditing, formInitialized]);
+  }, [profileData?.data, isEditing, isDirty]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    setIsDirty(true); // Mark form as dirty when user makes changes
+    
     if (name.startsWith('jobSeeker.')) {
       const field = name.split('.')[1];
       setFormData(prev => ({
@@ -89,6 +173,7 @@ const Profile: React.FC = () => {
 
   const addSkill = () => {
     if (newSkill.trim() && !formData.jobSeeker.skills.includes(newSkill.trim())) {
+      setIsDirty(true); // Mark form as dirty when adding skills
       setFormData(prev => ({
         ...prev,
         jobSeeker: {
@@ -101,6 +186,7 @@ const Profile: React.FC = () => {
   };
 
   const removeSkill = (skillToRemove: string) => {
+    setIsDirty(true); // Mark form as dirty when removing skills
     setFormData(prev => ({
       ...prev,
       jobSeeker: {
@@ -108,6 +194,63 @@ const Profile: React.FC = () => {
         skills: prev.jobSeeker.skills.filter(skill => skill !== skillToRemove),
       },
     }));
+  };
+
+  // Custom handler for entering edit mode
+  const handleEnterEditMode = () => {
+    console.log('✏️ Entering edit mode - syncing with latest profile data');
+    
+    // Reset dirty flag
+    setIsDirty(false);
+    
+    // Sync formData with latest profile data
+    if (profile) {
+      setFormData({
+        fullName: profile.fullName || profile.name || '',
+        phone: profile.phone || profile.number || '',
+        jobSeeker: {
+          title: profile.jobSeeker?.title || '',
+          bio: profile.jobSeeker?.bio || '',
+          skills: profile.jobSeeker?.skills || [],
+          experience: profile.jobSeeker?.experience || '',
+          education: profile.jobSeeker?.education || '',
+          preferredLocation: profile.jobSeeker?.preferredLocation || '',
+          expectedSalary: profile.jobSeeker?.expectedSalary || '',
+        },
+      });
+      console.log('  Synced skills count:', profile.jobSeeker?.skills?.length || 0);
+    }
+    
+    // Enter edit mode
+    enterEditMode();
+  };
+
+  // Custom handler for canceling edit mode
+  const handleCancelEdit = () => {
+    console.log('❌ Canceling edit - resetting to server data');
+    
+    // Reset dirty flag
+    setIsDirty(false);
+    
+    // Revert formData to latest profile data
+    if (profile) {
+      setFormData({
+        fullName: profile.fullName || profile.name || '',
+        phone: profile.phone || profile.number || '',
+        jobSeeker: {
+          title: profile.jobSeeker?.title || '',
+          bio: profile.jobSeeker?.bio || '',
+          skills: profile.jobSeeker?.skills || [],
+          experience: profile.jobSeeker?.experience || '',
+          education: profile.jobSeeker?.education || '',
+          preferredLocation: profile.jobSeeker?.preferredLocation || '',
+          expectedSalary: profile.jobSeeker?.expectedSalary || '',
+        },
+      });
+    }
+    
+    // Exit edit mode
+    exitEditMode();
   };
 
   const handleSave = async () => {
@@ -125,6 +268,9 @@ const Profile: React.FC = () => {
       });
       
       toast.success('Profile updated successfully!');
+      
+      // Reset dirty flag after successful save
+      setIsDirty(false);
       
       // Exit edit mode - form will NOT reset because formInitialized is true
       exitEditMode();
@@ -162,7 +308,15 @@ const Profile: React.FC = () => {
         console.log('Uploading resume:', file.name, file.size);
         const response = await uploadResumeMutation.mutateAsync(file);
         console.log('Resume upload response:', response);
-        toast.success('Resume uploaded successfully!');
+        
+        // Show success message
+        toast.success('Resume uploaded! Parsing in progress...', {
+          autoClose: 3000
+        });
+        
+        // Start polling for parse status
+        console.log('Starting resume parse polling...');
+        startPolling();
       } catch (err: any) {
         const errorMessage = err.response?.data?.message || err.message || 'Failed to upload resume';
         toast.error(errorMessage);
@@ -294,6 +448,15 @@ const Profile: React.FC = () => {
     );
   }
 
+  // Debug: Compare server data vs form state
+  console.log('📊 Profile Render Debug:');
+  console.log('  Server profile skills:', profile?.jobSeeker?.skills?.length || 0);
+  console.log('  FormData skills:', formData.jobSeeker.skills.length);
+  console.log('  IsEditing:', isEditing);
+  console.log('  IsDirty:', isDirty);
+  console.log('  Parse status:', parseStatus?.status);
+  console.log('  Skills to display:', isEditing ? formData.jobSeeker.skills : (profile?.jobSeeker?.skills || []));
+
   return (
     <DashboardLayout variant="job-seeker" title="Profile">
       <div className="max-w-4xl mx-auto w-full px-4 pb-10">
@@ -370,7 +533,7 @@ const Profile: React.FC = () => {
                 {isEditing ? (
                   <>
                     <button
-                      onClick={exitEditMode}
+                      onClick={handleCancelEdit}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                     >
                       Cancel
@@ -385,7 +548,7 @@ const Profile: React.FC = () => {
                   </>
                 ) : (
                   <button
-                    onClick={enterEditMode}
+                    onClick={handleEnterEditMode}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                   >
                     Edit Profile
@@ -572,8 +735,62 @@ const Profile: React.FC = () => {
                     </svg>
                     <span className="text-sm font-medium">Resume uploaded</span>
                   </div>
+                  
+                  {/* Parse Status Badge */}
+                  {parseStatus && (
+                    <div className={`flex items-center gap-2 p-2 rounded-lg text-sm ${
+                      parseStatus.status === 'done' ? 'bg-green-50 text-green-700' :
+                      parseStatus.status === 'failed' ? 'bg-red-50 text-red-700' :
+                      parseStatus.status === 'processing' ? 'bg-blue-50 text-blue-700' :
+                      'bg-yellow-50 text-yellow-700'
+                    }`}>
+                      {parseStatus.status === 'done' && (
+                        <>
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="font-medium">Parsed ✓</span>
+                          {parseStatus.summary && (
+                            <span className="text-xs">
+                              ({parseStatus.summary.skillsAdded} skills added)
+                            </span>
+                          )}
+                        </>
+                      )}
+                      {parseStatus.status === 'queued' && (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span className="font-medium">Queued for parsing...</span>
+                        </>
+                      )}
+                      {parseStatus.status === 'processing' && (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span className="font-medium">Parsing resume...</span>
+                        </>
+                      )}
+                      {parseStatus.status === 'failed' && (
+                        <>
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                          <span className="font-medium">Parsing failed</span>
+                          {parseStatus.error && (
+                            <span className="text-xs">({parseStatus.error})</span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                  
                   <a
-                    href={getFileUrl(profile.jobSeeker.resumeUrl) || '#'}
+                    href={profileData?.signedResumeUrl || getFileUrl(profile.jobSeeker.resumeUrl) || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block text-indigo-600 hover:text-indigo-700 text-sm"

@@ -1,4 +1,6 @@
 const userService = require('../Services/user-service');
+const resumeParserService = require('../Services/resume-parser-service');
+const { queueResumeParseJob } = require('../Services/resume-parse-queue');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 
@@ -10,10 +12,31 @@ const getProfile = async (req, res) => {
     const userId = req.user.id;
     const user = await userService.getUserProfile(userId);
     
+    // Debug: Log profile data being returned
+    console.log('\n📤 ========================================');
+    console.log('📤 RETURNING PROFILE TO FRONTEND');
+    console.log('📤 ========================================');
+    console.log('📤 User ID:', userId);
+    console.log('📤 Skills count:', user.jobSeeker?.skills?.length || 0);
+    console.log('📤 Skills array:', user.jobSeeker?.skills || []);
+    console.log('📤 Education:', user.jobSeeker?.education ? `${user.jobSeeker.education.substring(0, 50)}...` : '(empty)');
+    console.log('📤 Experience:', user.jobSeeker?.experience ? `${user.jobSeeker.experience.substring(0, 50)}...` : '(empty)');
+    console.log('📤 Title:', user.jobSeeker?.title || '(empty)');
+    console.log('📤 Bio:', user.jobSeeker?.bio ? `${user.jobSeeker.bio.substring(0, 50)}...` : '(empty)');
+    console.log('📤 Parse Status:', user.jobSeeker?.resumeParseStatus);
+    console.log('📤 Parse RunId:', user.jobSeeker?.resumeParseRunId);
+    console.log('📤 Parse Summary:', JSON.stringify(user.jobSeeker?.resumeParseResultSummary));
+    console.log('========================================\n');
+    
+    // Resume URL - since resumes are uploaded as public, use direct URL
+    // (They're public so Python parser can access them)
+    const resumeUrl = user.jobSeeker?.resumeUrl || null;
+    
     res.status(200).json({
       success: true,
       message: 'Profile retrieved successfully',
-      data: user
+      data: user,
+      signedResumeUrl: resumeUrl // Direct Cloudinary URL (public)
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
@@ -47,11 +70,11 @@ const updateProfile = async (req, res) => {
 };
 
 /**
- * Upload resume
+ * Upload resume (ASYNC - responds immediately, parsing happens in background)
  */
 const uploadResume = async (req, res) => {
   try {
-    console.log('=== UPLOAD RESUME CONTROLLER ===');
+    console.log('=== UPLOAD RESUME CONTROLLER (ASYNC) ===');
     const userId = req.user.id;
     console.log('User ID:', userId);
     
@@ -65,16 +88,17 @@ const uploadResume = async (req, res) => {
     
     console.log('File received:', req.file.originalname, 'Size:', req.file.size);
     
-    // Upload to Cloudinary with AUTHENTICATED delivery
-    // This prevents public access and requires signed URLs
+    // Upload to Cloudinary
+    // Note: Using 'upload' type (public) instead of 'authenticated' 
+    // so Python service can access it without signed URLs
     const uploadResult = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: 'resumes',
           resource_type: 'raw',
           public_id: `resume_${userId}_${Date.now()}`,
-          type: 'authenticated', // CRITICAL: Use authenticated delivery
-          format: req.file.originalname.split('.').pop() // Preserve original extension
+          type: 'upload', // Public access for parsing
+          format: req.file.originalname.split('.').pop()
         },
         (error, result) => {
           if (error) reject(error);
@@ -82,26 +106,45 @@ const uploadResume = async (req, res) => {
         }
       );
       
-      // Pipe buffer to upload stream
       streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
     });
     
-    console.log('Cloudinary upload result:', uploadResult.secure_url);
+    console.log('✅ Cloudinary upload successful');
     console.log('Public ID:', uploadResult.public_id);
+    console.log('URL:', uploadResult.secure_url);
     console.log('Format:', uploadResult.format);
-    console.log('Resource type:', uploadResult.resource_type);
     
-    // Update user with resumeUrl, resumePublicId, and resumeFormat
+    // Update user with resume URL immediately
     const user = await userService.updateUserResume(userId, {
       resumeUrl: uploadResult.secure_url,
       resumePublicId: uploadResult.public_id,
       resumeFormat: uploadResult.format
     });
     
+    console.log('✅ User resume metadata saved to DB');
+    
+    // 🚀 QUEUE PARSING JOB (runs in background - doesn't block response)
+    try {
+      console.log('\n📋 Queueing background parsing job...');
+      const jobId = await queueResumeParseJob(userId, uploadResult.secure_url, {
+        resumePublicId: uploadResult.public_id,
+        originalName: req.file.originalname
+      });
+      console.log('✅ Parsing job queued:', jobId);
+    } catch (queueError) {
+      console.error('❌ Failed to queue parsing job:', queueError.message);
+      // Don't fail the upload - just log the error
+    }
+    
+    console.log('\n📤 INSTANT RESPONSE - parsing will continue in background');
+    console.log('========================================\n');
+    
+    // RESPOND IMMEDIATELY - parsing happens in background
     res.status(200).json({
       success: true,
       message: 'Resume uploaded successfully',
-      data: user
+      data: user,
+      parsingStatus: 'queued' // Tell frontend parsing is queued
     });
   } catch (error) {
     console.error('Upload resume error:', error);
@@ -204,10 +247,14 @@ const getCandidateProfile = async (req, res) => {
     
     const candidate = await userService.getCandidateProfile(candidateId);
     
+    // Resume URL - since resumes are uploaded as public, use direct URL
+    const resumeUrl = candidate.jobSeeker?.resumeUrl || null;
+    
     res.status(200).json({
       success: true,
       message: 'Candidate profile retrieved successfully',
-      data: candidate
+      data: candidate,
+      signedResumeUrl: resumeUrl // Direct Cloudinary URL (public)
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
@@ -239,6 +286,47 @@ const getMyResumeUrl = async (req, res) => {
   }
 };
 
+/**
+ * Get resume parse status (for polling by frontend)
+ */
+const getResumeParseStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await userService.getUserProfile(userId);
+    
+    if (!user || !user.jobSeeker) {
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+    
+    // Return parse status and current profile fields
+    res.status(200).json({
+      success: true,
+      parseStatus: {
+        status: user.jobSeeker.resumeParseStatus || 'idle',
+        error: user.jobSeeker.resumeParseError || null,
+        parsedAt: user.jobSeeker.resumeParsedAt || null,
+        resumeParseRunId: user.jobSeeker.resumeParseRunId || null,
+        summary: user.jobSeeker.resumeParseResultSummary || null
+      },
+      profile: {
+        title: user.jobSeeker.title || '',
+        bio: user.jobSeeker.bio || '',
+        skills: user.jobSeeker.skills || [],
+        experience: user.jobSeeker.experience || '',
+        education: user.jobSeeker.education || ''
+      }
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -246,5 +334,6 @@ module.exports = {
   uploadAvatar,
   changePassword,
   getCandidateProfile,
-  getMyResumeUrl
+  getMyResumeUrl,
+  getResumeParseStatus
 };

@@ -42,6 +42,14 @@ export {
   profileKeys 
 } from './use-profile';
 
+// Resume parse status hooks
+export {
+  useResumeParseStatus,
+  useResumeParsePolling,
+  type ResumeParseStatus,
+  type ResumeParseStatusResponse
+} from './use-resume-parse-status';
+
 // Edit mode hook
 export { useEditMode } from './use-edit-mode';
 

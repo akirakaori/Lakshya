@@ -20,6 +20,9 @@ const errorHandler = require('./Middleware/error-handler');
 
 require('./models/database');
 
+// Import queue service
+const { initializeQueue } = require('./Services/resume-parse-queue');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -74,7 +77,19 @@ app.use((req, res) => {
 // Global error handler (must be last)
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`✓ Server is running on port ${port}`);
-  console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Initialize resume parsing queue and start server
+(async () => {
+  try {
+    // Initialize queue service (Redis or in-memory fallback)
+    await initializeQueue();
+    
+    // Start server
+    app.listen(port, () => {
+      console.log(`✓ Server is running on port ${port}`);
+      console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+})();

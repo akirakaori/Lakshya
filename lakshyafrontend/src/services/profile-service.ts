@@ -9,6 +9,19 @@ export interface JobSeekerProfile {
   preferredLocation?: string;
   expectedSalary?: string;
   resumeUrl?: string;
+  resumePublicId?: string;
+  resumeFormat?: string;
+  resumeParseStatus?: 'idle' | 'queued' | 'processing' | 'done' | 'failed';
+  resumeParseRunId?: string | null;
+  resumeParseError?: string | null;
+  resumeParsedAt?: string | null;
+  resumeParseResultSummary?: {
+    skillsAdded: number;
+    educationFilled: boolean;
+    experienceFilled: boolean;
+    bioFilled: boolean;
+    titleFilled: boolean;
+  } | null;
 }
 
 export interface RecruiterProfile {
@@ -51,7 +64,7 @@ export interface UpdateProfileData {
 
 export const profileService = {
   // Get user profile
-  getProfile: async (): Promise<{ success: boolean; data: UserProfile }> => {
+  getProfile: async (): Promise<{ success: boolean; data: UserProfile; signedResumeUrl?: string }> => {
     const response = await axiosInstance.get('/profile');
     return response.data;
   },
@@ -65,7 +78,7 @@ export const profileService = {
   },
 
   // Upload resume
-  uploadResume: async (file: File): Promise<{ success: boolean; data: UserProfile }> => {
+  uploadResume: async (file: File): Promise<{ success: boolean; data: UserProfile; signedResumeUrl?: string }> => {
     console.log('Profile Service - Uploading resume:', file.name, 'size:', file.size, 'type:', file.type);
     const formData = new FormData();
     formData.append('resume', file);

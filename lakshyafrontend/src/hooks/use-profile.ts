@@ -17,7 +17,26 @@ export const useProfile = () => {
   
   return useQuery({
     queryKey: profileKeys.detail(userId, role),
-    queryFn: () => profileService.getProfile(),
+    queryFn: async () => {
+      const response = await profileService.getProfile();
+      
+      // Debug: Log what we received from API
+      console.log('\n📥 ========================================');
+      console.log('📥 PROFILE DATA RECEIVED FROM API');
+      console.log('📥 ========================================');
+      console.log('📥 Success:', response.success);
+      console.log('📥 Skills count:', response.data?.jobSeeker?.skills?.length || 0);
+      console.log('📥 Skills:', response.data?.jobSeeker?.skills || []);
+      console.log('📥 Education:', response.data?.jobSeeker?.education ? 'YES' : 'NO');
+      console.log('📥 Experience:', response.data?.jobSeeker?.experience ? 'YES' : 'NO');
+      console.log('📥 Title:', response.data?.jobSeeker?.title || '(empty)');
+      console.log('📥 Bio:', response.data?.jobSeeker?.bio ? 'YES' : 'NO');
+      console.log('📥 Parse Status:', response.data?.jobSeeker?.resumeParseStatus);
+      console.log('📥 Parse Summary:', response.data?.jobSeeker?.resumeParseResultSummary);
+      console.log('========================================\n');
+      
+      return response;
+    },
     enabled: !!userId, // Only fetch when user is authenticated
     staleTime: 0, // Always fetch fresh data
     refetchOnMount: 'always',

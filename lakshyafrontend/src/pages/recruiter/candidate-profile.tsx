@@ -58,6 +58,7 @@ const CandidateProfile: React.FC = () => {
   const updateNotesMutation = useUpdateApplicationNotes();
 
   const candidate: CandidateProfile | null = data?.data || null;
+  const signedResumeUrl = data?.signedResumeUrl; // Cloudinary signed URL for authenticated resumes
   const application = applicationData?.data;
 
   // Extract avatar URL and initials
@@ -213,7 +214,7 @@ const CandidateProfile: React.FC = () => {
                     </a>
                     {candidate.jobSeeker?.resumeUrl && (
                       <a
-                        href={getFileUrl(candidate.jobSeeker.resumeUrl) || '#'}
+                        href={signedResumeUrl || getFileUrl(candidate.jobSeeker.resumeUrl) || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium"

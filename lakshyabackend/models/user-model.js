@@ -62,7 +62,24 @@ const userSchema = new Schema({
     expectedSalary: { type: String, default: '' },
     resumeUrl: { type: String, default: null },
     resumePublicId: { type: String, default: null },
-    resumeFormat: { type: String, default: null }
+    resumeFormat: { type: String, default: null },
+    
+    // Resume parsing status tracking
+    resumeParseStatus: {
+      type: String,
+      enum: ['idle', 'queued', 'processing', 'done', 'failed'],
+      default: 'idle'
+    },
+    resumeParseRunId: { type: String, default: null }, // Unique ID for each parse run
+    resumeParseError: { type: String, default: null },
+    resumeParsedAt: { type: Date, default: null },
+    resumeParseResultSummary: {
+      skillsAdded: { type: Number, default: 0 },
+      educationFilled: { type: Boolean, default: false },
+      experienceFilled: { type: Boolean, default: false },
+      bioFilled: { type: Boolean, default: false },
+      titleFilled: { type: Boolean, default: false }
+    }
   },
   recruiter: {
     companyDescription: { type: String, default: '' },
