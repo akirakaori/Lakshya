@@ -33,6 +33,10 @@ export interface ResumeParseStatusResponse {
     skills: string[];
     experience: string;
     education: string;
+    jobSeeker?: {
+      lastAutofillAt?: string | null;
+      resumeParsedAt?: string | null;
+    };
   };
 }
 
@@ -128,6 +132,7 @@ export const useResumeParseStatus = (options: {
  * Hook to start polling after resume upload
  * 
  * Automatically starts polling and stops when done/failed
+ * Uses lastAutofillAt timestamp to detect new parse+autofill completions
  */
 export const useResumeParsePolling = (callbacks?: {
   onParseComplete?: (summary: ResumeParseStatus['summary']) => void;
@@ -135,7 +140,11 @@ export const useResumeParsePolling = (callbacks?: {
 }) => {
   const queryClient = useQueryClient();
 
-  const TOAST_RUNID_KEY = 'resumeParseToastRunId';
+  // Track last seen autofill timestamp to prevent duplicate toasts
+  const lastSeenAutofillRef = useRef<string | null>(null);
+  
+  // Track if we've initialized the reference with current profile state
+  const isInitializedRef = useRef(false);
 
   const startPolling = () => {
     // Enable the query by invalidating with a specific state
@@ -149,19 +158,34 @@ export const useResumeParsePolling = (callbacks?: {
   const polling = useResumeParseStatus({
     enabled: true, // Always enabled when this hook is mounted
     onSuccess: (data: ResumeParseStatusResponse) => {
-      if (data.parseStatus.status === 'done' && callbacks?.onParseComplete) {
-        // Only show toast if this is a NEW parse completion
-        const currentRunId = data.parseStatus.resumeParseRunId;
-        const lastToastedRunId = sessionStorage.getItem(TOAST_RUNID_KEY);
+      const lastAutofillAt = data.profile?.jobSeeker?.lastAutofillAt;
+      
+      // Initialize the reference on first load to prevent showing toast for old data
+      if (!isInitializedRef.current && lastAutofillAt) {
+        console.log('🔧 Initializing lastSeenAutofillRef with current timestamp:', lastAutofillAt);
+        lastSeenAutofillRef.current = lastAutofillAt;
+        isInitializedRef.current = true;
+        return; // Don't trigger callback on initialization
+      }
+      
+      if (data.parseStatus.status === 'done') {
+        console.log('📊 Parse done - lastAutofillAt:', lastAutofillAt, 'lastSeen:', lastSeenAutofillRef.current);
         
-        console.log('Parse complete - currentRunId:', currentRunId, 'lastToasted:', lastToastedRunId);
-        
-        if (currentRunId && currentRunId !== lastToastedRunId) {
-          console.log('Showing toast for NEW parse completion');
-          callbacks.onParseComplete(data.parseStatus.summary);
-          sessionStorage.setItem(TOAST_RUNID_KEY, currentRunId);
-        } else if (currentRunId === lastToastedRunId) {
-          console.log('Skipping toast - already shown for this runId');
+        // Only trigger callback if this is a NEW autofill (timestamp changed)
+        if (lastAutofillAt && lastAutofillAt !== lastSeenAutofillRef.current) {
+          console.log('✅ NEW autofill detected - triggering callback');
+          
+          if (callbacks?.onParseComplete) {
+            callbacks.onParseComplete(data.parseStatus.summary);
+          }
+          
+          // Update last seen timestamp
+          lastSeenAutofillRef.current = lastAutofillAt;
+          
+          // Invalidate profile query to fetch updated data
+          queryClient.invalidateQueries({ queryKey: ['profile'] });
+        } else if (lastAutofillAt === lastSeenAutofillRef.current) {
+          console.log('⏭️  Skipping - already handled this autofill');
         }
       }
     },

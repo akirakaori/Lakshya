@@ -1,6 +1,7 @@
 const axios = require('axios');
 const FormData = require('form-data');
 const UserModel = require('../models/user-model');
+const { mergeProfile } = require('../Utils/profile-autofill');
 
 // Resume parser service configuration
 const RESUME_PARSER_URL = process.env.RESUME_PARSER_URL || 'http://localhost:8000';
@@ -202,8 +203,40 @@ const parseAndAutofillProfile = async (userId, resumeData, options = {}) => {
     console.log('Experience:', user.jobSeeker?.experience ? 'exists' : '(empty)');
     console.log('Bio:', user.jobSeeker?.bio ? 'exists' : '(empty)');
     
-    // Prepare updates
+    // Use smart merge function to autofill only empty fields
+    const userObj = user.toObject();
+    const { updatedProfile, changes } = mergeProfile(userObj, parsedData);
+    
+    // Prepare database updates from merged profile
     const updates = {};
+    
+    // Map top-level fields
+    if (updatedProfile.name !== userObj.name) {
+      updates.name = updatedProfile.name;
+    }
+    if (updatedProfile.email !== userObj.email) {
+      updates.email = updatedProfile.email;
+    }
+    if (updatedProfile.number !== userObj.number) {
+      updates.number = updatedProfile.number;
+    }
+    
+    // Map jobSeeker fields using dot notation
+    const jobSeekerFields = ['title', 'bio', 'skills', 'experience', 'education'];
+    for (const field of jobSeekerFields) {
+      const newValue = updatedProfile.jobSeeker?.[field];
+      const oldValue = userObj.jobSeeker?.[field];
+      
+      const hasChanged = Array.isArray(newValue)
+        ? JSON.stringify(newValue) !== JSON.stringify(oldValue)
+        : newValue !== oldValue;
+      
+      if (hasChanged) {
+        updates[`jobSeeker.${field}`] = newValue;
+      }
+    }
+    
+    // Generate summary from changes
     const summary = {
       skillsAdded: 0,
       educationFilled: false,
@@ -212,63 +245,35 @@ const parseAndAutofillProfile = async (userId, resumeData, options = {}) => {
       titleFilled: false
     };
     
-    // Title: only if empty
-    if (parsedData.title && !user.jobSeeker?.title) {
-      updates['jobSeeker.title'] = parsedData.title;
-      summary.titleFilled = true;
-      console.log('✓ Adding title:', parsedData.title);
-    }
-    
-    // Skills: merge with existing (unique, case-insensitive)
-    if (parsedData.skills && parsedData.skills.length > 0) {
-      const existingSkills = (user.jobSeeker?.skills || []).map(s => s.toLowerCase());
-      const newSkillsToAdd = parsedData.skills.filter(
-        skill => !existingSkills.includes(skill.toLowerCase())
-      );
-      
-      if (newSkillsToAdd.length > 0) {
-        const mergedSkills = [...(user.jobSeeker?.skills || []), ...newSkillsToAdd];
-        updates['jobSeeker.skills'] = mergedSkills;
-        summary.skillsAdded = newSkillsToAdd.length;
-        console.log(`✓ Adding ${newSkillsToAdd.length} new skills:`, newSkillsToAdd);
+    changes.forEach(change => {
+      if (change.field === 'skills' && change.action === 'appended') {
+        summary.skillsAdded = Array.isArray(change.value) ? change.value.length : 0;
+      } else if (change.field === 'education' && (change.action === 'filled' || change.action === 'appended')) {
+        summary.educationFilled = true;
+      } else if (change.field === 'experience' && (change.action === 'filled' || change.action === 'appended')) {
+        summary.experienceFilled = true;
+      } else if (change.field === 'bio' && change.action === 'filled') {
+        summary.bioFilled = true;
+      } else if (change.field === 'title' && change.action === 'filled') {
+        summary.titleFilled = true;
       }
-    }
+    });
     
-    // Education: only if empty
-    if (parsedData.education && !user.jobSeeker?.education) {
-      updates['jobSeeker.education'] = parsedData.education;
-      summary.educationFilled = true;
-      console.log('✓ Adding education:', parsedData.education.substring(0, 60) + '...');
-    }
-    
-    // Experience: only if empty
-    if (parsedData.experience && !user.jobSeeker?.experience) {
-      updates['jobSeeker.experience'] = parsedData.experience;
-      summary.experienceFilled = true;
-      console.log('✓ Adding experience:', parsedData.experience.substring(0, 60) + '...');
-    }
-    
-    // Bio: only if empty
-    if (parsedData.summary && !user.jobSeeker?.bio) {
-      updates['jobSeeker.bio'] = parsedData.summary;
-      summary.bioFilled = true;
-      console.log('✓ Adding bio:', parsedData.summary.substring(0, 60) + '...');
-    }
-    
-    // Update status fields (preserve runId from when job was queued)
+    // Update status and timestamp fields
     updates['jobSeeker.resumeParseStatus'] = 'done';
     updates['jobSeeker.resumeParseError'] = null;
     updates['jobSeeker.resumeParsedAt'] = new Date();
+    updates['jobSeeker.lastAutofillAt'] = new Date();
     updates['jobSeeker.resumeParseResultSummary'] = summary;
-    // Keep existing runId - don't overwrite it
     
     console.log('\n💾 ========================================');
-    console.log('💾 APPLYING UPDATES TO DATABASE');
+    console.log('💾 APPLYING AUTOFILL UPDATES TO DATABASE');
     console.log('💾 ========================================');
     console.log('💾 User ID:', userId);
     console.log('💾 Total fields to update:', Object.keys(updates).length);
-    console.log('💾 Updates object:', JSON.stringify(updates, null, 2));
+    console.log('💾 Changes tracked:', changes.length);
     console.log('💾 Summary:', JSON.stringify(summary, null, 2));
+    console.log('💾 UPDATES OBJECT:', JSON.stringify(updates, null, 2));
     console.log('========================================\n');
     
     // Update user profile with $set to ensure data persists
@@ -278,60 +283,39 @@ const parseAndAutofillProfile = async (userId, resumeData, options = {}) => {
       { new: true, runValidators: false } // Return updated doc, skip validation for nested updates
     ).select('-password -resetOTP -resetOTPExpiry');
     
+    console.log('\n🔍 ========================================');
+    console.log('🔍 AFTER findByIdAndUpdate RESULT');
+    console.log('🔍 ========================================');
+    console.log('🔍 updatedUser is null?', updatedUser === null);
+    console.log('🔍 updatedUser.jobSeeker exists?', !!updatedUser?.jobSeeker);
+    console.log('🔍 updatedUser.jobSeeker.skills:', JSON.stringify(updatedUser?.jobSeeker?.skills));
+    console.log('🔍 updatedUser.jobSeeker.education:', updatedUser?.jobSeeker?.education ? `${updatedUser.jobSeeker.education.length} chars` : 'empty');
+    console.log('========================================\n');
+    
     if (!updatedUser) {
       console.error('❌ Database update failed - user not found or update error');
       return null;
     }
     
-    // CRITICAL: Verify the data was actually saved
+    // Verify data was saved
     console.log('\n🔍 ========================================');
-    console.log('🔍 VERIFYING SAVED DATA');
+    console.log('🔍 VERIFICATION: DATA SAVED SUCCESSFULLY');
     console.log('🔍 ========================================');
-    console.log('🔍 Saved skills count:', updatedUser.jobSeeker?.skills?.length || 0);
-    console.log('🔍 Saved skills:', updatedUser.jobSeeker?.skills || []);
-    console.log('🔍 Saved education:', updatedUser.jobSeeker?.education ? 'YES' : 'NO');
-    console.log('🔍 Saved experience:', updatedUser.jobSeeker?.experience ? 'YES' : 'NO');
-    console.log('🔍 Saved status:', updatedUser.jobSeeker?.resumeParseStatus);
-    console.log('🔍 Saved runId:', updatedUser.jobSeeker?.resumeParseRunId);
-    console.log('🔍 Saved summary:', updatedUser.jobSeeker?.resumeParseResultSummary);
-    console.log('========================================\n');
-    
-    // DOUBLE-CHECK: Fetch from DB again to ensure persistence
-    const refetchedUser = await UserModel.findById(userId).select('jobSeeker.skills jobSeeker.resumeParseStatus jobSeeker.resumeParseResultSummary');
-    console.log('\n🔎 ========================================');
-    console.log('🔎 DOUBLE-CHECK: REFETCHING FROM DATABASE');
-    console.log('🔎 ========================================');
-    console.log('🔎 Skills count after refetch:', refetchedUser.jobSeeker?.skills?.length || 0);
-    console.log('🔎 Skills after refetch:', refetchedUser.jobSeeker?.skills || []);
-    console.log('🔎 Status after refetch:', refetchedUser.jobSeeker?.resumeParseStatus);
-    console.log('🔎 Summary after refetch:', refetchedUser.jobSeeker?.resumeParseResultSummary);
-    
-    // CRITICAL ERROR CHECK
-    const expectedCount = summary.skillsAdded;
-    const actualCount = refetchedUser.jobSeeker?.skills?.length || 0;
-    const existingCount = user.jobSeeker?.skills?.length || 0;
-    const finalExpectedCount = existingCount + expectedCount;
-    
-    if (actualCount !== finalExpectedCount) {
-      console.error('❌❌❌ CRITICAL ERROR: SKILLS COUNT MISMATCH ❌❌❌');
-      console.error('Expected total skills:', finalExpectedCount);
-      console.error('Actual total skills:', actualCount);
-      console.error('Previous skills:', existingCount);
-      console.error('New skills added:', expectedCount);
-      console.error('This means the database update FAILED or was PARTIAL!');
-      console.error('========================================\n');
-    } else {
-      console.log('✅ Skills count verification PASSED');
-    }
+    console.log('🔍 Skills count:', updatedUser.jobSeeker?.skills?.length || 0);
+    console.log('🔍 Parse status:', updatedUser.jobSeeker?.resumeParseStatus);
+    console.log('🔍 Parsed at:', updatedUser.jobSeeker?.resumeParsedAt);
+    console.log('🔍 Autofilled at:', updatedUser.jobSeeker?.lastAutofillAt);
+    console.log('🔍 Summary:', updatedUser.jobSeeker?.resumeParseResultSummary);
     console.log('========================================\n');
     
     console.log('\n✅ ========================================');
-    console.log('✅ AUTO-FILL COMPLETE');
+    console.log('✅ PARSE + AUTO-AUTOFILL COMPLETED');
     console.log('✅ ========================================');
     console.log('✅ Skills added:', summary.skillsAdded);
     console.log('✅ Education filled:', summary.educationFilled);
     console.log('✅ Experience filled:', summary.experienceFilled);
-    console.log('✅ Status: done');
+    console.log('✅ Bio filled:', summary.bioFilled);
+    console.log('✅ Title filled:', summary.titleFilled);
     console.log('========================================\n');
     
     return updatedUser;

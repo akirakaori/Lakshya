@@ -7,8 +7,7 @@ import {
   useChangePassword, 
   useUploadProfileImage, 
   useEditMode,
-  useResumeParsePolling,
-  useAutofillProfile
+  useResumeParsePolling
 } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
@@ -21,12 +20,9 @@ const Profile: React.FC = () => {
   const uploadResumeMutation = useUploadResume();
   const changePasswordMutation = useChangePassword();
   const uploadProfileImageMutation = useUploadProfileImage();
-  const autofillProfileMutation = useAutofillProfile();
   
   const { isEditing, enterEditMode, exitEditMode, guardAction } = useEditMode();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showAutofillModal, setShowAutofillModal] = useState(false);
-  const [autofillChanges, setAutofillChanges] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -34,8 +30,8 @@ const Profile: React.FC = () => {
   // Resume parsing status polling
   const { parseStatus, startPolling } = useResumeParsePolling({
     onParseComplete: (summary) => {
-      console.log('Resume parsing completed:', summary);
-      toast.success('Resume parsed! Profile updated automatically.', {
+      console.log('Resume parsing + autofill completed:', summary);
+      toast.success('✨ Resume parsed and profile auto-filled successfully!', {
         autoClose: 5000
       });
     },
@@ -207,6 +203,9 @@ const Profile: React.FC = () => {
     // Reset dirty flag
     setIsDirty(false);
     
+    // IMPORTANT: Force form re-initialization to pull latest data from server
+    setFormInitialized(false);
+    
     // Sync formData with latest profile data
     if (profile) {
       setFormData({
@@ -364,63 +363,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleAutofillProfile = async () => {
-    if (!profile) return;
-    
-    // You can manually provide resume analysis data, or get it from somewhere else
-    // For demonstration, let's create a dialog to paste the analysis JSON
-    const analysisText = prompt(
-      'Paste your resume analysis JSON here (or press Cancel to use mock data):'
-    );
-    
-    let analysisData: any;
-    
-    if (analysisText === null) {
-      // User cancelled - use mock data for testing
-      analysisData = {
-        title: 'Senior Software Engineer',
-        skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS'],
-        experience: 'ABC Company - Software Engineer (2020-2023)\n- Built scalable web applications\n- Led team of 5 developers',
-        education: 'Bachelor of Science in Computer Science\nUniversity of Example, 2020',
-        summary: 'Experienced software engineer with 5+ years in full-stack development.',
-        phone: '+1234567890',
-        email: 'example@email.com'
-      };
-      console.log('Using mock analysis data for testing');
-    } else if (analysisText.trim()) {
-      try {
-        analysisData = JSON.parse(analysisText);
-      } catch (error) {
-        toast.error('Invalid JSON format. Please provide valid analysis data.');
-        return;
-      }
-    } else {
-      toast.error('No analysis data provided');
-      return;
-    }
-    
-    try {
-      console.log('Autofilling profile with analysis:', analysisData);
-      const response = await autofillProfileMutation.mutateAsync(analysisData);
-      console.log('Autofill response:', response);
-      
-      // Store changes to display in modal
-      setAutofillChanges(response.data.changes);
-      setShowAutofillModal(true);
-      
-      // Show success toast with summary
-      const summary = response.data.summary;
-      toast.success(
-        `Profile autofilled! ${summary.filled} fields filled, ${summary.appended} appended, ${summary.skipped} skipped.`,
-        { autoClose: 5000 }
-      );
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to autofill profile';
-      toast.error(errorMessage);
-      console.error('Autofill error:', err);
-    }
-  };
-
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!guardAction('upload avatar')) {
       if (e.target) e.target.value = '';
@@ -491,7 +433,7 @@ const Profile: React.FC = () => {
 
   // Handle modal body overflow
   React.useEffect(() => {
-    if (showPasswordModal || showAutofillModal) {
+    if (showPasswordModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -499,7 +441,7 @@ const Profile: React.FC = () => {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showPasswordModal, showAutofillModal]);
+  }, [showPasswordModal]);
 
   if (isLoading) {
     return (
@@ -850,19 +792,8 @@ const Profile: React.FC = () => {
                     </div>
                   )}
                   
-                  {/* Autofill Button - only show when resume is successfully parsed */}
-                  {parseStatus?.status === 'done' && (
-                    <button
-                      onClick={handleAutofillProfile}
-                      disabled={autofillProfileMutation.isPending}
-                      className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      {autofillProfileMutation.isPending ? 'Autofilling...' : 'Smart Autofill Profile'}
-                    </button>
-                  )}
+                  {/* Note: Autofill happens automatically after resume parsing */}
+                  {/* Manual autofill button removed - autofill is now automatic */}
                   
                   <a
                     href={profileData?.signedResumeUrl || getFileUrl(profile.jobSeeker.resumeUrl) || '#'}
@@ -1018,127 +949,6 @@ const Profile: React.FC = () => {
                 className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
               >
                 {changePasswordMutation.isPending ? 'Changing...' : 'Change Password'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Autofill Changes Modal */}
-      {showAutofillModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setShowAutofillModal(false)} />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-2xl my-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Smart Autofill Results</h2>
-              <button
-                onClick={() => setShowAutofillModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="font-semibold text-purple-900">Profile Updated Successfully!</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {autofillChanges.filter(c => c.action === 'filled').length}
-                  </div>
-                  <div className="text-gray-600">Fields Filled</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {autofillChanges.filter(c => c.action === 'appended').length}
-                  </div>
-                  <div className="text-gray-600">Fields Appended</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-600">
-                    {autofillChanges.filter(c => c.action === 'skipped').length}
-                  </div>
-                  <div className="text-gray-600">Fields Skipped</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {autofillChanges.map((change, index) => (
-                <div
-                  key={index}
-                  className={`p-3 rounded-lg border ${
-                    change.action === 'filled' ? 'bg-green-50 border-green-200' :
-                    change.action === 'appended' ? 'bg-blue-50 border-blue-200' :
-                    'bg-gray-50 border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-0.5">
-                      {change.action === 'filled' && (
-                        <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                      {change.action === 'appended' && (
-                        <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                      {change.action === 'skipped' && (
-                        <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-gray-900 capitalize">{change.field}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          change.action === 'filled' ? 'bg-green-100 text-green-700' :
-                          change.action === 'appended' ? 'bg-blue-100 text-blue-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                          {change.action}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">{change.reason}</p>
-                      {change.value && (
-                        <div className="mt-2 text-xs text-gray-500 bg-white p-2 rounded border border-gray-200">
-                          {Array.isArray(change.value) ? (
-                            <div className="flex flex-wrap gap-1">
-                              {change.value.map((item: any, i: number) => (
-                                <span key={i} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded">
-                                  {typeof item === 'string' ? item : JSON.stringify(item)}
-                                </span>
-                              ))}
-                            </div>
-                          ) : typeof change.value === 'string' ? (
-                            <span className="break-words">{change.value.length > 100 ? change.value.substring(0, 100) + '...' : change.value}</span>
-                          ) : (
-                            <span className="break-words">{JSON.stringify(change.value)}</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setShowAutofillModal(false)}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                Close
               </button>
             </div>
           </div>

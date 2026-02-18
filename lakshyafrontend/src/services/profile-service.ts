@@ -15,6 +15,7 @@ export interface JobSeekerProfile {
   resumeParseRunId?: string | null;
   resumeParseError?: string | null;
   resumeParsedAt?: string | null;
+  lastAutofillAt?: string | null;
   resumeParseResultSummary?: {
     skillsAdded: number;
     educationFilled: boolean;

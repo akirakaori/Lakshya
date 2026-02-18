@@ -316,7 +316,11 @@ const getResumeParseStatus = async (req, res) => {
         bio: user.jobSeeker.bio || '',
         skills: user.jobSeeker.skills || [],
         experience: user.jobSeeker.experience || '',
-        education: user.jobSeeker.education || ''
+        education: user.jobSeeker.education || '',
+        jobSeeker: {
+          lastAutofillAt: user.jobSeeker.lastAutofillAt || null,
+          resumeParsedAt: user.jobSeeker.resumeParsedAt || null
+        }
       }
     });
   } catch (error) {

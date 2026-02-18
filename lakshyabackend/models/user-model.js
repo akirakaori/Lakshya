@@ -73,6 +73,7 @@ const userSchema = new Schema({
     resumeParseRunId: { type: String, default: null }, // Unique ID for each parse run
     resumeParseError: { type: String, default: null },
     resumeParsedAt: { type: Date, default: null },
+    lastAutofillAt: { type: Date, default: null }, // Last time autofill was triggered
     resumeParseResultSummary: {
       skillsAdded: { type: Number, default: 0 },
       educationFilled: { type: Boolean, default: false },

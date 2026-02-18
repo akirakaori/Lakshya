@@ -176,9 +176,11 @@ const mergeProfile = (profile, analysis) => {
   const changes = [];
   const updatedProfile = { ...profile };
   
-  // Ensure jobSeeker object exists
+  // IMPORTANT: Deep clone jobSeeker to avoid modifying the original object
   if (!updatedProfile.jobSeeker) {
     updatedProfile.jobSeeker = {};
+  } else {
+    updatedProfile.jobSeeker = JSON.parse(JSON.stringify(updatedProfile.jobSeeker));
   }
   
   // Track what we're starting with
