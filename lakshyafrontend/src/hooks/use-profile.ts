@@ -146,3 +146,47 @@ export const useUploadProfileImage = () => {
     }
   });
 };
+
+// Smart Resume Autofill mutation
+export const useAutofillProfile = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?._id;
+  const role = user?.role;
+  
+  return useMutation({
+    mutationFn: (analysisData: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      title?: string;
+      summary?: string;
+      skills?: string[];
+      experience?: string;
+      education?: string;
+    }) => {
+      console.log('useAutofillProfile - autofilling with analysis data:', analysisData);
+      return profileService.autofillProfile(analysisData);
+    },
+    onSuccess: (response) => {
+      console.log('useAutofillProfile success - response:', response);
+      console.log('Fields updated:', response.data.fieldsUpdated);
+      console.log('Changes:', response.data.changes);
+      console.log('Summary:', response.data.summary);
+      
+      // Update the cache immediately with the new profile data
+      if (response?.data?.profile && userId && role) {
+        queryClient.setQueryData(profileKeys.detail(userId, role), {
+          success: true,
+          data: response.data.profile
+        });
+      }
+      
+      // Also invalidate to ensure cache consistency
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    },
+    onError: (error) => {
+      console.error('useAutofillProfile error:', error);
+    }
+  });
+};

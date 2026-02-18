@@ -1,6 +1,7 @@
 const UserModel = require('../models/user-model');
 const bcrypt = require('bcrypt');
 const cloudinary = require('../config/cloudinary');
+const { mergeProfile } = require('../Utils/profile-autofill');
 
 // Note: URL parsing for resumes removed. Use resumePublicId instead.
 // Avatar logic remains untouched.
@@ -257,6 +258,109 @@ const getMyResumeSignedUrl = async (userId) => {
   }
 };
 
+/**
+ * Smart Resume Autofill: Intelligently merge resume analysis with profile
+ * Only fills EMPTY fields, never overwrites existing values
+ * 
+ * @param {string} userId - User ID
+ * @param {Object} analysisData - Resume analysis data from parser
+ * @returns {Promise<Object>} - { updatedProfile, changes }
+ */
+const autofillProfile = async (userId, analysisData) => {
+  try {
+    console.log('\n🚀 ========================================');
+    console.log('🚀 AUTOFILL PROFILE SERVICE');
+    console.log('🚀 ========================================');
+    console.log('🚀 User ID:', userId);
+    console.log('🚀 Analysis data preview:');
+    console.log('   - Title:', analysisData.title || '(none)');
+    console.log('   - Skills:', analysisData.skills?.length || 0);
+    console.log('   - Has experience:', !!analysisData.experience);
+    console.log('   - Has education:', !!analysisData.education);
+    console.log('========================================\n');
+    
+    // Fetch current profile
+    const currentProfile = await UserModel.findById(userId).select('-password -resetOTP -resetOTPExpiry');
+    
+    if (!currentProfile) {
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Convert to plain object for manipulation
+    const profileObj = currentProfile.toObject();
+    
+    // Use the smart merge function
+    const { updatedProfile, changes } = mergeProfile(profileObj, analysisData);
+    
+    // Prepare MongoDB update object (only update changed fields)
+    const dbUpdates = {};
+    
+    // Map profile fields to MongoDB update format
+    if (updatedProfile.name !== profileObj.name) {
+      dbUpdates.name = updatedProfile.name;
+    }
+    
+    if (updatedProfile.email !== profileObj.email) {
+      dbUpdates.email = updatedProfile.email;
+    }
+    
+    if (updatedProfile.number !== profileObj.number) {
+      dbUpdates.number = updatedProfile.number;
+    }
+    
+    // Handle jobSeeker nested updates (use dot notation)
+    const jobSeekerFields = ['title', 'bio', 'skills', 'experience', 'education'];
+    
+    for (const field of jobSeekerFields) {
+      const newValue = updatedProfile.jobSeeker?.[field];
+      const oldValue = profileObj.jobSeeker?.[field];
+      
+      // Compare properly (for arrays, use JSON.stringify)
+      const hasChanged = Array.isArray(newValue)
+        ? JSON.stringify(newValue) !== JSON.stringify(oldValue)
+        : newValue !== oldValue;
+      
+      if (hasChanged) {
+        dbUpdates[`jobSeeker.${field}`] = newValue;
+      }
+    }
+    
+    console.log('\n💾 Database updates to apply:', Object.keys(dbUpdates).length);
+    console.log('💾 Fields:', Object.keys(dbUpdates).join(', '));
+    
+    // Apply updates to database if there are changes
+    let savedProfile = currentProfile;
+    
+    if (Object.keys(dbUpdates).length > 0) {
+      savedProfile = await UserModel.findByIdAndUpdate(
+        userId,
+        { $set: dbUpdates },
+        { new: true, runValidators: false }
+      ).select('-password -resetOTP -resetOTPExpiry');
+      
+      console.log('✅ Profile updated in database');
+    } else {
+      console.log('ℹ️  No changes needed - profile already complete');
+    }
+    
+    console.log('\n✅ ========================================');
+    console.log('✅ AUTOFILL COMPLETED SUCCESSFULLY');
+    console.log('✅ ========================================\n');
+    
+    return {
+      success: true,
+      profile: savedProfile,
+      changes,
+      fieldsUpdated: Object.keys(dbUpdates).length
+    };
+  } catch (error) {
+    console.error('\n❌ Autofill profile error:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
@@ -264,5 +368,6 @@ module.exports = {
   updateUserProfileImage,
   changePassword,
   getCandidateProfile,
-  getMyResumeSignedUrl
+  getMyResumeSignedUrl,
+  autofillProfile
 };

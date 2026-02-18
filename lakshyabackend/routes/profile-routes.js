@@ -81,6 +81,13 @@ router.post('/upload-resume', verifyToken, uploadResume.single('resume'), handle
 router.get('/resume-parse-status', verifyToken, userController.getResumeParseStatus);
 
 /**
+ * @route   POST /api/profile/autofill
+ * @desc    Smart Resume Autofill - Merge resume analysis with profile (only fills empty fields)
+ * @access  Private (All authenticated users)
+ */
+router.post('/autofill', verifyToken, userController.autofillProfile);
+
+/**
  * @route   GET /api/profile/resume-url
  * @desc    Get signed resume URL for viewing
  * @access  Private (All authenticated users)

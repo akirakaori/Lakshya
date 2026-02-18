@@ -110,6 +110,42 @@ export const profileService = {
     console.log('Profile Service - Profile image upload response:', response.data);
     return response.data;
   },
+
+  // Smart Resume Autofill - Merge resume analysis with profile (only fills empty fields)
+  autofillProfile: async (analysisData: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    title?: string;
+    summary?: string;
+    skills?: string[];
+    experience?: string;
+    education?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    data: {
+      profile: UserProfile;
+      changes: Array<{
+        field: string;
+        action: 'filled' | 'skipped' | 'appended';
+        value?: any;
+        reason: string;
+      }>;
+      fieldsUpdated: number;
+      summary: {
+        totalChanges: number;
+        filled: number;
+        appended: number;
+        skipped: number;
+      };
+    };
+  }> => {
+    console.log('Profile Service - Autofilling profile with analysis data:', analysisData);
+    const response = await axiosInstance.post('/profile/autofill', { analysisData });
+    console.log('Profile Service - Autofill response:', response.data);
+    return response.data;
+  },
 };
 
 export default profileService;

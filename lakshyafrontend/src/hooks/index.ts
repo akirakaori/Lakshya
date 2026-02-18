@@ -39,6 +39,7 @@ export {
   useUploadResume, 
   useChangePassword,
   useUploadProfileImage,
+  useAutofillProfile,
   profileKeys 
 } from './use-profile';
 

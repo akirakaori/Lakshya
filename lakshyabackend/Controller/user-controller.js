@@ -327,6 +327,71 @@ const getResumeParseStatus = async (req, res) => {
   }
 };
 
+/**
+ * Smart Resume Autofill - Intelligently merge resume analysis with profile
+ * POST /api/profile/autofill
+ * Body: { analysisData: { title, skills, experience, education, summary, ... } }
+ */
+const autofillProfile = async (req, res) => {
+  try {
+    console.log('\n📝 ========================================');
+    console.log('📝 AUTOFILL PROFILE CONTROLLER');
+    console.log('📝 ========================================');
+    
+    const userId = req.user.id;
+    const { analysisData } = req.body;
+    
+    console.log('📝 User ID:', userId);
+    console.log('📝 Analysis data received:', !!analysisData);
+    
+    if (!analysisData) {
+      console.log('❌ No analysis data provided in request body');
+      return res.status(400).json({
+        success: false,
+        message: 'Analysis data is required. Provide analysisData in request body.'
+      });
+    }
+    
+    console.log('📝 Analysis preview:');
+    console.log('   - Title:', analysisData.title || '(none)');
+    console.log('   - Skills count:', analysisData.skills?.length || 0);
+    console.log('   - Has experience:', !!analysisData.experience);
+    console.log('   - Has education:', !!analysisData.education);
+    console.log('   - Has summary:', !!analysisData.summary);
+    console.log('========================================\n');
+    
+    // Call autofill service
+    const result = await userService.autofillProfile(userId, analysisData);
+    
+    console.log('\n✅ Autofill result:');
+    console.log('   - Success:', result.success);
+    console.log('   - Fields updated:', result.fieldsUpdated);
+    console.log('   - Changes count:', result.changes.length);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Profile autofilled successfully',
+      data: {
+        profile: result.profile,
+        changes: result.changes,
+        fieldsUpdated: result.fieldsUpdated,
+        summary: {
+          totalChanges: result.changes.length,
+          filled: result.changes.filter(c => c.action === 'filled').length,
+          appended: result.changes.filter(c => c.action === 'appended').length,
+          skipped: result.changes.filter(c => c.action === 'skipped').length
+        }
+      }
+    });
+  } catch (error) {
+    console.error('\n❌ Autofill profile controller error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -335,5 +400,6 @@ module.exports = {
   changePassword,
   getCandidateProfile,
   getMyResumeUrl,
-  getResumeParseStatus
+  getResumeParseStatus,
+  autofillProfile
 };
