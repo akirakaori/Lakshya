@@ -144,9 +144,57 @@ export const useShortlistCandidate = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (applicationId: string) => applicationService.shortlistCandidate(applicationId),
-    onSuccess: () => {
+    mutationFn: (applicationId: string) => {
+      console.log('📋 [SHORTLIST] Shortlisting application:', applicationId);
+      return applicationService.shortlistCandidate(applicationId);
+    },
+    onSuccess: (response, applicationId) => {
+      console.log('✅ [SHORTLIST] Success:', response.data);
+      
+      // Update cache optimistically for the specific application detail view
+      queryClient.setQueryData(['recruiterApplication', applicationId], (old: any) => {
+        if (!old || !old.data || !old.data.application) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            application: {
+              ...old.data.application,
+              status: 'shortlisted'
+            }
+          }
+        };
+      });
+      
+      // Invalidate and refetch the specific recruiter application query
+      queryClient.invalidateQueries({ 
+        queryKey: ['recruiterApplication', applicationId],
+        exact: true 
+      });
+      queryClient.refetchQueries({ 
+        queryKey: ['recruiterApplication', applicationId],
+        exact: true,
+        type: 'active'
+      });
+      
+      // Invalidate recruiter job applications list (Manage Job Post table) - ALL filters/tabs
+      queryClient.invalidateQueries({ 
+        queryKey: ['recruiter-job-applications']
+      });
+      
+      // Force immediate refetch of active recruiter job applications queries
+      queryClient.refetchQueries({ 
+        queryKey: ['recruiter-job-applications'],
+        type: 'active'
+      });
+      
+      // Invalidate job seeker applications
       queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+      
+      console.log('✨ [SHORTLIST] All queries invalidated and refetched - table will update instantly');
+    },
+    onError: (error) => {
+      console.error('❌ [SHORTLIST] Failed:', error);
     },
   });
 };
@@ -162,9 +210,59 @@ export const useScheduleInterview = () => {
     }: { 
       applicationId: string; 
       interviewData?: { date?: string; mode?: string; link?: string } 
-    }) => applicationService.scheduleInterview(applicationId, interviewData),
-    onSuccess: () => {
+    }) => {
+      console.log('🗓️ [INTERVIEW] Scheduling interview for application:', applicationId);
+      return applicationService.scheduleInterview(applicationId, interviewData);
+    },
+    onSuccess: (response, variables) => {
+      const { applicationId, interviewData } = variables;
+      console.log('✅ [INTERVIEW] Success:', response.data);
+      
+      // Update cache optimistically for the specific application detail view
+      queryClient.setQueryData(['recruiterApplication', applicationId], (old: any) => {
+        if (!old || !old.data || !old.data.application) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            application: {
+              ...old.data.application,
+              status: 'interview',
+              interview: interviewData || old.data.application.interview
+            }
+          }
+        };
+      });
+      
+      // Invalidate and refetch the specific recruiter application query
+      queryClient.invalidateQueries({ 
+        queryKey: ['recruiterApplication', applicationId],
+        exact: true 
+      });
+      queryClient.refetchQueries({ 
+        queryKey: ['recruiterApplication', applicationId],
+        exact: true,
+        type: 'active'
+      });
+      
+      // Invalidate recruiter job applications list (Manage Job Post table) - ALL filters/tabs
+      queryClient.invalidateQueries({ 
+        queryKey: ['recruiter-job-applications']
+      });
+      
+      // Force immediate refetch of active recruiter job applications queries
+      queryClient.refetchQueries({ 
+        queryKey: ['recruiter-job-applications'],
+        type: 'active'
+      });
+      
+      // Invalidate job seeker applications
       queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+      
+      console.log('✨ [INTERVIEW] All queries invalidated and refetched - table will update instantly');
+    },
+    onError: (error) => {
+      console.error('❌ [INTERVIEW] Failed:', error);
     },
   });
 };
@@ -274,9 +372,41 @@ export const useUpdateRecruiterApplicationStatus = () => {
       applicationId: string; 
       status: 'applied' | 'shortlisted' | 'interview' | 'rejected' 
     }) => applicationService.updateRecruiterApplicationStatus(applicationId, status),
-    onSuccess: () => {
-      // Invalidate all recruiter job applications queries
+    onSuccess: (_response, variables) => {
+      const { applicationId, status } = variables;
+      console.log('✅ [STATUS UPDATE] Changed to:', status);
+      
+      // Update cache optimistically for the specific application detail view
+      queryClient.setQueryData(['recruiterApplication', applicationId], (old: any) => {
+        if (!old || !old.data || !old.data.application) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            application: {
+              ...old.data.application,
+              status: status
+            }
+          }
+        };
+      });
+      
+      // Invalidate and refetch the specific recruiter application query
+      queryClient.invalidateQueries({ 
+        queryKey: ['recruiterApplication', applicationId],
+        exact: true 
+      });
+      
+      // Invalidate all recruiter job applications queries (table)
       queryClient.invalidateQueries({ queryKey: ['recruiter-job-applications'] });
+      
+      // Force immediate refetch
+      queryClient.refetchQueries({ 
+        queryKey: ['recruiter-job-applications'],
+        type: 'active'
+      });
+      
+      console.log('✨ [STATUS UPDATE] Table will update instantly');
     },
   });
 };
