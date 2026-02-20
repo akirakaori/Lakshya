@@ -187,6 +187,14 @@ function App() {
               }
             />
             <Route
+              path="/recruiter/application/:applicationId"
+              element={
+                <ProtectedRoute allowedRoles={['recruiter']}>
+                  <CandidateProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/recruiter/candidate/:candidateId"
               element={
                 <ProtectedRoute allowedRoles={['recruiter']}>
@@ -198,7 +206,7 @@ function App() {
               path="/recruiter/profile"
               element={
                 <ProtectedRoute allowedRoles={['recruiter']}>
-                  <RecruiterProfile />
+```                  <RecruiterProfile />
                 </ProtectedRoute>
               }
             />

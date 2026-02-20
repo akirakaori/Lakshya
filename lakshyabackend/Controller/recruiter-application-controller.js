@@ -99,8 +99,32 @@ const bulkUpdateApplicationStatus = async (req, res, next) => {
   }
 };
 
+/**
+ * @route GET /api/recruiter/applications/:applicationId
+ * @desc Get single application details with candidate profile and match snapshot
+ */
+const getApplicationDetails = async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const recruiterId = req.user.id;
+
+    const result = await recruiterApplicationService.getApplicationDetails(
+      applicationId,
+      recruiterId
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getJobApplications,
   updateApplicationStatus,
-  bulkUpdateApplicationStatus
+  bulkUpdateApplicationStatus,
+  getApplicationDetails
 };

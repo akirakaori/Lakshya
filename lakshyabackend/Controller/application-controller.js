@@ -208,10 +208,17 @@ const updateRecruiterNotes = async (req, res) => {
     
     const application = await applicationService.updateRecruiterNotes(applicationId, recruiterId, notes);
     
+    console.log('✅ Notes updated for application:', applicationId, 'notes length:', notes?.length || 0);
+    
+    // Return ONLY the notes field for efficient cache update
     res.status(200).json({
       success: true,
       message: 'Notes updated successfully',
-      data: application
+      data: {
+        _id: application._id,
+        notes: application.notes,
+        updatedAt: application.updatedAt || new Date()
+      }
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({

@@ -174,10 +174,67 @@ export const useUpdateApplicationNotes = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ applicationId, notes }: { applicationId: string; notes: string }) =>
-      applicationService.updateNotes(applicationId, notes),
-    onSuccess: () => {
+    mutationFn: ({ applicationId, notes }: { applicationId: string; notes: string }) => {
+      console.log('💾 [MUTATION] Saving notes for application:', applicationId, 'length:', notes.length);
+      return applicationService.updateNotes(applicationId, notes);
+    },
+    onSuccess: (response, variables) => {
+      const { applicationId, notes } = variables;
+      console.log('✅ [MUTATION] Notes saved successfully. Server returned:', response.data);
+      
+      // Update cache with new notes IMMEDIATELY
+      const updated = queryClient.setQueryData(['recruiterApplication', applicationId], (old: any) => {
+        console.log('📦 [CACHE] Old cache data:', old);
+        if (!old || !old.data || !old.data.application) {
+          console.warn('⚠️ [CACHE] Invalid cache structure, skipping optimistic update');
+          return old;
+        }
+        
+        const newData = {
+          ...old,
+          data: {
+            ...old.data,
+            application: {
+              ...old.data.application,
+              notes: notes
+            }
+          }
+        };
+        console.log('📦 [CACHE] Updated cache data:', newData);
+        return newData;
+      });
+      
+      if (!updated) {
+        console.warn('⚠️ [CACHE] setQueryData returned null/undefined - cache update may have failed');
+      }
+      
+      // Force invalidate and refetch to ensure consistency
+      console.log('🔄 [REFETCH] Invalidating and refetching application query...');
+      queryClient.invalidateQueries({ 
+        queryKey: ['recruiterApplication', applicationId],
+        exact: true 
+      });
+      
+      // Force refetch immediately
+      queryClient.refetchQueries({ 
+        queryKey: ['recruiterApplication', applicationId],
+        exact: true,
+        type: 'active'
+      });
+      
+      // Invalidate application lists (job seeker)
       queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+      
+      // Invalidate recruiter job applications list (so table/drawer updates)
+      queryClient.invalidateQueries({ 
+        queryKey: ['recruiter-job-applications'],
+        refetchType: 'active'
+      });
+      
+      console.log('✨ [MUTATION] Notes update complete - invalidated all related queries');
+    },
+    onError: (error) => {
+      console.error('❌ [MUTATION] Failed to save notes:', error);
     },
   });
 };

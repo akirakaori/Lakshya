@@ -6,6 +6,8 @@ import {
   useUpdateRecruiterApplicationStatus,
   useBulkUpdateApplicationStatus
 } from '../../hooks';
+import { useQuery } from '@tanstack/react-query';
+import axiosInstance from '../../services/axios-instance';
 import { toast } from 'react-toastify';
 import { getFileUrl, getInitials } from '../../utils';
 import type { RecruiterApplication } from '../../services';
@@ -34,8 +36,7 @@ const JobApplications: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedApplications, setSelectedApplications] = useState<Set<string>>(new Set());
-  const [viewingNotes, setViewingNotes] = useState<{ id: string; notes: string; applicantName: string } | null>(null);
-  const [viewingDetails, setViewingDetails] = useState<RecruiterApplication | null>(null);
+  const [viewingDetailsId, setViewingDetailsId] = useState<string | null>(null);
   
   // Advanced filters
   const [minScore, setMinScore] = useState<number>(0);
@@ -59,6 +60,18 @@ const JobApplications: React.FC = () => {
     minScore: minScore || undefined,
     mustHave: mustHaveSkill || undefined,
     missing: missingSkill || undefined
+  });
+  
+  // Fetch application details for drawer (real-time query, not stale snapshot)
+  const { data: drawerData, isLoading: drawerLoading } = useQuery({
+    queryKey: ['recruiterApplication', viewingDetailsId],
+    queryFn: async () => {
+      if (!viewingDetailsId) return null;
+      const response = await axiosInstance.get(`/recruiter/applications/${viewingDetailsId}`);
+      return response.data;
+    },
+    enabled: !!viewingDetailsId,
+    staleTime: 0, // Always fresh
   });
   
   const updateStatusMutation = useUpdateRecruiterApplicationStatus();
@@ -531,13 +544,13 @@ const JobApplications: React.FC = () => {
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => setViewingDetails(application)}
+                              onClick={() => setViewingDetailsId(application._id)}
                               className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
                             >
                               Details
                             </button>
                             <Link
-                              to={`/recruiter/candidate/${applicant?._id}?jobId=${jobId}`}
+                              to={`/recruiter/application/${application._id}`}
                               className="text-gray-600 hover:text-gray-700 text-sm font-medium"
                             >
                               Profile
@@ -567,10 +580,36 @@ const JobApplications: React.FC = () => {
         )}
 
         {/* Application Details Drawer */}
-        {viewingDetails && (() => {
-          const applicant = typeof viewingDetails.applicant === 'object' 
-            ? (viewingDetails.applicant as Applicant)
-            : null;
+        {viewingDetailsId && (() => {
+          if (drawerLoading) {
+            return (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-lg shadow-xl p-8">
+                  <LoadingSpinner text="Loading details..." />
+                </div>
+              </div>
+            );
+          }
+          
+          const viewingDetails = drawerData?.data?.application;
+          const applicant = drawerData?.data?.candidate;
+          
+          if (!viewingDetails || !applicant) {
+            return (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-lg shadow-xl p-8">
+                  <p className="text-gray-600">Application not found</p>
+                  <button
+                    onClick={() => setViewingDetailsId(null)}
+                    className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            );
+          }
+          
           return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
@@ -582,7 +621,7 @@ const JobApplications: React.FC = () => {
                     <p className="text-sm text-indigo-100">{applicant?.email}</p>
                   </div>
                   <button
-                    onClick={() => setViewingDetails(null)}
+                    onClick={() => setViewingDetailsId(null)}
                     className="text-white hover:text-indigo-100"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -617,7 +656,7 @@ const JobApplications: React.FC = () => {
                     </h4>
                     {viewingDetails.matchedSkills && viewingDetails.matchedSkills.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {viewingDetails.matchedSkills.map((skill, idx) => (
+                        {viewingDetails.matchedSkills.map((skill: string, idx: number) => (
                           <span
                             key={idx}
                             className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium"
@@ -641,7 +680,7 @@ const JobApplications: React.FC = () => {
                     </h4>
                     {viewingDetails.missingSkills && viewingDetails.missingSkills.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {viewingDetails.missingSkills.map((skill, idx) => (
+                        {viewingDetails.missingSkills.map((skill: string, idx: number) => (
                           <span
                             key={idx}
                             className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium"
@@ -691,7 +730,7 @@ const JobApplications: React.FC = () => {
                               viewingDetails._id, 
                               status as 'shortlisted' | 'interview' | 'rejected'
                             );
-                            setViewingDetails(null);
+                            setViewingDetailsId(null);
                           }}
                           disabled={viewingDetails.status === status}
                           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -710,13 +749,14 @@ const JobApplications: React.FC = () => {
                 </div>
                 <div className="px-6 py-4 border-t border-gray-200 flex justify-between bg-gray-50">
                   <Link
-                    to={`/recruiter/candidate/${applicant?._id}?jobId=${jobId}`}
+                    to={`/recruiter/application/${viewingDetails._id}`}
                     className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
+                    onClick={() => setViewingDetailsId(null)}
                   >
                     View Full Profile
                   </Link>
                   <button
-                    onClick={() => setViewingDetails(null)}
+                    onClick={() => setViewingDetailsId(null)}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
                   >
                     Close

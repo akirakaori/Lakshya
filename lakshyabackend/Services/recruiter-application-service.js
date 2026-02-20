@@ -1,5 +1,6 @@
 const ApplicationModel = require('../models/application-model');
 const JobModel = require('../models/job-model');
+const UserModel = require('../models/user-model');
 
 /**
  * Normalize skill for matching (lowercase, trim)
@@ -192,8 +193,58 @@ const bulkUpdateApplicationStatus = async (jobId, recruiterId, applicationIds, n
   };
 };
 
+/**
+ * Get single application details with candidate profile and match snapshot
+ * Used by recruiter to view applicant profile with frozen match data from apply time
+ */
+const getApplicationDetails = async (applicationId, recruiterId) => {
+  // Find application and populate job and applicant
+  const application = await ApplicationModel.findById(applicationId)
+    .populate('jobId')
+    .populate({
+      path: 'applicant',
+      select: 'fullName name email phone profileImageUrl jobSeeker createdAt'
+    })
+    .lean();
+
+  if (!application) {
+    throw { statusCode: 404, message: 'Application not found' };
+  }
+
+  // Verify recruiter owns the job
+  if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
+    throw { statusCode: 403, message: 'You are not authorized to view this application' };
+  }
+
+  console.log(`📋 Recruiter viewing application: applicationId=${applicationId}, matchScore=${application.matchScore}, matchedSkills=${application.matchedSkills?.length || 0}`);
+
+  return {
+    application: {
+      _id: application._id,
+      status: application.status,
+      notes: application.notes,
+      coverLetter: application.coverLetter,
+      createdAt: application.createdAt,
+      // Match snapshot (frozen at apply time)
+      matchScore: application.matchScore || 0,
+      matchedSkills: application.matchedSkills || [],
+      missingSkills: application.missingSkills || [],
+      matchAnalyzedAt: application.matchAnalyzedAt,
+      experienceYears: application.experienceYears || 0,
+      interview: application.interview,
+    },
+    candidate: application.applicant,
+    job: {
+      _id: application.jobId._id,
+      title: application.jobId.title,
+      companyName: application.jobId.companyName
+    }
+  };
+};
+
 module.exports = {
   getJobApplications,
   updateApplicationStatus,
-  bulkUpdateApplicationStatus
+  bulkUpdateApplicationStatus,
+  getApplicationDetails
 };

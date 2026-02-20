@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner } from '../../components';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  useApplicationByJobAndCandidate, 
   useShortlistCandidate, 
   useScheduleInterview, 
   useUpdateApplicationNotes 
@@ -31,46 +30,69 @@ interface CandidateProfile {
   createdAt: string;
 }
 
+interface ApplicationSnapshot {
+  _id: string;
+  status: string;
+  notes: string;
+  coverLetter?: string;
+  createdAt: string;
+  matchScore: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  matchAnalyzedAt?: string;
+  experienceYears: number;
+}
+
 const CandidateProfile: React.FC = () => {
-  const { candidateId } = useParams<{ candidateId: string }>();
-  const [searchParams] = useSearchParams();
-  const jobId = searchParams.get('jobId');
+  const { applicationId } = useParams<{ applicationId: string }>();
 
   const [notes, setNotes] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
 
+  // Fetch application with candidate profile and match snapshot
   const { data, isLoading } = useQuery({
-    queryKey: ['candidate', candidateId],
+    queryKey: ['recruiterApplication', applicationId],
     queryFn: async () => {
-      const response = await axiosInstance.get(`/profile/candidate/${candidateId}`);
+      console.log('🔄 [QUERY] Fetching application details for:', applicationId);
+      const response = await axiosInstance.get(`/recruiter/applications/${applicationId}`);
+      console.log('✅ [QUERY] Fetched application. Notes length:', response.data?.data?.application?.notes?.length || 0);
       return response.data;
     },
-    enabled: !!candidateId,
+    enabled: !!applicationId,
+    staleTime: 0, // Always consider data stale - refetch on every access
+    refetchOnMount: 'always', // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnReconnect: true, // Refetch when reconnecting
   });
-
-  // Get application data if jobId is provided
-  const { data: applicationData } = useApplicationByJobAndCandidate(
-    jobId || '',
-    candidateId || ''
-  );
 
   const shortlistMutation = useShortlistCandidate();
   const interviewMutation = useScheduleInterview();
   const updateNotesMutation = useUpdateApplicationNotes();
 
-  const candidate: CandidateProfile | null = data?.data || null;
-  const signedResumeUrl = data?.signedResumeUrl; // Cloudinary signed URL for authenticated resumes
-  const application = applicationData?.data;
+  const candidate: CandidateProfile | null = data?.data?.candidate || null;
+  const application: ApplicationSnapshot | null = data?.data?.application || null;
+  const signedResumeUrl = data?.signedResumeUrl; // If backend provides signed URLs
 
   // Extract avatar URL and initials
   const avatarUrl = candidate?.profileImageUrl ? getFileUrl(candidate.profileImageUrl) : null;
   const initials = candidate ? getInitials(candidate.fullName) : 'U';
 
-  // Load existing notes when application data is available
+  // Sync notes from server when not dirty (prevents overwriting user typing)
   useEffect(() => {
-    if (application?.notes) {
-      setNotes(application.notes);
+    if (!isDirty && application?.notes !== undefined) {
+      console.log('📝 [SYNC] Syncing notes from server:', application.notes?.substring(0, 50) + (application.notes?.length > 50 ? '...' : ''));
+      setNotes(application.notes || '');
+    } else if (isDirty) {
+      console.log('✏️ [SYNC] Skipping sync - user is editing (dirty=true)');
     }
-  }, [application]);
+  }, [application?.notes, isDirty]);
+
+  // Debug: Log when query data changes
+  useEffect(() => {
+    if (data) {
+      console.log('🔍 [QUERY] Query data updated. Notes:', data?.data?.application?.notes?.substring(0, 50));
+    }
+  }, [data]);
 
   const handleShortlist = async () => {
     if (!application?._id) {
@@ -110,21 +132,33 @@ const CandidateProfile: React.FC = () => {
     }
 
     try {
-      await updateNotesMutation.mutateAsync({
+      console.log('💾 [SAVE] Attempting to save notes. Length:', notes.length, 'ApplicationId:', application._id);
+      console.log('💾 [SAVE] Notes content:', notes.substring(0, 100) + (notes.length > 100 ? '...' : ''));
+      
+      const result = await updateNotesMutation.mutateAsync({
         applicationId: application._id,
         notes,
       });
+      
+      console.log('✅ [SAVE] Save complete. Result:', result);
+      setIsDirty(false); // Clear dirty flag after successful save
       toast.success('Notes saved successfully!');
-    } catch {
+    } catch (error) {
+      console.error('❌ [SAVE] Failed to save notes:', error);
       toast.error('Failed to save notes');
     }
   };
 
-  // Calculate AI match score (mock)
-  const aiMatchScore = 87;
-  const skillMatchPercentage = 92;
-  const experienceMatchPercentage = 85;
-  const educationMatchPercentage = 78;
+  const handleNotesChange = (newNotes: string) => {
+    setNotes(newNotes);
+    setIsDirty(true); // Mark as dirty when user types
+  };
+
+  // Use REAL match snapshot data (frozen at apply time)
+  const matchScore = application?.matchScore || 0;
+  const matchedSkills = application?.matchedSkills || [];
+  const missingSkills = application?.missingSkills || [];
+  const matchAnalyzedAt = application?.matchAnalyzedAt;
 
   if (isLoading) {
     return (
@@ -326,75 +360,101 @@ const CandidateProfile: React.FC = () => {
           <div className="space-y-6">
             {/* AI Match Score */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">AI Match Analysis</h2>
-              <div className="text-center mb-6">
-                <div className="relative w-32 h-32 mx-auto">
-                  <svg className="w-32 h-32 transform -rotate-90">
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="#e5e7eb"
-                      strokeWidth="8"
-                      fill="none"
-                    />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="#4f46e5"
-                      strokeWidth="8"
-                      fill="none"
-                      strokeDasharray={`${(aiMatchScore / 100) * 352} 352`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-indigo-600">{aiMatchScore}%</span>
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">AI Match Analysis</h2>
+              <p className="text-xs text-gray-500 mb-4">Snapshot at time of application</p>
+              
+              {matchScore > 0 ? (
+                <>
+                  <div className="text-center mb-6">
+                    <div className="relative w-32 h-32 mx-auto">
+                      <svg className="w-32 h-32 transform -rotate-90">
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="56"
+                          stroke="#e5e7eb"
+                          strokeWidth="8"
+                          fill="none"
+                        />
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="56"
+                          stroke="#4f46e5"
+                          strokeWidth="8"
+                          fill="none"
+                          strokeDasharray={`${(matchScore / 100) * 352} 352`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-3xl font-bold text-indigo-600">{matchScore}%</span>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 mt-2">Overall Match Score</p>
+                    {matchAnalyzedAt && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Analyzed {new Date(matchAnalyzedAt).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
-                </div>
-                <p className="text-gray-600 mt-2">Overall Match Score</p>
-              </div>
 
-              {/* Match Breakdown */}
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Skills Match</span>
-                    <span className="font-medium text-gray-900">{skillMatchPercentage}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 rounded-full"
-                      style={{ width: `${skillMatchPercentage}%` }}
-                    />
-                  </div>
+                  {/* Matched Skills */}
+                  {matchedSkills.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-700 mb-2">
+                        Matched Skills ({matchedSkills.length})
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        {matchedSkills.slice(0, 10).map((skill, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium"
+                          >
+                            ✓ {skill}
+                          </span>
+                        ))}
+                        {matchedSkills.length > 10 && (
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                            +{matchedSkills.length - 10} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing Skills */}
+                  {missingSkills.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-2">
+                        Missing Skills ({missingSkills.length})
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        {missingSkills.slice(0, 8).map((skill, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-medium"
+                          >
+                            ✗ {skill}
+                          </span>
+                        ))}
+                        {missingSkills.length > 8 && (
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                            +{missingSkills.length - 8} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 text-sm">No analysis snapshot available</p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    The candidate applied before match analysis was enabled
+                  </p>
                 </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Experience Match</span>
-                    <span className="font-medium text-gray-900">{experienceMatchPercentage}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 rounded-full"
-                      style={{ width: `${experienceMatchPercentage}%` }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Education Match</span>
-                    <span className="font-medium text-gray-900">{educationMatchPercentage}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-500 rounded-full"
-                      style={{ width: `${educationMatchPercentage}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Quick Actions */}
@@ -435,18 +495,23 @@ const CandidateProfile: React.FC = () => {
                 <>
                   <textarea
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={(e) => handleNotesChange(e.target.value)}
                     placeholder="Add private notes about this candidate..."
                     rows={4}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
                   />
-                  <button
-                    onClick={handleSaveNotes}
-                    disabled={updateNotesMutation.isPending}
-                    className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium disabled:opacity-50"
-                  >
-                    {updateNotesMutation.isPending ? 'Saving...' : 'Save Notes'}
-                  </button>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      onClick={handleSaveNotes}
+                      disabled={updateNotesMutation.isPending || !isDirty}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {updateNotesMutation.isPending ? 'Saving...' : 'Save Notes'}
+                    </button>
+                    {isDirty && (
+                      <span className="text-xs text-orange-600 font-medium">Unsaved changes</span>
+                    )}
+                  </div>
                 </>
               ) : (
                 <p className="text-gray-500 text-sm">Application not found. Notes are not available.</p>

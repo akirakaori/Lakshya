@@ -49,4 +49,15 @@ router.patch(
   recruiterApplicationController.bulkUpdateApplicationStatus
 );
 
+/**
+ * @route GET /api/recruiter/applications/:applicationId
+ * @desc Get single application with candidate profile and match snapshot
+ */
+router.get(
+  "/applications/:applicationId",
+  authenticate,
+  authorizeRoles(ROLES.RECRUITER),
+  recruiterApplicationController.getApplicationDetails
+);
+
 module.exports = router;
