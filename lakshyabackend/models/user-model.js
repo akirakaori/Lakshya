@@ -64,6 +64,9 @@ const userSchema = new Schema({
     resumePublicId: { type: String, default: null },
     resumeFormat: { type: String, default: null },
     
+    // Profile versioning for match analysis
+    profileUpdatedAt: { type: Date, default: null }, // Last time profile fields were updated
+    
     // Resume parsing status tracking
     resumeParseStatus: {
       type: String,

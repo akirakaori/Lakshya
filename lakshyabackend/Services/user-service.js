@@ -68,7 +68,9 @@ const updateUserProfile = async (userId, updateData) => {
     if (updateData.jobSeeker) {
       updateData.jobSeeker = {
         ...currentUser.jobSeeker,
-        ...updateData.jobSeeker
+        ...updateData.jobSeeker,
+        // Track profile update time for match analysis versioning
+        profileUpdatedAt: new Date()
       };
     }
     

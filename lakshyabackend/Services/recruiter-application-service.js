@@ -2,10 +2,24 @@ const ApplicationModel = require('../models/application-model');
 const JobModel = require('../models/job-model');
 
 /**
+ * Normalize skill for matching (lowercase, trim)
+ */
+const normalizeSkill = (skill) => {
+  return skill.toLowerCase().trim();
+};
+
+/**
  * Get all applications for a specific job with filtering and sorting
  */
 const getJobApplications = async (jobId, recruiterId, filters = {}) => {
-  const { status = 'all', sort = 'newest', search = '' } = filters;
+  const { 
+    status = 'all', 
+    sort = 'newest', 
+    search = '', 
+    minScore = 0, 
+    mustHave = '', 
+    missing = '' 
+  } = filters;
 
   // Validate job exists and recruiter owns it
   const job = await JobModel.findById(jobId);
@@ -18,8 +32,27 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
 
   // Build query filter
   const query = { jobId };
+  
+  // Status filter
   if (status !== 'all') {
     query.status = status;
+  }
+  
+  // Minimum match score filter
+  if (minScore > 0) {
+    query.matchScore = { $gte: parseInt(minScore) };
+  }
+  
+  // Must-have skill filter (candidate must have this skill)
+  if (mustHave && mustHave.trim()) {
+    const normalizedSkill = normalizeSkill(mustHave.trim());
+    query.matchedSkills = { $in: [new RegExp(`^${normalizedSkill}$`, 'i')] };
+  }
+  
+  // Missing skill filter (candidate is missing this skill)
+  if (missing && missing.trim()) {
+    const normalizedSkill = normalizeSkill(missing.trim());
+    query.missingSkills = { $in: [new RegExp(`^${normalizedSkill}$`, 'i')] };
   }
 
   // Build sort criteria

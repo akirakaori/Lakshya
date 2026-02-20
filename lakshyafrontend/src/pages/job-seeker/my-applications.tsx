@@ -28,6 +28,11 @@ const MyApplications: React.FC = () => {
 
   const applications = response?.data || [];
 
+  // Debug: Log when applications data updates
+  React.useEffect(() => {
+    console.log('📊 My Applications data updated - Count:', applications.length);
+  }, [applications.length]);
+
   // Extract all job IDs for batch match score fetch
   const jobIds = useMemo(() => {
     return applications

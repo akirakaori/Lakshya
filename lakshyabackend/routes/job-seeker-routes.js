@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const authenticate = require("../Middleware/auth-middleware"); // JWT verify
 const authorizeRoles = require("../Middleware/role-middleware");
-const { getJobMatch, getJobMatchScores } = require("../Controller/job-match-controller");
+const { getJobMatch, analyzeJobMatch, getJobMatchScores } = require("../Controller/job-match-controller");
 
 const ROLES = require("../Library/roles").ROLES;
 
@@ -33,7 +33,7 @@ router.post(
 
 /**
  * @route   GET /api/job-seeker/jobs/:jobId/match
- * @desc    Get match analysis for a specific job
+ * @desc    Get cached match analysis for a specific job (with isOutdated flag)
  * @access  Private (Job Seeker only)
  */
 router.get(
@@ -41,6 +41,18 @@ router.get(
   authenticate,
   authorizeRoles(ROLES.JOB_SEEKER),
   getJobMatch
+);
+
+/**
+ * @route   POST /api/job-seeker/jobs/:jobId/analyze
+ * @desc    Compute fresh match analysis for a specific job
+ * @access  Private (Job Seeker only)
+ */
+router.post(
+  "/jobs/:jobId/analyze",
+  authenticate,
+  authorizeRoles(ROLES.JOB_SEEKER),
+  analyzeJobMatch
 );
 
 module.exports = router;

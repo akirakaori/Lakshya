@@ -47,6 +47,20 @@ const applicationSchema = new Schema({
     type: Date,
     default: null,
   },
+  // Snapshot of profile version at apply time
+  profileUpdatedAtUsed: {
+    type: Date,
+    default: null,
+  },
+  resumeParsedAtUsed: {
+    type: Date,
+    default: null,
+  },
+  suggestionSource: {
+    type: String,
+    enum: ['ollama', 'rule'],
+    default: null,
+  },
   experienceYears: {
     type: Number,
     default: 0,
@@ -68,6 +82,13 @@ applicationSchema.index({ jobId: 1, applicant: 1 }, { unique: true });
 applicationSchema.index({ applicant: 1 });
 applicationSchema.index({ jobId: 1 });
 applicationSchema.index({ status: 1 });
+
+// Indexes for recruiter filtering and sorting
+applicationSchema.index({ jobId: 1, matchScore: -1 });
+applicationSchema.index({ jobId: 1, experienceYears: -1 });
+applicationSchema.index({ jobId: 1, createdAt: -1 });
+applicationSchema.index({ jobId: 1, matchedSkills: 1 });
+applicationSchema.index({ jobId: 1, missingSkills: 1 });
 
 const ApplicationModel = mongoose.model('Application', applicationSchema);
 module.exports = ApplicationModel;

@@ -35,6 +35,13 @@ const JobApplications: React.FC = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedApplications, setSelectedApplications] = useState<Set<string>>(new Set());
   const [viewingNotes, setViewingNotes] = useState<{ id: string; notes: string; applicantName: string } | null>(null);
+  const [viewingDetails, setViewingDetails] = useState<RecruiterApplication | null>(null);
+  
+  // Advanced filters
+  const [minScore, setMinScore] = useState<number>(0);
+  const [mustHaveSkill, setMustHaveSkill] = useState('');
+  const [missingSkill, setMissingSkill] = useState('');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // Debounce search input for better performance
   React.useEffect(() => {
@@ -48,7 +55,10 @@ const JobApplications: React.FC = () => {
   const { data, isLoading } = useRecruiterJobApplications(jobId || '', {
     status: activeTab,
     sort: sortBy,
-    search: debouncedSearch
+    search: debouncedSearch,
+    minScore: minScore || undefined,
+    mustHave: mustHaveSkill || undefined,
+    missing: missingSkill || undefined
   });
   
   const updateStatusMutation = useUpdateRecruiterApplicationStatus();
@@ -94,6 +104,18 @@ const JobApplications: React.FC = () => {
       toast.error('Failed to update applications');
     }
   };
+
+  const clearFilters = () => {
+    setMinScore(0);
+    setMustHaveSkill('');
+    setMissingSkill('');
+    setSearchQuery('');
+  };
+
+  const activeFilterCount = 
+    (minScore > 0 ? 1 : 0) + 
+    (mustHaveSkill ? 1 : 0) + 
+    (missingSkill ? 1 : 0);
 
   const handleStatusChange = async (applicationId: string, status: 'applied' | 'shortlisted' | 'interview' | 'rejected') => {
     try {
@@ -201,10 +223,12 @@ const JobApplications: React.FC = () => {
           </div>
 
           {/* Toolbar */}
-          <div className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            {/* Search and Sort */}
-            <div className="flex items-center gap-3 flex-1">
-              <div className="relative flex-1 max-w-md">
+          <div className="p-4 space-y-4">
+            {/* Primary Controls */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              {/* Search and Sort */}
+              <div className="flex items-center gap-3 flex-1">
+                <div className="relative flex-1 max-w-md">
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
                   fill="none"
@@ -239,44 +263,122 @@ const JobApplications: React.FC = () => {
                 </select>
               </div>
             </div>
-
-            {/* Bulk Actions */}
-            {selectedApplications.size > 0 && (
-              <div className="flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg">
-                <span className="text-sm text-indigo-900 font-medium">
-                  {selectedApplications.size} selected
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className={`px-4 py-1.5 border rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
+                  showAdvancedFilters || activeFilterCount > 0
+                    ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+              </svg>
+              Match Filters
+              {activeFilterCount > 0 && (
+                <span className="bg-indigo-600 text-white px-1.5 py-0.5 rounded-full text-xs">
+                  {activeFilterCount}
                 </span>
-                <div className="h-4 w-px bg-indigo-200" />
-                <button
-                  onClick={() => handleBulkStatusUpdate('shortlisted')}
-                  disabled={bulkUpdateMutation.isPending}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
-                >
-                  Shortlist
-                </button>
-                <button
-                  onClick={() => handleBulkStatusUpdate('interview')}
-                  disabled={bulkUpdateMutation.isPending}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
-                >
-                  Interview
-                </button>
-                <button
-                  onClick={() => handleBulkStatusUpdate('rejected')}
-                  disabled={bulkUpdateMutation.isPending}
-                  className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={() => setSelectedApplications(new Set())}
-                  className="text-sm text-gray-600 hover:text-gray-700"
-                >
-                  Clear
-                </button>
-              </div>
-            )}
+              )}
+            </button>
           </div>
+
+          {/* Advanced Filters */}
+          {showAdvancedFilters && (
+            <div className="border-t border-gray-200 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Minimum Match Score
+                  </label>
+                  <select
+                    value={minScore}
+                    onChange={(e) => setMinScore(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="0">No minimum</option>
+                    <option value="50">≥ 50%</option>
+                    <option value="60">≥ 60%</option>
+                    <option value="70">≥ 70%</option>
+                    <option value="80">≥ 80%</option>
+                    <option value="90">≥ 90%</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Must Have Skill
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., React, Python"
+                    value={mustHaveSkill}
+                    onChange={(e) => setMustHaveSkill(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Missing Skill
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Docker, AWS"
+                    value={missingSkill}
+                    onChange={(e) => setMissingSkill(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+              {activeFilterCount > 0 && (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={clearFilters}
+                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Bulk Actions */}
+          {selectedApplications.size > 0 && (
+            <div className="flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg">
+              <span className="text-sm text-indigo-900 font-medium">
+                {selectedApplications.size} selected
+              </span>
+              <div className="h-4 w-px bg-indigo-200" />
+              <button
+                onClick={() => handleBulkStatusUpdate('shortlisted')}
+                disabled={bulkUpdateMutation.isPending}
+                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+              >
+                Shortlist
+              </button>
+              <button
+                onClick={() => handleBulkStatusUpdate('interview')}
+                disabled={bulkUpdateMutation.isPending}
+                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+              >
+                Interview
+              </button>
+              <button
+                onClick={() => handleBulkStatusUpdate('rejected')}
+                disabled={bulkUpdateMutation.isPending}
+                className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+              >
+                Reject
+              </button>
+              <button
+                onClick={() => setSelectedApplications(new Set())}
+                className="text-sm text-gray-600 hover:text-gray-700"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
         </div>
 
         {/* Applications List */}
@@ -303,8 +405,9 @@ const JobApplications: React.FC = () => {
                     />
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Candidate</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Skills</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Match</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Match Score</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Matched Skills</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Missing Skills</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Experience</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Applied</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
@@ -353,23 +456,6 @@ const JobApplications: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <div className="flex flex-wrap gap-1 max-w-xs">
-                            {applicant?.jobSeeker?.skills?.slice(0, 3).map((skill, idx) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                            {(applicant?.jobSeeker?.skills?.length || 0) > 3 && (
-                              <span className="text-xs text-gray-400">
-                                +{(applicant?.jobSeeker?.skills?.length || 0) - 3}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
                           <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                             (application.matchScore || 0) >= 85 
                               ? 'bg-green-100 text-green-700' 
@@ -379,6 +465,46 @@ const JobApplications: React.FC = () => {
                           }`}>
                             {application.matchScore || 0}%
                           </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex flex-wrap gap-1 max-w-xs">
+                            {application.matchedSkills?.slice(0, 2).map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                            {(application.matchedSkills?.length || 0) > 2 && (
+                              <span className="text-xs text-green-600 font-medium">
+                                +{(application.matchedSkills?.length || 0) - 2}
+                              </span>
+                            )}
+                            {!application.matchedSkills || application.matchedSkills.length === 0 && (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex flex-wrap gap-1 max-w-xs">
+                            {application.missingSkills?.slice(0, 2).map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                            {(application.missingSkills?.length || 0) > 2 && (
+                              <span className="text-xs text-red-600 font-medium">
+                                +{(application.missingSkills?.length || 0) - 2}
+                              </span>
+                            )}
+                            {!application.missingSkills || application.missingSkills.length === 0 && (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-600">
                           {application.experienceYears || 0} yrs
@@ -404,11 +530,17 @@ const JobApplications: React.FC = () => {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
-                            <Link
-                              to={`/recruiter/candidate/${applicant?._id}?jobId=${jobId}`}
+                            <button
+                              onClick={() => setViewingDetails(application)}
                               className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
                             >
-                              View
+                              Details
+                            </button>
+                            <Link
+                              to={`/recruiter/candidate/${applicant?._id}?jobId=${jobId}`}
+                              className="text-gray-600 hover:text-gray-700 text-sm font-medium"
+                            >
+                              Profile
                             </Link>
                             {applicant?.jobSeeker?.resumeUrl && (
                               <a
@@ -423,19 +555,6 @@ const JobApplications: React.FC = () => {
                                 </svg>
                               </a>
                             )}
-                            <button
-                              onClick={() => setViewingNotes({
-                                id: application._id,
-                                notes: application.notes || 'No notes available',
-                                applicantName: applicant?.fullName || applicant?.name || 'Unknown'
-                              })}
-                              className="text-gray-600 hover:text-gray-700"
-                              title="View Notes"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            </button>
                           </div>
                         </td>
                       </tr>
@@ -447,46 +566,166 @@ const JobApplications: React.FC = () => {
           </div>
         )}
 
-        {/* Notes View Modal */}
-        {viewingNotes && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Notes - {viewingNotes.applicantName}
-                </h3>
-                <button
-                  onClick={() => setViewingNotes(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="px-6 py-4 overflow-y-auto max-h-[calc(80vh-160px)]">
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                    {viewingNotes.notes}
-                  </p>
+        {/* Application Details Drawer */}
+        {viewingDetails && (() => {
+          const applicant = typeof viewingDetails.applicant === 'object' 
+            ? (viewingDetails.applicant as Applicant)
+            : null;
+          return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-indigo-600 to-indigo-700">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">
+                      {applicant?.fullName || applicant?.name || 'Candidate'}
+                    </h3>
+                    <p className="text-sm text-indigo-100">{applicant?.email}</p>
+                  </div>
+                  <button
+                    onClick={() => setViewingDetails(null)}
+                    className="text-white hover:text-indigo-100"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> To edit notes, please go to the candidate's detail page by clicking the "View" button.
-                  </p>
+                <div className="px-6 py-4 overflow-y-auto max-h-[calc(90vh-180px)]">
+                  {/* Match Score Summary */}
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-4 border border-indigo-200">
+                      <div className="text-sm text-indigo-600 font-medium mb-1">Match Score</div>
+                      <div className="text-2xl font-bold text-indigo-900">{viewingDetails.matchScore || 0}%</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                      <div className="text-sm text-green-600 font-medium mb-1">Matched Skills</div>
+                      <div className="text-2xl font-bold text-green-900">{viewingDetails.matchedSkills?.length || 0}</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+                      <div className="text-sm text-orange-600 font-medium mb-1">Missing Skills</div>
+                      <div className="text-2xl font-bold text-orange-900">{viewingDetails.missingSkills?.length || 0}</div>
+                    </div>
+                  </div>
+
+                  {/* Matched Skills */}
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Matched Skills
+                    </h4>
+                    {viewingDetails.matchedSkills && viewingDetails.matchedSkills.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {viewingDetails.matchedSkills.map((skill, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">No matched skills recorded</p>
+                    )}
+                  </div>
+
+                  {/* Missing Skills */}
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                      Missing Skills
+                    </h4>
+                    {viewingDetails.missingSkills && viewingDetails.missingSkills.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {viewingDetails.missingSkills.map((skill, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">No missing skills recorded</p>
+                    )}
+                  </div>
+
+                  {/* Additional Info */}
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="text-xs text-gray-500 mb-1">Experience</div>
+                      <div className="text-lg font-semibold text-gray-900">{viewingDetails.experienceYears || 0} years</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="text-xs text-gray-500 mb-1">Applied On</div>
+                      <div className="text-lg font-semibold text-gray-900">{formatDate(viewingDetails.createdAt)}</div>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  {viewingDetails.notes && (
+                    <div className="mb-4">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-2">Recruiter Notes</h4>
+                      <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {viewingDetails.notes}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status Update */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Update Status</h4>
+                    <div className="flex gap-2">
+                      {['shortlisted', 'interview', 'rejected'].map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => {
+                            handleStatusChange(
+                              viewingDetails._id, 
+                              status as 'shortlisted' | 'interview' | 'rejected'
+                            );
+                            setViewingDetails(null);
+                          }}
+                          disabled={viewingDetails.status === status}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            viewingDetails.status === status
+                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              : status === 'rejected'
+                              ? 'bg-red-600 text-white hover:bg-red-700'
+                              : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                          }`}
+                        >
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-                <button
-                  onClick={() => setViewingNotes(null)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
-                >
-                  Close
-                </button>
+                <div className="px-6 py-4 border-t border-gray-200 flex justify-between bg-gray-50">
+                  <Link
+                    to={`/recruiter/candidate/${applicant?._id}?jobId=${jobId}`}
+                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
+                  >
+                    View Full Profile
+                  </Link>
+                  <button
+                    onClick={() => setViewingDetails(null)}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </DashboardLayout>
   );

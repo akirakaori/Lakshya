@@ -220,8 +220,14 @@ export const jobService = {
   },
 
   // Get match analysis for a specific job (job seeker only)
-  getJobMatch: async (jobId: string): Promise<{ success: boolean; data: JobMatchAnalysis }> => {
+  getJobMatch: async (jobId: string): Promise<{ success: boolean; data: JobMatchAnalysis | null; isOutdated: boolean }> => {
     const response = await axiosInstance.get(`/job-seeker/jobs/${jobId}/match`);
+    return response.data;
+  },
+
+  // Compute fresh match analysis for a specific job (job seeker only)
+  analyzeJobMatch: async (jobId: string): Promise<{ success: boolean; data: JobMatchAnalysis; isOutdated: boolean }> => {
+    const response = await axiosInstance.post(`/job-seeker/jobs/${jobId}/analyze`);
     return response.data;
   },
 

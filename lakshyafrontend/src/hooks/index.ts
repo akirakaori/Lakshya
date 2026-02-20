@@ -66,3 +66,4 @@ export {
 // Job match hooks
 export { useJobMatch, jobMatchKeys } from './use-job-match';
 export { useJobMatchScores, jobMatchScoresKeys } from './use-job-match-scores';
+export { useAnalyzeJobMatch } from './use-analyze-job-match';

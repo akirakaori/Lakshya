@@ -64,8 +64,17 @@ const jobMatchAnalysisSchema = new Schema({
     default: Date.now,
   },
   version: {
-    type: Number,
-    default: 1,
+    type: String,
+    default: 'v1',
+  },
+  // Track profile version used for this analysis
+  profileUpdatedAtUsed: {
+    type: Date,
+    default: null,
+  },
+  resumeParsedAtUsed: {
+    type: Date,
+    default: null,
   },
 }, {
   timestamps: true,

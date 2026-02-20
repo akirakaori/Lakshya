@@ -53,6 +53,9 @@ export interface RecruiterApplicationFilters {
   status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected';
   sort?: 'newest' | 'match' | 'experience';
   search?: string;
+  minScore?: number;
+  mustHave?: string;
+  missing?: string;
 }
 
 export interface RecruiterApplicationsResponse {
@@ -76,6 +79,9 @@ export interface RecruiterApplicationsResponse {
 
 export interface RecruiterApplication extends Application {
   matchScore?: number;
+  matchedSkills?: string[];
+  missingSkills?: string[];
+  matchAnalyzedAt?: string;
   experienceYears?: number;
 }
 
@@ -209,6 +215,9 @@ export const applicationService = {
     if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
     if (filters?.sort) params.append('sort', filters.sort);
     if (filters?.search && filters.search.trim()) params.append('search', filters.search.trim());
+    if (filters?.minScore !== undefined && filters.minScore > 0) params.append('minScore', filters.minScore.toString());
+    if (filters?.mustHave && filters.mustHave.trim()) params.append('mustHave', filters.mustHave.trim());
+    if (filters?.missing && filters.missing.trim()) params.append('missing', filters.missing.trim());
     
     const queryString = params.toString();
     const url = queryString 

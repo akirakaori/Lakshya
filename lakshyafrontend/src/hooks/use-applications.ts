@@ -43,8 +43,24 @@ export const useApplyForJob = () => {
   return useMutation({
     mutationFn: ({ jobId, data }: { jobId: string; data?: ApplyJobData }) =>
       applicationService.applyForJob(jobId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: applicationKeys.my() });
+    onSuccess: (response) => {
+      console.log('✅ Apply success - Application created:', response.data._id);
+      
+      // CRITICAL FIX: Invalidate ALL "my applications" queries (not just one with specific filters)
+      // Using prefix match to catch all variations: ['applications', 'my', ...any filters]
+      console.log('🔄 Invalidating all myApplications queries...');
+      queryClient.invalidateQueries({ queryKey: ['applications', 'my'] });
+      
+      // Also invalidate the general applications cache
+      queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+      
+      // Refetch active queries immediately for instant UI update
+      queryClient.refetchQueries({ 
+        queryKey: ['applications', 'my'], 
+        type: 'active' 
+      });
+      
+      console.log('✅ Cache invalidated - My Applications will show new application');
     },
   });
 };
@@ -69,7 +85,18 @@ export const useWithdrawApplication = () => {
   return useMutation({
     mutationFn: (applicationId: string) => applicationService.withdrawApplication(applicationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: applicationKeys.my() });
+      console.log('✅ Application withdrawn');
+      
+      // CRITICAL FIX: Invalidate ALL "my applications" queries
+      console.log('🔄 Invalidating all myApplications queries...');
+      queryClient.invalidateQueries({ queryKey: ['applications', 'my'] });
+      queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+      
+      // Refetch active queries immediately
+      queryClient.refetchQueries({ 
+        queryKey: ['applications', 'my'], 
+        type: 'active' 
+      });
     },
   });
 };
@@ -163,7 +190,16 @@ export const useRecruiterJobApplications = (
   filters?: RecruiterApplicationFilters
 ) => {
   return useQuery({
-    queryKey: ['recruiter-job-applications', jobId, filters?.status, filters?.sort, filters?.search],
+    queryKey: [
+      'recruiter-job-applications', 
+      jobId, 
+      filters?.status, 
+      filters?.sort, 
+      filters?.search,
+      filters?.minScore,
+      filters?.mustHave,
+      filters?.missing
+    ],
     queryFn: () => applicationService.getRecruiterJobApplications(jobId, filters),
     enabled: !!jobId,
   });

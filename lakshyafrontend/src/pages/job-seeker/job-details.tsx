@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { DashboardLayout, JobCard, LoadingSpinner, EmptyState, JobMatchPanel } from '../../components';
-import { useJob, useJobs, useApplyForJob, useHasApplied } from '../../hooks';
+import { DashboardLayout, LoadingSpinner, EmptyState, ErrorBoundary } from '../../components';
+import { JobCard } from '../../components/jobs';
+import JobMatchPanel from '../../components/jobs/JobMatchPanel';
+import { useJob, useJobs, useApplyForJob, useHasApplied, useJobMatch } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
 import type { Job } from '../../services';
@@ -48,14 +50,37 @@ const JobDetails: React.FC = () => {
   const applyMutation = useApplyForJob();
   const hasApplied = useHasApplied(jobId);
   const { user } = useAuth();
+  const { data: matchData } = useJobMatch(jobId);
 
   const job = jobData?.data;
   const relatedJobs = relatedJobsData?.data?.filter((j: Job) => j._id !== jobId).slice(0, 4) || [];
 
   const isJobSeeker = user?.role === 'job_seeker';
+  const hasAnalysis = !!matchData?.data;
+  const isAnalysisOutdated = matchData?.isOutdated || false;
 
   const handleApply = async () => {
     if (!jobId) return;
+    
+    // Check if analysis exists and is up-to-date (optional - backend handles this automatically)
+    // We show warnings but still allow apply (backend will compute if needed)
+    if (!hasAnalysis) {
+      const confirmed = window.confirm(
+        'You haven\'t analyzed your match for this job yet. We recommend analyzing first to see how well you match. Continue anyway?'
+      );
+      if (!confirmed) {
+        setShowApplyModal(false);
+        return;
+      }
+    } else if (isAnalysisOutdated) {
+      const confirmed = window.confirm(
+        'Your profile has changed since the last analysis. We recommend re-analyzing to see your updated match score. Continue anyway?'
+      );
+      if (!confirmed) {
+        setShowApplyModal(false);
+        return;
+      }
+    }
     
     try {
       await applyMutation.mutateAsync({
@@ -259,7 +284,32 @@ const JobDetails: React.FC = () => {
 
             {/* AI Match Score — real analysis */}
             {isJobSeeker && jobId && (
-              <JobMatchPanel jobId={jobId} />
+              <ErrorBoundary
+                fallback={
+                  <div className="bg-white rounded-xl border border-yellow-200 p-6">
+                    <h3 className="text-lg font-semibold text-yellow-900 mb-2">Match Analysis Unavailable</h3>
+                    <p className="text-sm text-yellow-700 mb-4">
+                      We encountered an error loading the match analysis. This may be due to missing data or a temporary issue.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="flex-1 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                      >
+                        Retry
+                      </button>
+                      <button
+                        onClick={() => window.history.back()}
+                        className="flex-1 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      >
+                        Go Back
+                      </button>
+                    </div>
+                  </div>
+                }
+              >
+                <JobMatchPanel jobId={jobId} />
+              </ErrorBoundary>
             )}
           </div>
         </div>

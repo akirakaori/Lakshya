@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileService } from '../services';
 import type { UpdateProfileData } from '../services';
 import { useAuth } from '../context/auth-context';
+import { jobMatchKeys } from './use-job-match';
 
 // Query keys with userId and role for proper cache isolation
 export const profileKeys = {
@@ -63,8 +64,12 @@ export const useUpdateProfile = () => {
         queryClient.setQueryData(profileKeys.detail(userId, role), response);
       }
       
-      // Also invalidate to ensure fresh data on next fetch
+      // Invalidate profile cache to ensure fresh data on next fetch
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      
+      // CRITICAL: Invalidate job match cache so Job Details shows outdated banner immediately
+      console.log('🔄 Invalidating jobMatch cache after profile update');
+      queryClient.invalidateQueries({ queryKey: jobMatchKeys.all });
     },
     onError: (error) => {
       console.error('useUpdateProfile error:', error);
@@ -92,8 +97,12 @@ export const useUploadResume = () => {
         queryClient.setQueryData(profileKeys.detail(userId, role), response);
       }
       
-      // Also invalidate to ensure fresh data
+      // Invalidate profile cache to ensure fresh data
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      
+      // CRITICAL: Invalidate job match cache (resume upload triggers resumeParsedAt update)
+      console.log('🔄 Invalidating jobMatch cache after resume upload');
+      queryClient.invalidateQueries({ queryKey: jobMatchKeys.all });
     },
     onError: (error) => {
       console.error('useUploadResume error:', error);
@@ -182,8 +191,12 @@ export const useAutofillProfile = () => {
         });
       }
       
-      // Also invalidate to ensure cache consistency
+      // Invalidate profile cache to ensure cache consistency
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      
+      // CRITICAL: Invalidate job match cache (autofill updates profile fields)
+      console.log('🔄 Invalidating jobMatch cache after resume autofill');
+      queryClient.invalidateQueries({ queryKey: jobMatchKeys.all });
     },
     onError: (error) => {
       console.error('useAutofillProfile error:', error);

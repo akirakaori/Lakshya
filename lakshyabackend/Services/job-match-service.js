@@ -209,56 +209,81 @@ Requirements:
  * Returns the analysis object (not yet saved).
  */
 async function computeJobMatch(user, job) {
-  // 1. Skill matching (deterministic)
-  const { matchedSkills, missingSkills, skillScore } = computeSkillMatch(
-    user.jobSeeker?.skills,
-    job.skillsRequired
-  );
+  try {
+    // 1. Skill matching (deterministic)
+    const { matchedSkills, missingSkills, skillScore } = computeSkillMatch(
+      user.jobSeeker?.skills,
+      job.skillsRequired
+    );
 
-  // 2. Semantic similarity
-  const resumeText = buildResumeText(user);
-  const jobText = buildJobText(job);
-  const { semanticScore, semanticPercent } = await getSemanticScore(resumeText, jobText);
+    // 2. Semantic similarity
+    const resumeText = buildResumeText(user);
+    const jobText = buildJobText(job);
+    const { semanticScore, semanticPercent } = await getSemanticScore(resumeText, jobText);
 
-  // 3. Hybrid score
-  const finalRaw = 0.6 * skillScore + 0.4 * semanticScore;
-  const matchScore = Math.round(finalRaw * 100);
-  const skillScorePercent = Math.round(skillScore * 100);
+    // 3. Hybrid score
+    const finalRaw = 0.6 * skillScore + 0.4 * semanticScore;
+    const matchScore = Math.round(finalRaw * 100);
+    const skillScorePercent = Math.round(skillScore * 100);
 
-  // 4. Suggestions — try Ollama, fallback to rule-based
-  let suggestions, summaryRewrite, suggestionSource;
+    // 4. Suggestions — try Ollama, fallback to rule-based
+    let suggestions, summaryRewrite, suggestionSource;
 
-  const ollamaResult = await getOllamaSuggestions(
-    missingSkills,
-    matchScore,
-    job.title || '',
-    user.jobSeeker?.bio || user.jobSeeker?.summary || ''
-  );
+    const ollamaResult = await getOllamaSuggestions(
+      missingSkills,
+      matchScore,
+      job.title || '',
+      user.jobSeeker?.bio || user.jobSeeker?.summary || ''
+    );
 
-  if (ollamaResult) {
-    suggestions = ollamaResult.suggestions;
-    summaryRewrite = ollamaResult.summaryRewrite;
-    suggestionSource = 'ollama';
-  } else {
-    suggestions = ruleBasedSuggestions(missingSkills, matchScore, job.title || '');
-    summaryRewrite = '';
-    suggestionSource = 'rule';
+    if (ollamaResult) {
+      suggestions = ollamaResult.suggestions;
+      summaryRewrite = ollamaResult.summaryRewrite;
+      suggestionSource = 'ollama';
+    } else {
+      suggestions = ruleBasedSuggestions(missingSkills, matchScore, job.title || '');
+      summaryRewrite = '';
+      suggestionSource = 'rule';
+    }
+
+    // CRITICAL: Ensure all fields have safe defaults (never null/undefined)
+    return {
+      matchScore: typeof matchScore === 'number' ? matchScore : 0,
+      skillScore: typeof skillScore === 'number' ? skillScore : 0,
+      semanticScore: typeof semanticScore === 'number' ? semanticScore : 0,
+      skillScorePercent: typeof skillScorePercent === 'number' ? skillScorePercent : 0,
+      semanticPercent: typeof semanticPercent === 'number' ? semanticPercent : 0,
+      matchedSkills: Array.isArray(matchedSkills) ? matchedSkills : [],
+      missingSkills: Array.isArray(missingSkills) ? missingSkills : [],
+      suggestions: Array.isArray(suggestions) ? suggestions : [],
+      summaryRewrite: typeof summaryRewrite === 'string' ? summaryRewrite : '',
+      suggestionSource: suggestionSource || 'rule',
+      analyzedAt: new Date(),
+      version: 'v1',
+      // Track profile version used for this analysis
+      profileUpdatedAtUsed: user.jobSeeker?.profileUpdatedAt || null,
+      resumeParsedAtUsed: user.jobSeeker?.resumeParsedAt || null,
+    };
+  } catch (error) {
+    console.error('❌ Error in computeJobMatch:', error);
+    // Return safe fallback analysis instead of crashing
+    return {
+      matchScore: 0,
+      skillScore: 0,
+      semanticScore: 0,
+      skillScorePercent: 0,
+      semanticPercent: 0,
+      matchedSkills: [],
+      missingSkills: [],
+      suggestions: ['Unable to generate suggestions at this time. Please try again later.'],
+      summaryRewrite: '',
+      suggestionSource: 'rule',
+      analyzedAt: new Date(),
+      version: 'v1',
+      profileUpdatedAtUsed: user.jobSeeker?.profileUpdatedAt || null,
+      resumeParsedAtUsed: user.jobSeeker?.resumeParsedAt || null,
+    };
   }
-
-  return {
-    matchScore,
-    skillScore,
-    semanticScore,
-    skillScorePercent,
-    semanticPercent,
-    matchedSkills,
-    missingSkills,
-    suggestions,
-    summaryRewrite,
-    suggestionSource,
-    analyzedAt: new Date(),
-    version: 1,
-  };
 }
 
 // --------------- Cached analysis with upsert -----------------
@@ -356,10 +381,102 @@ async function getBatchMatchScores(userId, jobIds) {
   return result;
 }
 
+// --------------- New: GET cached match with isOutdated flag -----------------
+
+/**
+ * Get cached match analysis and check if it's outdated.
+ * Does NOT compute — only reads cache.
+ * Returns { analysis, isOutdated } or { analysis: null, isOutdated: false } if no cache.
+ */
+async function getCachedMatchWithOutdatedFlag(userId, jobId) {
+  const [user, cached] = await Promise.all([
+    UserModel.findById(userId),
+    JobMatchAnalysis.findOne({ userId, jobId }),
+  ]);
+
+  if (!user) {
+    const error = new Error('User not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!cached) {
+    return { analysis: null, isOutdated: false };
+  }
+
+  // Check if analysis is outdated
+  const userProfileUpdatedAt = user.jobSeeker?.profileUpdatedAt || null;
+  const userResumeParsedAt = user.jobSeeker?.resumeParsedAt || null;
+  const analysisProfileUpdatedAt = cached.profileUpdatedAtUsed || null;
+  const analysisResumeParsedAt = cached.resumeParsedAtUsed || null;
+
+  let isOutdated = false;
+
+  // Profile updated after analysis was done
+  if (userProfileUpdatedAt && analysisProfileUpdatedAt) {
+    if (new Date(userProfileUpdatedAt) > new Date(analysisProfileUpdatedAt)) {
+      isOutdated = true;
+    }
+  } else if (userProfileUpdatedAt && !analysisProfileUpdatedAt) {
+    // User has profile update but analysis doesn't track it
+    isOutdated = true;
+  }
+
+  // Resume parsed after analysis was done
+  if (userResumeParsedAt && analysisResumeParsedAt) {
+    if (new Date(userResumeParsedAt) > new Date(analysisResumeParsedAt)) {
+      isOutdated = true;
+    }
+  } else if (userResumeParsedAt && !analysisResumeParsedAt) {
+    // User has resume but analysis doesn't track it
+    isOutdated = true;
+  }
+
+  return { analysis: cached, isOutdated };
+}
+
+// --------------- New: POST analyze (compute + upsert) -----------------
+
+/**
+ * Compute fresh match analysis and upsert into JobMatchAnalysis.
+ * This is called when user explicitly clicks "Analyze My Match" or "Analyze Again".
+ */
+async function computeAndUpsertMatch(userId, jobId) {
+  const [user, job] = await Promise.all([
+    UserModel.findById(userId),
+    JobModel.findById(jobId),
+  ]);
+
+  if (!user) {
+    const error = new Error('User not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  if (!job) {
+    const error = new Error('Job not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  console.log(`🔄 Computing fresh match analysis for user=${userId} job=${jobId}`);
+  const analysis = await computeJobMatch(user, job);
+
+  // Upsert (replace old analysis for this job)
+  const saved = await JobMatchAnalysis.findOneAndUpdate(
+    { userId, jobId },
+    { ...analysis, userId, jobId },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  return saved;
+}
+
 module.exports = {
   computeJobMatch,
   getOrComputeMatch,
   getBatchMatchScores,
+  getCachedMatchWithOutdatedFlag,
+  computeAndUpsertMatch,
   computeSkillMatch,
   normalizeSkill,
   ruleBasedSuggestions,
