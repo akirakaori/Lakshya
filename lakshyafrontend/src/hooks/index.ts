@@ -62,3 +62,7 @@ export {
   useResetPassword, 
   useLogout 
 } from './use-auth';
+
+// Job match hooks
+export { useJobMatch, jobMatchKeys } from './use-job-match';
+export { useJobMatchScores, jobMatchScoresKeys } from './use-job-match-scores';

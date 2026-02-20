@@ -2,7 +2,7 @@
 export { Sidebar, Navbar, DashboardLayout, Footer } from './layout';
 
 // Job components
-export { JobCard, JobFilter } from './jobs';
+export { JobCard, JobFilter, JobMatchPanel } from './jobs';
 
 // Application components
 export { ApplicationCard } from './applications';

@@ -1,21 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState } from '../../components';
-import { useMyApplications } from '../../hooks';
+import { useMyApplications, useJobMatchScores } from '../../hooks';
 import type { Job } from '../../services';
 import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStatus';
-
-// Helper function to generate deterministic AI match score from jobId
-const calculateAIMatch = (jobId: string): number => {
-  let hash = 0;
-  for (let i = 0; i < jobId.length; i++) {
-    const char = jobId.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  // Map hash to 75-99 range
-  return 75 + (Math.abs(hash) % 25);
-};
 
 const MyApplications: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,6 +27,20 @@ const MyApplications: React.FC = () => {
   });
 
   const applications = response?.data || [];
+
+  // Extract all job IDs for batch match score fetch
+  const jobIds = useMemo(() => {
+    return applications
+      .map(app => {
+        const job = typeof app.jobId === 'object' ? app.jobId as Job : null;
+        return typeof app.jobId === 'string' ? app.jobId : job?._id;
+      })
+      .filter((id): id is string => !!id);
+  }, [applications]);
+
+  // Fetch match scores for all jobs in batch
+  const { data: matchScoresResponse } = useJobMatchScores(jobIds.length > 0 ? jobIds : undefined);
+  const matchScores = matchScoresResponse?.data || {};
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -158,7 +160,10 @@ const MyApplications: React.FC = () => {
                   {applications.map((application) => {
                     const job = typeof application.jobId === 'object' ? application.jobId as Job : null;
                     const jobId = typeof application.jobId === 'string' ? application.jobId : job?._id;
-                    const aiMatchScore = jobId ? calculateAIMatch(jobId) : 80;
+                    
+                    // Get real match score from cached data
+                    const matchData = jobId ? matchScores[jobId] : null;
+                    const hasMatchScore = matchData?.matchScore !== null && matchData?.matchScore !== undefined;
                     
                     // Check if job is deleted or inactive
                     const isJobInactive = job?.isDeleted || (job && !job.isActive);
@@ -186,9 +191,13 @@ const MyApplications: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                            {aiMatchScore}%
-                          </span>
+                          {hasMatchScore ? (
+                            <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                              {matchData.matchScore}%
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">—</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           {job && jobId && (

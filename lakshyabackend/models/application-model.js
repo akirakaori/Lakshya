@@ -35,6 +35,18 @@ const applicationSchema = new Schema({
     min: 0,
     max: 100
   },
+  matchedSkills: {
+    type: [String],
+    default: [],
+  },
+  missingSkills: {
+    type: [String],
+    default: [],
+  },
+  matchAnalyzedAt: {
+    type: Date,
+    default: null,
+  },
   experienceYears: {
     type: Number,
     default: 0,

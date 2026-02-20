@@ -1,6 +1,7 @@
 """
 Resume Parser Microservice using FastAPI + spaCy
 Extracts structured data from resumes (PDF/DOCX) for auto-filling job seeker profiles.
+Also provides semantic similarity scoring via MiniLM embeddings.
 """
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,12 +12,17 @@ import os
 import re
 from typing import List, Optional
 import logging
+import numpy as np
 
 # NLP and document parsing libraries
 import spacy
 from spacy.matcher import PhraseMatcher
 import pdfplumber
 import docx2txt
+
+# Sentence-transformer for semantic similarity
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -41,6 +47,14 @@ try:
 except OSError:
     logger.error("✗ spaCy model not found. Run: python -m spacy download en_core_web_sm")
     nlp = None
+
+# Load MiniLM sentence-transformer model (singleton, loaded once at startup)
+try:
+    st_model = SentenceTransformer("all-MiniLM-L6-v2")
+    logger.info("✓ MiniLM sentence-transformer model loaded successfully")
+except Exception as e:
+    logger.error(f"✗ Failed to load sentence-transformer model: {e}")
+    st_model = None
 
 # Comprehensive skills dictionary for PhraseMatcher
 SKILLS_DATABASE = [
@@ -84,14 +98,64 @@ class ParseResumeResponse(BaseModel):
     educationFound: bool = False
     experienceFound: bool = False
 
+# --- Semantic similarity schemas ---
+class SemanticScoreRequest(BaseModel):
+    resumeText: str
+    jobText: str
+
+class SemanticScoreResponse(BaseModel):
+    semanticScore: float
+    semanticPercent: int
+
 @app.get("/")
 def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
         "service": "Resume Parser",
-        "spacy_loaded": nlp is not None
+        "spacy_loaded": nlp is not None,
+        "sentence_transformer_loaded": st_model is not None,
     }
+
+
+def _clean_text(text: str) -> str:
+    """Strip and collapse whitespace for embedding input."""
+    text = text.strip()
+    text = re.sub(r'\s+', ' ', text)
+    return text
+
+
+@app.post("/semantic-score", response_model=SemanticScoreResponse)
+async def semantic_score(request: SemanticScoreRequest):
+    """
+    Compute cosine-similarity between resume text and job text using MiniLM embeddings.
+    Returns a float score (0..1) and an integer percent (0..100).
+    """
+    if st_model is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Sentence-transformer model not loaded.",
+        )
+
+    resume_text = _clean_text(request.resumeText)
+    job_text = _clean_text(request.jobText)
+
+    # Edge case: empty input => score 0
+    if not resume_text or not job_text:
+        return SemanticScoreResponse(semanticScore=0.0, semanticPercent=0)
+
+    try:
+        embeddings = st_model.encode([resume_text, job_text])
+        sim = cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
+        # Clamp to 0..1
+        sim = float(max(0.0, min(1.0, sim)))
+        return SemanticScoreResponse(
+            semanticScore=round(sim, 4),
+            semanticPercent=round(sim * 100),
+        )
+    except Exception as e:
+        logger.error(f"Semantic score computation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Semantic scoring failed: {str(e)}")
 
 @app.post("/parse-resume", response_model=ParseResumeResponse)
 async def parse_resume(request: ParseResumeRequest):

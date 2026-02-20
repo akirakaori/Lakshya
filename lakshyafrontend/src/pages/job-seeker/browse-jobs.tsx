@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout, JobCard, JobFilter, LoadingSpinner, EmptyState } from '../../components';
-import { useJobs } from '../../hooks';
+import { useJobs, useJobMatchScores } from '../../hooks';
 import type { JobFilters } from '../../services';
 
 // Default filters
@@ -68,6 +68,13 @@ const BrowseJobs: React.FC = () => {
 
   const jobs = data?.data || [];
   const pagination = data?.pagination;
+
+  // Extract job IDs for batch match score fetch
+  const jobIds = useMemo(() => jobs.map(job => job._id), [jobs]);
+
+  // Fetch match scores for all visible jobs
+  const { data: matchScoresResponse } = useJobMatchScores(jobIds.length > 0 ? jobIds : undefined);
+  const matchScores = matchScoresResponse?.data || {};
 
   // Update URL when applied filters change
   useEffect(() => {
@@ -219,9 +226,18 @@ const BrowseJobs: React.FC = () => {
               <>
                 {/* Job Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                  {jobs.map((job) => (
-                    <JobCard key={job._id} job={job} showMatchScore />
-                  ))}
+                  {jobs.map((job) => {
+                    const matchData = matchScores[job._id];
+                    const matchScore = matchData?.matchScore ?? undefined;
+                    return (
+                      <JobCard 
+                        key={job._id} 
+                        job={job} 
+                        showMatchScore 
+                        matchScore={matchScore}
+                      />
+                    );
+                  })}
                 </div>
 
                 {/* Pagination */}

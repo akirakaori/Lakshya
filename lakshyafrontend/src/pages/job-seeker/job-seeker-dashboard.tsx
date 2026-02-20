@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout, StatsCard, LoadingSpinner } from '../../components';
 import { useAuth } from '../../context/auth-context';
-import { useMyApplications } from '../../hooks';
+import { useMyApplications, useJobMatchScores } from '../../hooks';
 import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStatus';
+import type { Job } from '../../services';
 
 const JobSeekerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -14,6 +15,20 @@ const JobSeekerDashboard: React.FC = () => {
 
   // Recent applications (last 3)
   const recentApplications = applications.slice(0, 3);
+
+  // Extract job IDs from recent applications for batch fetch
+  const jobIds = useMemo(() => {
+    return recentApplications
+      .map(app => {
+        const job = typeof app.jobId === 'object' ? app.jobId as Job : null;
+        return typeof app.jobId === 'string' ? app.jobId : job?._id;
+      })
+      .filter((id): id is string => !!id);
+  }, [recentApplications]);
+
+  // Fetch match scores for recent applications
+  const { data: matchScoresResponse } = useJobMatchScores(jobIds.length > 0 ? jobIds : undefined);
+  const matchScores = matchScoresResponse?.data || {};
 
   // Resume strength score (demo value)
   const resumeStrengthScore = 85;
@@ -118,8 +133,10 @@ const JobSeekerDashboard: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     {recentApplications.map((application) => {
-                      const job = typeof application.jobId === 'object' ? application.jobId : null;
-                      const matchScore = Math.floor(Math.random() * 20) + 80;
+                      const job = typeof application.jobId === 'object' ? application.jobId as Job : null;
+                      const jobId = typeof application.jobId === 'string' ? application.jobId : job?._id;
+                      const matchData = jobId ? matchScores[jobId] : null;
+                      const matchScore = matchData?.matchScore;
                       
                       return (
                         <div key={application._id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
@@ -131,7 +148,9 @@ const JobSeekerDashboard: React.FC = () => {
                             <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
                               {getStatusLabel(application.status)}
                             </span>
-                            <span className="text-green-600 text-sm font-medium">✓ {matchScore}% Match</span>
+                            {matchScore !== null && matchScore !== undefined && (
+                              <span className="text-green-600 text-sm font-medium">✓ {matchScore}% Match</span>
+                            )}
                           </div>
                         </div>
                       );

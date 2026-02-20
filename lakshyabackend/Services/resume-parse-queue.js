@@ -31,17 +31,25 @@ try {
 const initializeQueue = async () => {
   if (Queue && Worker) {
     try {
-      // Try to create BullMQ queue with Redis
+      // Test Redis connection first before creating queue/worker
+      const Redis = require('ioredis');
       const redisConfig = {
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT) || 6379,
-        maxRetriesPerRequest: 3,
-        connectTimeout: 5000
+        maxRetriesPerRequest: null, // Required by BullMQ
+        retryStrategy: () => null, // Don't retry connections
+        lazyConnect: true,
+        connectTimeout: 3000
       };
 
+      const testRedis = new Redis(redisConfig);
+      await testRedis.connect();
+      await testRedis.ping();
+      await testRedis.quit();
+
+      // Redis is available, create queue and worker
       resumeQueue = new Queue('resume-parsing', { connection: redisConfig });
 
-      // Create worker to process jobs
       const worker = new Worker(
         'resume-parsing',
         async (job) => {
@@ -61,15 +69,16 @@ const initializeQueue = async () => {
         console.error(`❌ Job ${job?.id} failed:`, err.message);
       });
 
-      // Test Redis connection
-      await resumeQueue.waitUntilReady();
+      // Suppress reconnection errors
+      worker.on('error', (err) => {
+        // Silently handle worker errors to avoid spam
+      });
+
       isUsingRedis = true;
       console.log('✅ Resume parsing queue initialized with Redis');
-
       return true;
     } catch (error) {
-      console.warn('⚠️  Redis connection failed:', error.message);
-      console.warn('   Falling back to in-memory queue');
+      console.warn('⚠️  Redis not available - using in-memory queue');
       resumeQueue = null;
       isUsingRedis = false;
     }

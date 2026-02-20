@@ -1,6 +1,7 @@
 const ApplicationModel = require('../models/application-model');
 const JobModel = require('../models/job-model');
 const UserModel = require('../models/user-model');
+const JobMatchAnalysis = require('../models/job-match-analysis');
 
 /**
  * Apply for a job
@@ -47,6 +48,22 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
       const user = await UserModel.findById(applicantId);
       resume = user.resume;
     }
+
+    // Attach match analysis data if available (non-blocking)
+    let matchData = {};
+    try {
+      const analysis = await JobMatchAnalysis.findOne({ userId: applicantId, jobId });
+      if (analysis) {
+        matchData = {
+          matchScore: analysis.matchScore,
+          matchedSkills: analysis.matchedSkills,
+          missingSkills: analysis.missingSkills,
+          matchAnalyzedAt: analysis.analyzedAt,
+        };
+      }
+    } catch (matchErr) {
+      console.warn('⚠ Could not attach match data to application:', matchErr.message);
+    }
     
     // Create application
     const application = new ApplicationModel({
@@ -54,7 +71,8 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
       applicant: applicantId,
       resume,
       coverLetter: applicationData.coverLetter || null,
-      status: 'applied'
+      status: 'applied',
+      ...matchData,
     });
     
     await application.save();

@@ -129,6 +129,28 @@ const buildQueryParams = (filters: JobFilters): URLSearchParams => {
   return params;
 };
 
+export interface JobMatchAnalysis {
+  matchScore: number;
+  skillScorePercent: number;
+  semanticPercent: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  suggestions: string[];
+  summaryRewrite: string;
+  suggestionSource: 'ollama' | 'rule';
+  analyzedAt: string;
+}
+
+export interface JobMatchScore {
+  matchScore: number | null;
+  analyzedAt: string | null;
+  source: 'cache' | 'missing';
+}
+
+export interface BatchMatchScoresResponse {
+  [jobId: string]: JobMatchScore;
+}
+
 export const jobService = {
   // Get all jobs with filters (public)
   getJobs: async (filters: JobFilters = {}): Promise<JobsResponse> => {
@@ -194,6 +216,18 @@ export const jobService = {
   // Toggle job status (recruiter only)
   toggleJobStatus: async (jobId: string): Promise<{ success: boolean; data: Job }> => {
     const response = await axiosInstance.patch(`/jobs/${jobId}/toggle-status`);
+    return response.data;
+  },
+
+  // Get match analysis for a specific job (job seeker only)
+  getJobMatch: async (jobId: string): Promise<{ success: boolean; data: JobMatchAnalysis }> => {
+    const response = await axiosInstance.get(`/job-seeker/jobs/${jobId}/match`);
+    return response.data;
+  },
+
+  // Get cached match scores for multiple jobs (batch - job seeker only)
+  getBatchMatchScores: async (jobIds: string[]): Promise<{ success: boolean; data: BatchMatchScoresResponse }> => {
+    const response = await axiosInstance.post(`/job-seeker/jobs/match-scores`, { jobIds });
     return response.data;
   },
 };

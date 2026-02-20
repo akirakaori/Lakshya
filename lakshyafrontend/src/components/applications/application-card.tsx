@@ -6,13 +6,11 @@ import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStat
 interface ApplicationCardProps {
   application: Application;
   variant?: 'card' | 'row';
+  matchScore?: number | null;
 }
 
-const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, variant = 'card' }) => {
+const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, variant = 'card', matchScore }) => {
   const job = typeof application.jobId === 'object' ? application.jobId as Job : null;
-
-  // Generate a random match score (for demo)
-  const aiMatchScore = Math.floor(Math.random() * 25) + 75;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -36,9 +34,13 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, variant 
           </span>
         </td>
         <td className="px-6 py-4">
-          <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-            {aiMatchScore}%
-          </span>
+          {matchScore !== null && matchScore !== undefined ? (
+            <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+              {matchScore}%
+            </span>
+          ) : (
+            <span className="text-gray-400 text-xs">—</span>
+          )}
         </td>
       </tr>
     );
@@ -79,7 +81,9 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, variant 
             {formatDate(application.createdAt)}
           </span>
         </div>
-        <span className="text-green-600 font-medium">✓ {aiMatchScore}% Match</span>
+        {matchScore !== null && matchScore !== undefined && (
+          <span className="text-green-600 font-medium">✓ {matchScore}% Match</span>
+        )}
       </div>
     </div>
   );

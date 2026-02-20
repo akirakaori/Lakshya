@@ -14,6 +14,7 @@ const jobRoutes = require('./Routes/job-routes');
 const applicationRoutes = require('./Routes/application-routes');
 const adminRoutes = require('./Routes/admin-routes');
 const recruiterRoutes = require('./Routes/recruiter-routes');
+const jobSeekerRoutes = require('./Routes/job-seeker-routes');
 
 // Import middleware
 const errorHandler = require('./Middleware/error-handler');
@@ -56,6 +57,7 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/recruiter', recruiterRoutes);
+app.use('/api/job-seeker', jobSeekerRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {

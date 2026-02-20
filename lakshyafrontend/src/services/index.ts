@@ -5,7 +5,7 @@ export { applicationService } from './application-service';
 export { profileService } from './profile-service';
 
 export type { LoginCredentials, RegisterData, AuthResponse } from './auth-service';
-export type { Job, JobFilters, JobsResponse, CreateJobData } from './job-service';
+export type { Job, JobFilters, JobsResponse, CreateJobData, JobMatchAnalysis, JobMatchScore, BatchMatchScoresResponse } from './job-service';
 export type { 
   Application, 
   ApplyJobData, 

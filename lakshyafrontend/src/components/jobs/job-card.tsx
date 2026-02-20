@@ -22,9 +22,6 @@ const formatSalary = (salary: Job['salary']) => {
 };
 
 const JobCard: React.FC<JobCardProps> = ({ job, variant = 'default', showMatchScore = false, matchScore }) => {
-  // Generate a random match score if not provided (for demo purposes)
-  const aiMatchScore = matchScore ?? Math.floor(Math.random() * 30) + 70;
-  
   const getMatchScoreColor = (score: number) => {
     if (score >= 90) return 'bg-green-100 text-green-700';
     if (score >= 75) return 'bg-blue-100 text-blue-700';
@@ -45,9 +42,9 @@ const JobCard: React.FC<JobCardProps> = ({ job, variant = 'default', showMatchSc
             <h3 className="font-semibold text-gray-900 hover:text-indigo-600">{job.title}</h3>
             <p className="text-sm text-gray-600 mt-1">{job.companyName}</p>
           </div>
-          {showMatchScore && (
-            <span className={`text-sm px-2 py-1 rounded-full ${getMatchScoreColor(aiMatchScore)}`}>
-              {aiMatchScore}%
+          {showMatchScore && matchScore !== undefined && (
+            <span className={`text-sm px-2 py-1 rounded-full ${getMatchScoreColor(matchScore)}`}>
+              {matchScore}%
             </span>
           )}
         </div>
@@ -104,9 +101,9 @@ const JobCard: React.FC<JobCardProps> = ({ job, variant = 'default', showMatchSc
 
       {/* AI Match Score & View Details */}
       <div className="mt-4 flex items-center justify-between">
-        {showMatchScore && (
-          <div className={`text-sm px-3 py-1 rounded-full ${getMatchScoreColor(aiMatchScore)}`}>
-            AI Match: {aiMatchScore}%
+        {showMatchScore && matchScore !== undefined && (
+          <div className={`text-sm px-3 py-1 rounded-full ${getMatchScoreColor(matchScore)}`}>
+            AI Match: {matchScore}%
           </div>
         )}
         <Link

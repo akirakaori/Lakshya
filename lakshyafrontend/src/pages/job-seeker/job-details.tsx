@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { DashboardLayout, JobCard, LoadingSpinner, EmptyState } from '../../components';
+import { DashboardLayout, JobCard, LoadingSpinner, EmptyState, JobMatchPanel } from '../../components';
 import { useJob, useJobs, useApplyForJob, useHasApplied } from '../../hooks';
+import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
 import type { Job } from '../../services';
 
@@ -46,12 +47,12 @@ const JobDetails: React.FC = () => {
   const { data: relatedJobsData } = useJobs({ limit: 4 });
   const applyMutation = useApplyForJob();
   const hasApplied = useHasApplied(jobId);
+  const { user } = useAuth();
 
   const job = jobData?.data;
   const relatedJobs = relatedJobsData?.data?.filter((j: Job) => j._id !== jobId).slice(0, 4) || [];
 
-  // Demo match score
-  const aiMatchScore = 92;
+  const isJobSeeker = user?.role === 'job_seeker';
 
   const handleApply = async () => {
     if (!jobId) return;
@@ -256,43 +257,10 @@ const JobDetails: React.FC = () => {
               </p>
             </div>
 
-            {/* AI Match Score */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Match Score</h3>
-              <div className="flex items-center justify-center">
-                <div className="relative w-32 h-32">
-                  <svg className="w-full h-full" viewBox="0 0 100 100">
-                    <circle
-                      className="text-gray-200"
-                      strokeWidth="8"
-                      stroke="currentColor"
-                      fill="transparent"
-                      r="40"
-                      cx="50"
-                      cy="50"
-                    />
-                    <circle
-                      className="text-green-500"
-                      strokeWidth="8"
-                      strokeDasharray={`${aiMatchScore * 2.51} 251`}
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="transparent"
-                      r="40"
-                      cx="50"
-                      cy="50"
-                      transform="rotate(-90 50 50)"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-green-600">{aiMatchScore}%</span>
-                  </div>
-                </div>
-              </div>
-              <p className="text-sm text-gray-500 text-center mt-2">
-                Great match! Your profile aligns well with this role.
-              </p>
-            </div>
+            {/* AI Match Score — real analysis */}
+            {isJobSeeker && jobId && (
+              <JobMatchPanel jobId={jobId} />
+            )}
           </div>
         </div>
 
