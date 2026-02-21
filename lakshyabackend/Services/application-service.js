@@ -136,7 +136,7 @@ const getMyApplications = async (applicantId, filters = {}) => {
     
     const applications = await applicationsQuery;
     
-    // If search query provided, filter populated results
+    // If search query provided, filter populated its results 
     let filteredApplications = applications;
     if (q && q.trim()) {
       const searchTerm = q.toLowerCase();
