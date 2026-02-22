@@ -117,46 +117,58 @@ const BrowseJobs: React.FC = () => {
   return (
     <DashboardLayout variant="job-seeker" title="Job Search">
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Search Bar */}
-        <div className="mb-6">
-          <form onSubmit={handleSearch} className="flex gap-3">
-            <div className="flex-1 relative">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        {/* Blue Gradient Search Header Banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700 px-4 sm:px-6 lg:px-10 py-6 sm:py-8 mb-6">
+          {/* Decorative Shapes */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
+          
+          {/* Content */}
+          <div className="relative z-10">
+            <h1 className="text-white text-2xl sm:text-3xl font-semibold mb-4">
+              Let's find your dream job!
+            </h1>
+            
+            {/* Search Form */}
+            <form onSubmit={handleSearch} className="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch">
+              <div className="flex-1 flex items-center gap-3 bg-white/15 backdrop-blur-md rounded-full px-4 py-3 ring-1 ring-white/20">
+                <svg
+                  className="w-5 h-5 text-white/70 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Find job title..."
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch(e);
+                    }
+                  }}
+                  className="w-full bg-transparent placeholder:text-white/70 text-white outline-none"
                 />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search by job title, keywords, or company..."
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch(e);
-                  }
-                }}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              Search
-            </button>
-          </form>
+              </div>
+              <button
+                type="submit"
+                className="rounded-full bg-white text-blue-700 font-semibold px-6 py-3 hover:bg-white/90 transition flex items-center justify-center gap-2"
+              >
+                <span>Search</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </form>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
@@ -225,7 +237,7 @@ const BrowseJobs: React.FC = () => {
             ) : (
               <>
                 {/* Job Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
                   {jobs.map((job) => {
                     const matchData = matchScores[job._id];
                     const matchScore = matchData?.matchScore ?? undefined;
