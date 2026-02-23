@@ -24,6 +24,7 @@ export interface Job {
   deletedAt?: string | null;
   deletedBy?: string | null;
   deletedByRole?: 'admin' | 'recruiter' | null;
+  interviewRoundsRequired?: number; // Number of interview rounds required (1-4, default 2)
   createdBy: {
     _id: string;
     name: string;
@@ -79,6 +80,7 @@ export interface CreateJobData {
   type?: string;
   experienceLevel?: string;
   jobType?: string;
+  interviewRoundsRequired?: number; // Number of interview rounds (1-4, default 2)
 }
 
 // Helper: Build query params from filters (removes empty/undefined values)

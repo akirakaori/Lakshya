@@ -13,6 +13,8 @@ export type {
   ApplicationsResponse,
   RecruiterApplicationFilters,
   RecruiterApplicationsResponse,
-  RecruiterApplication
+  RecruiterApplication,
+  Interview,
+  ScheduleInterviewData
 } from './application-service';
 export type { UserProfile, UpdateProfileData } from './profile-service';

@@ -231,7 +231,14 @@ const getApplicationDetails = async (applicationId, recruiterId) => {
       missingSkills: application.missingSkills || [],
       matchAnalyzedAt: application.matchAnalyzedAt,
       experienceYears: application.experienceYears || 0,
+      // Interview data (both legacy and new multi-round)
       interview: application.interview,
+      interviews: application.interviews || [], // Multi-round interviews array
+      jobId: {
+        _id: application.jobId._id,
+        title: application.jobId.title,
+        interviewRoundsRequired: application.jobId.interviewRoundsRequired || 2
+      } // Include jobId with interview rounds info
     },
     candidate: application.applicant,
     job: {

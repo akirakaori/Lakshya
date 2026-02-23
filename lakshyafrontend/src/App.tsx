@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ToastContainer, Slide } from 'react-toastify';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/toast.css';
 
@@ -41,41 +40,29 @@ import {
 // Admin Pages
 import { AdminProfile, AdminDashboard } from "./pages/admin";
 
-// Create a client for TanStack Query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
 function App() {
   const [_, setIsAuthenticated] = useState(false);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <div className="App">
-          <RefreshHandler setIsAuthenticated={setIsAuthenticated} />
-          {/* Global Toast Container */}
-          <ToastContainer
-            position="top-center"
-            autoClose={2500}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss={false}
-            draggable={false}
-            pauseOnHover={false}
-            theme="colored"
-            transition={Slide}
-            limit={1}
-          />
-          <Routes>
+    <AuthProvider>
+      <div className="App">
+        <RefreshHandler setIsAuthenticated={setIsAuthenticated} />
+        {/* Global Toast Container */}
+        <ToastContainer
+          position="top-center"
+          autoClose={2500}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss={false}
+          draggable={false}
+          pauseOnHover={false}
+          theme="colored"
+          transition={Slide}
+          limit={1}
+        />
+        <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
@@ -221,7 +208,6 @@ function App() {
           </Routes>
         </div>
       </AuthProvider>
-    </QueryClientProvider>
   );
 }
 

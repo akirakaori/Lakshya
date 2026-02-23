@@ -174,7 +174,7 @@ const shortlistCandidate = async (req, res) => {
 };
 
 /**
- * Schedule interview (recruiter only)
+ * Schedule interview (recruiter only) - LEGACY single interview
  */
 const scheduleInterview = async (req, res) => {
   try {
@@ -187,6 +187,59 @@ const scheduleInterview = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Interview scheduled successfully',
+      data: application
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Schedule multi-round interview (recruiter only)
+ */
+const scheduleInterviewRound = async (req, res) => {
+  try {
+    const recruiterId = req.user.id;
+    const applicationId = req.params.applicationId;
+    const interviewData = req.body;
+    
+    const application = await applicationService.scheduleInterviewRound(applicationId, recruiterId, interviewData);
+    
+    res.status(201).json({
+      success: true,
+      message: 'Interview round scheduled successfully',
+      data: application
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Update interview feedback/outcome (recruiter only)
+ */
+const updateInterviewFeedback = async (req, res) => {
+  try {
+    const recruiterId = req.user.id;
+    const { applicationId, interviewId } = req.params;
+    const feedbackData = req.body;
+    
+    const application = await applicationService.updateInterviewFeedback(
+      applicationId,
+      interviewId,
+      recruiterId,
+      feedbackData
+    );
+    
+    res.status(200).json({
+      success: true,
+      message: 'Interview feedback updated successfully',
       data: application
     });
   } catch (error) {
@@ -260,6 +313,8 @@ module.exports = {
   withdrawApplication,
   shortlistCandidate,
   scheduleInterview,
+  scheduleInterviewRound,
+  updateInterviewFeedback,
   updateRecruiterNotes,
   getApplicationByJobAndCandidate
 };

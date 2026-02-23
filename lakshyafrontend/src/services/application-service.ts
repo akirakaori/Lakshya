@@ -1,6 +1,23 @@
 import axiosInstance from './axios-instance';
 import type { Job } from './job-service';
 
+// Interview type for multi-round scheduling
+export interface Interview {
+  _id?: string;
+  roundNumber: number;
+  date: string;
+  time?: string;
+  timezone?: string;
+  mode: 'online' | 'onsite' | 'phone';
+  linkOrLocation?: string;
+  messageToCandidate?: string; // Visible to candidate
+  internalNotes?: string; // Recruiter-only
+  outcome?: 'pass' | 'fail' | 'hold' | 'pending';
+  feedback?: string; // Recruiter feedback after interview
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Application {
   _id: string;
   jobId: Job | string | null;
@@ -26,13 +43,16 @@ export interface Application {
   } | string;
   resume?: string;
   coverLetter?: string;
-  status: 'applied' | 'shortlisted' | 'interview' | 'rejected';
+  status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired';
   notes?: string;
+  // Legacy single interview field (deprecated - use interviews array)
   interview?: {
     date?: string;
     mode?: string;
     link?: string;
   };
+  // Multi-round interviews
+  interviews?: Interview[];
   createdAt: string;
   updatedAt: string;
 }
@@ -44,18 +64,29 @@ export interface ApplyJobData {
 
 export interface ApplicationFilters {
   q?: string;
-  status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected';
+  status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired';
   page?: number;
   limit?: number;
 }
 
 export interface RecruiterApplicationFilters {
-  status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected';
+  status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired';
   sort?: 'newest' | 'match' | 'experience';
   search?: string;
   minScore?: number;
   mustHave?: string;
   missing?: string;
+}
+
+export interface ScheduleInterviewData {
+  roundNumber?: number; // Auto-computed if not provided
+  date: string;
+  time?: string;
+  timezone?: string;
+  mode: 'online' | 'onsite' | 'phone';
+  linkOrLocation?: string;
+  messageToCandidate?: string;
+  internalNotes?: string;
 }
 
 export interface RecruiterApplicationsResponse {
@@ -179,12 +210,34 @@ export const applicationService = {
     return response.data;
   },
 
-  // Schedule interview (recruiter only)
+  // Schedule interview (recruiter only - legacy single interview)
   scheduleInterview: async (
     applicationId: string,
     interviewData?: { date?: string; mode?: string; link?: string }
   ): Promise<{ success: boolean; data: Application }> => {
     const response = await axiosInstance.patch(`/applications/${applicationId}/interview`, interviewData || {});
+    return response.data;
+  },
+
+  // Schedule multi-round interview (recruiter only)
+  scheduleInterviewRound: async (
+    applicationId: string,
+    interviewData: ScheduleInterviewData
+  ): Promise<{ success: boolean; data: Application }> => {
+    const response = await axiosInstance.post(`/applications/${applicationId}/interviews`, interviewData);
+    return response.data;
+  },
+
+  // Update interview feedback/outcome (recruiter only)
+  updateInterviewFeedback: async (
+    applicationId: string,
+    interviewId: string,
+    feedback: { outcome?: 'pass' | 'fail' | 'hold'; feedback?: string }
+  ): Promise<{ success: boolean; data: Application }> => {
+    const response = await axiosInstance.patch(
+      `/applications/${applicationId}/interviews/${interviewId}/feedback`,
+      feedback
+    );
     return response.data;
   },
 
@@ -231,7 +284,7 @@ export const applicationService = {
   // Update application status (recruiter - new endpoint)
   updateRecruiterApplicationStatus: async (
     applicationId: string,
-    status: 'applied' | 'shortlisted' | 'interview' | 'rejected'
+    status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired'
   ): Promise<{ success: boolean; data: RecruiterApplication }> => {
     const response = await axiosInstance.patch(`/recruiter/applications/${applicationId}/status`, { status });
     return response.data;
@@ -241,7 +294,7 @@ export const applicationService = {
   bulkUpdateApplicationStatus: async (
     jobId: string,
     applicationIds: string[],
-    status: 'applied' | 'shortlisted' | 'interview' | 'rejected'
+    status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired'
   ): Promise<{ success: boolean; data: { modifiedCount: number; status: string } }> => {
     const response = await axiosInstance.patch(`/recruiter/jobs/${jobId}/applications/bulk-status`, {
       applicationIds,

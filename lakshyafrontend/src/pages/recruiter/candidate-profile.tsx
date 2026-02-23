@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { DashboardLayout, LoadingSpinner } from '../../components';
+import { DashboardLayout, LoadingSpinner, ScheduleInterviewModal } from '../../components';
 import { useQuery } from '@tanstack/react-query';
 import { 
   useShortlistCandidate, 
-  useScheduleInterview, 
-  useUpdateApplicationNotes 
+  useUpdateApplicationNotes,
+  useUpdateRecruiterApplicationStatus,
+  useUpdateInterviewOutcome
 } from '../../hooks';
 import axiosInstance from '../../services/axios-instance';
 import { toast } from 'react-toastify';
 import { getFileUrl, getInitials } from '../../utils';
+import type { Interview } from '../../services';
 
 interface CandidateProfile {
   _id: string;
@@ -32,6 +34,7 @@ interface CandidateProfile {
 
 interface ApplicationSnapshot {
   _id: string;
+  jobId: string | { _id: string; title: string; interviewRoundsRequired?: number };
   status: string;
   notes: string;
   coverLetter?: string;
@@ -41,6 +44,7 @@ interface ApplicationSnapshot {
   missingSkills: string[];
   matchAnalyzedAt?: string;
   experienceYears: number;
+  interviews?: Interview[];
 }
 
 const CandidateProfile: React.FC = () => {
@@ -48,6 +52,7 @@ const CandidateProfile: React.FC = () => {
 
   const [notes, setNotes] = useState('');
   const [isDirty, setIsDirty] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   // Fetch application with candidate profile and match snapshot
   const { data, isLoading } = useQuery({
@@ -66,12 +71,77 @@ const CandidateProfile: React.FC = () => {
   });
 
   const shortlistMutation = useShortlistCandidate();
-  const interviewMutation = useScheduleInterview();
   const updateNotesMutation = useUpdateApplicationNotes();
+  const updateStatusMutation = useUpdateRecruiterApplicationStatus();
+  const updateInterviewOutcomeMutation = useUpdateInterviewOutcome();
 
   const candidate: CandidateProfile | null = data?.data?.candidate || null;
   const application: ApplicationSnapshot | null = data?.data?.application || null;
   const signedResumeUrl = data?.signedResumeUrl; // If backend provides signed URLs
+  
+  // Extract jobId for modal
+  const jobId = typeof application?.jobId === 'string' 
+    ? application.jobId 
+    : application?.jobId?._id || '';
+  
+  // Normalize interviews array (handle backend field name variations)
+  const normalizedInterviews = React.useMemo(() => {
+    if (!application?.interviews || !Array.isArray(application.interviews)) {
+      return [];
+    }
+    
+    // Debug log to verify data structure
+    console.log('🔍 [INTERVIEW DEBUG] Raw interviews from backend:', application.interviews);
+    
+    return application.interviews.map((interview: any, idx: number) => {
+      // Normalize field names in case backend uses different keys
+      const normalized = {
+        _id: interview._id,
+        roundNumber: interview.roundNumber || idx + 1,
+        date: interview.date || interview.scheduledAt,
+        time: interview.time,
+        timezone: interview.timezone,
+        mode: interview.mode,
+        linkOrLocation: interview.linkOrLocation || interview.locationOrLink || interview.link,
+        messageToCandidate: interview.messageToCandidate || interview.message,
+        internalNotes: interview.internalNotes || interview.internalNote,
+        outcome: interview.outcome || 'pending',
+        feedback: interview.feedback
+      };
+      
+      console.log(`🔍 [INTERVIEW DEBUG] Round ${normalized.roundNumber}:`, {
+        hasInternalNotes: !!normalized.internalNotes,
+        internalNotesLength: normalized.internalNotes?.length || 0,
+        hasMessage: !!normalized.messageToCandidate
+      });
+      
+      return normalized;
+    });
+  }, [application?.interviews]);
+
+  // Compute interview rounds progress
+  const interviewProgress = React.useMemo(() => {
+    if (!application) return { required: 2, completed: 0, eligible: false };
+    
+    // Get required rounds from job (default to 2)
+    const jobData = typeof application.jobId === 'object' ? application.jobId : null;
+    const requiredRounds = jobData?.interviewRoundsRequired ?? 2;
+    
+    // Count completed rounds (outcome === 'pass')
+    const completedRounds = normalizedInterviews.filter(i => i.outcome === 'pass').length;
+    
+    // Eligible for hire if all required rounds are passed
+    const eligible = completedRounds >= requiredRounds;
+    
+    console.log('🎯 [INTERVIEW PROGRESS]', {
+      requiredRounds,
+      completedRounds,
+      eligible,
+      status: application.status
+    });
+    
+    return { required: requiredRounds, completed: completedRounds, eligible };
+  }, [application, normalizedInterviews]);
 
   // Extract avatar URL and initials
   const avatarUrl = candidate?.profileImageUrl ? getFileUrl(candidate.profileImageUrl) : null;
@@ -108,20 +178,50 @@ const CandidateProfile: React.FC = () => {
     }
   };
 
-  const handleScheduleInterview = async () => {
+  const handleReject = async () => {
     if (!application?._id) {
       toast.error('Application not found');
       return;
     }
 
+    if (!window.confirm('Are you sure you want to reject this candidate?')) {
+      return;
+    }
+
     try {
-      await interviewMutation.mutateAsync({
+      await updateStatusMutation.mutateAsync({
         applicationId: application._id,
-        interviewData: { mode: 'virtual' },
+        status: 'rejected',
       });
-      toast.success('Interview scheduled successfully!');
+      toast.success('Candidate rejected');
     } catch {
-      toast.error('Failed to schedule interview');
+      toast.error('Failed to reject candidate');
+    }
+  };
+
+  const handleHire = async () => {
+    if (!application?._id) {
+      toast.error('Application not found');
+      return;
+    }
+
+    if (!interviewProgress.eligible) {
+      toast.error(`Candidate must pass all ${interviewProgress.required} interview rounds before hiring`);
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to hire ${candidate?.fullName}?`)) {
+      return;
+    }
+
+    try {
+      await updateStatusMutation.mutateAsync({
+        applicationId: application._id,
+        status: 'hired',
+      });
+      toast.success('Candidate marked as hired!');
+    } catch {
+      toast.error('Failed to mark as hired');
     }
   };
 
@@ -462,22 +562,160 @@ const CandidateProfile: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
               {application ? (
                 <div className="space-y-3">
-                  <button
-                    onClick={handleShortlist}
-                    disabled={shortlistMutation.isPending || application.status === 'shortlisted'}
-                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {application.status === 'shortlisted' ? 'Already Shortlisted' : 'Shortlist Candidate'}
-                  </button>
-                  <button
-                    onClick={handleScheduleInterview}
-                    disabled={interviewMutation.isPending || application.status === 'interview'}
-                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {application.status === 'interview' ? 'Interview Scheduled' : 'Schedule Interview'}
-                  </button>
+                  {/* Interview Progress Indicator */}
+                  {application.status === 'interview' && (
+                    <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-indigo-900">Interview Progress</span>
+                        <span className="text-xs font-semibold text-indigo-600">
+                          {interviewProgress.completed} of {interviewProgress.required} rounds passed
+                        </span>
+                      </div>
+                      <div className="w-full bg-indigo-200 rounded-full h-2">
+                        <div 
+                          className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(interviewProgress.completed / interviewProgress.required) * 100}%` }}
+                        />
+                      </div>
+                      {interviewProgress.eligible ? (
+                        <p className="text-xs text-green-600 font-medium mt-2">
+                          ✓ All rounds completed - Eligible for hire
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-600 mt-2">
+                          {interviewProgress.required - interviewProgress.completed} more round{(interviewProgress.required - interviewProgress.completed) > 1 ? 's' : ''} needed
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* APPLIED status actions */}
+                  {application.status === 'applied' && (
+                    <>
+                      <button
+                        onClick={handleShortlist}
+                        disabled={shortlistMutation.isPending}
+                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Shortlist Candidate
+                      </button>
+                      <button
+                        onClick={handleReject}
+                        disabled={updateStatusMutation.isPending}
+                        className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:opacity-50"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+
+                  {/* SHORTLISTED status actions */}
+                  {application.status === 'shortlisted' && (
+                    <>
+                      <button
+                        onClick={() => setShowScheduleModal(true)}
+                        className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Schedule Interview (Round 1 of {interviewProgress.required})
+                      </button>
+                      <button
+                        onClick={handleReject}
+                        disabled={updateStatusMutation.isPending}
+                        className="w-full px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 font-medium disabled:opacity-50"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+
+                  {/* INTERVIEW status actions */}
+                  {application.status === 'interview' && (
+                    <>
+                      {/* Interview Progress Indicator */}
+                      <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                        <div className="flex items-center justify-between mb-2 text-sm">
+                          <span className="font-medium text-indigo-900">Interview Progress</span>
+                          <span className="text-indigo-700 font-semibold">
+                            {interviewProgress.completed} of {interviewProgress.required} rounds passed
+                          </span>
+                        </div>
+                        <div className="w-full bg-indigo-200 rounded-full h-2 mb-2">
+                          <div 
+                            className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${(interviewProgress.completed / interviewProgress.required) * 100}%` }}
+                          />
+                        </div>
+                        {interviewProgress.eligible ? (
+                          <p className="text-xs text-green-700 font-medium flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            All rounds completed - Eligible for hire
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-600">
+                            {interviewProgress.required - interviewProgress.completed} more round{interviewProgress.required - interviewProgress.completed > 1 ? 's' : ''} needed
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Show HIRE button if all rounds completed */}
+                      {interviewProgress.eligible ? (
+                        <button
+                          onClick={handleHire}
+                          disabled={updateStatusMutation.isPending}
+                          className="w-full px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 font-medium disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {updateStatusMutation.isPending ? 'Processing...' : 'Hire Candidate'}
+                        </button>
+                      ) : (
+                        /* Show SCHEDULE NEXT ROUND if more rounds needed */
+                        <button
+                          onClick={() => setShowScheduleModal(true)}
+                          className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          Schedule Next Round ({interviewProgress.completed + 1} of {interviewProgress.required})
+                        </button>
+                      )}
+                      <button
+                        onClick={handleReject}
+                        disabled={updateStatusMutation.isPending}
+                        className="w-full px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 font-medium disabled:opacity-50"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+
+                  {/* REJECTED/HIRED status (read-only) */}
+                  {(application.status === 'rejected' || application.status === 'hired') && (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-gray-500">
+                        Status: <span className="font-medium capitalize">{application.status}</span>
+                      </p>
+                      {application.status === 'hired' && (
+                        <p className="text-xs text-green-600 font-medium mt-1">
+                          ✓ Candidate successfully hired after {interviewProgress.completed} interview rounds
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Common actions */}
                   <a
-                    href={`mailto:${candidate.email}`}
+                    href={`mailto:${candidate?.email}`}
                     className="block w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-center"
                   >
                     Send Message
@@ -487,6 +725,129 @@ const CandidateProfile: React.FC = () => {
                 <p className="text-gray-500 text-sm">Application not found. Quick actions are not available.</p>
               )}
             </div>
+
+            {/* Interview Schedule */}
+            {normalizedInterviews.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Interview Schedule
+                  <span className="ml-2 text-sm text-gray-500 font-normal">({normalizedInterviews.length} round{normalizedInterviews.length > 1 ? 's' : ''})</span>
+                </h2>
+                <div className="space-y-3">
+                  {normalizedInterviews.map((interview, idx) => (
+                    <div key={idx} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
+                            Round {interview.roundNumber}
+                          </span>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            interview.outcome === 'pass' ? 'bg-green-100 text-green-700' :
+                            interview.outcome === 'fail' ? 'bg-red-100 text-red-700' :
+                            interview.outcome === 'hold' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {interview.outcome === 'pass' ? '✓ Pass' :
+                             interview.outcome === 'fail' ? '✗ Fail' :
+                             interview.outcome === 'hold' ? '⏸ Hold' :
+                             'Pending'}
+                          </span>
+                        </div>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize">
+                          {interview.mode}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span>
+                            {new Date(interview.date).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                            {interview.time && ` at ${interview.time}`}
+                            {interview.timezone && ` (${interview.timezone})`}
+                          </span>
+                        </div>
+                        {interview.linkOrLocation && (
+                          <div className="flex items-start gap-2 mt-1">
+                            <svg className="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            </svg>
+                            <span className="break-words">{interview.linkOrLocation}</span>
+                          </div>
+                        )}
+                        {interview.messageToCandidate && (
+                          <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
+                            <p className="font-medium text-blue-900 mb-1">Message to Candidate:</p>
+                            <p className="text-blue-700">{interview.messageToCandidate}</p>
+                          </div>
+                        )}
+                        {interview.internalNotes && (
+                          <div className="mt-2 p-2 bg-amber-50 rounded text-xs">
+                            <p className="font-medium text-amber-900 mb-1">Internal Notes (Private):</p>
+                            <p className="text-amber-700">{interview.internalNotes}</p>
+                          </div>
+                        )}
+                        
+                        {/* Mark Pass/Fail Buttons */}
+                        {(!interview.outcome || interview.outcome === 'pending') && interview._id && (
+                          <div className="mt-3 pt-3 border-t border-gray-200 flex gap-2">
+                            <button
+                              onClick={async () => {
+                                if (!applicationId) return;
+                                try {
+                                  await updateInterviewOutcomeMutation.mutateAsync({
+                                    applicationId,
+                                    interviewId: interview._id!,
+                                    outcome: 'pass'
+                                  });
+                                  toast.success(`Round ${interview.roundNumber} marked as PASS`);
+                                } catch (error) {
+                                  toast.error('Failed to update interview outcome');
+                                }
+                              }}
+                              disabled={updateInterviewOutcomeMutation.isPending}
+                              className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Mark Pass
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!applicationId) return;
+                                try {
+                                  await updateInterviewOutcomeMutation.mutateAsync({
+                                    applicationId,
+                                    interviewId: interview._id!,
+                                    outcome: 'fail'
+                                  });
+                                  toast.success(`Round ${interview.roundNumber} marked as FAIL`);
+                                } catch (error) {
+                                  toast.error('Failed to update interview outcome');
+                                }
+                              }}
+                              disabled={updateInterviewOutcomeMutation.isPending}
+                              className="flex-1 px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              Mark Fail
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Notes */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -519,6 +880,17 @@ const CandidateProfile: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Schedule Interview Modal */}
+        {showScheduleModal && application && (
+          <ScheduleInterviewModal
+            applicationId={application._id}
+            jobId={jobId}
+            currentInterviews={normalizedInterviews}
+            candidateName={candidate?.fullName || 'Candidate'}
+            onClose={() => setShowScheduleModal(false)}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

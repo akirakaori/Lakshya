@@ -93,6 +93,12 @@ const jobSchema = new Schema({
     type: String,
     enum: ['admin', 'recruiter', null],
     default: null
+  },
+  interviewRoundsRequired: {
+    type: Number,
+    min: 1,
+    max: 4,
+    default: 2
   }
 }, { 
   timestamps: true,

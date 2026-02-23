@@ -41,6 +41,7 @@ const PostJob: React.FC = () => {
     skills: [] as string[],
     requirements: '',
     benefits: '',
+    interviewRoundsRequired: 2, // Default to 2 rounds
   });
 
   const [newSkill, setNewSkill] = useState('');
@@ -64,6 +65,7 @@ const PostJob: React.FC = () => {
         skills: job.skills || job.skillsRequired || [],
         requirements: Array.isArray(job.requirements) ? job.requirements.join('\n') : '',
         benefits: Array.isArray(job.benefits) ? job.benefits.join('\n') : '',
+        interviewRoundsRequired: job.interviewRoundsRequired || 2,
       });
     }
   }, [isEditMode, jobData]);
@@ -126,6 +128,7 @@ const PostJob: React.FC = () => {
       skillsRequired: formData.skills,
       requirements: formData.requirements.split('\n').filter(r => r.trim()),
       benefits: formData.benefits.split('\n').filter(b => b.trim()),
+      interviewRoundsRequired: parseInt(formData.interviewRoundsRequired.toString()) || 2,
     };
 
     try {
@@ -238,6 +241,26 @@ const PostJob: React.FC = () => {
                   <option value="lead">Lead / Manager</option>
                   <option value="executive">Executive</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Interview Rounds Required
+                  <span className="ml-2 text-xs text-gray-500">(How many rounds before hire?)</span>
+                </label>
+                <select
+                  name="interviewRoundsRequired"
+                  value={formData.interviewRoundsRequired}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value={1}>1 Round</option>
+                  <option value={2}>2 Rounds (Recommended)</option>
+                  <option value={3}>3 Rounds</option>
+                  <option value={4}>4 Rounds</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Candidates must pass all {formData.interviewRoundsRequired} round{formData.interviewRoundsRequired > 1 ? 's' : ''} before being eligible for hire
+                </p>
               </div>
             </div>
           </div>

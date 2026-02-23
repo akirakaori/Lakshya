@@ -22,7 +22,7 @@ const applicationSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['applied', 'shortlisted', 'interview', 'rejected'],
+    enum: ['applied', 'shortlisted', 'interview', 'rejected', 'hired'],
     default: 'applied'
   },
   notes: {
@@ -70,7 +70,32 @@ const applicationSchema = new Schema({
     date: { type: Date },
     mode: { type: String }, // 'virtual', 'in-person', 'phone'
     link: { type: String }
-  }
+  },
+  // Multi-round interviews array
+  interviews: [
+    {
+      roundNumber: { type: Number, required: true },
+      date: { type: Date, required: true },
+      time: { type: String },
+      timezone: { type: String },
+      mode: { 
+        type: String, 
+        enum: ['online', 'onsite', 'phone'],
+        required: true 
+      },
+      linkOrLocation: { type: String },
+      messageToCandidate: { type: String }, // Visible to candidate
+      internalNotes: { type: String }, // Recruiter-only
+      outcome: { 
+        type: String, 
+        enum: ['pass', 'fail', 'hold', 'pending'],
+        default: 'pending'
+      },
+      feedback: { type: String }, // Recruiter feedback
+      createdAt: { type: Date, default: Date.now },
+      updatedAt: { type: Date, default: Date.now }
+    }
+  ]
 }, { 
   timestamps: true 
 });

@@ -25,10 +25,12 @@ export {
   useApplicationByJobAndCandidate,
   useShortlistCandidate,
   useScheduleInterview,
+  useScheduleInterviewRound,
   useUpdateApplicationNotes,
   useRecruiterJobApplications,
   useUpdateRecruiterApplicationStatus,
   useBulkUpdateApplicationStatus,
+  useUpdateInterviewOutcome,
   applicationKeys 
 } from './use-applications';
 

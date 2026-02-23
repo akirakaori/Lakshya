@@ -55,10 +55,24 @@ router.patch('/:id/shortlist', authorizeRoles(ROLES.RECRUITER), applicationContr
 
 /**
  * @route   PATCH /api/applications/:id/interview
- * @desc    Schedule interview
+ * @desc    Schedule interview (legacy single interview)
  * @access  Private (Recruiter only - must be the job creator)
  */
 router.patch('/:id/interview', authorizeRoles(ROLES.RECRUITER), applicationController.scheduleInterview);
+
+/**
+ * @route   POST /api/applications/:applicationId/interviews
+ * @desc    Schedule multi-round interview
+ * @access  Private (Recruiter only - must be the job creator)
+ */
+router.post('/:applicationId/interviews', authorizeRoles(ROLES.RECRUITER), applicationController.scheduleInterviewRound);
+
+/**
+ * @route   PATCH /api/applications/:applicationId/interviews/:interviewId/feedback
+ * @desc    Update interview feedback/outcome
+ * @access  Private (Recruiter only - must be the job creator)
+ */
+router.patch('/:applicationId/interviews/:interviewId/feedback', authorizeRoles(ROLES.RECRUITER), applicationController.updateInterviewFeedback);
 
 /**
  * @route   PATCH /api/applications/:id/notes

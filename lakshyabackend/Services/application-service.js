@@ -308,7 +308,7 @@ const shortlistCandidate = async (applicationId, recruiterId) => {
 };
 
 /**
- * Schedule interview (recruiter only)
+ * Schedule interview (recruiter only) - LEGACY single interview
  */
 const scheduleInterview = async (applicationId, recruiterId, interviewData) => {
   try {
@@ -334,6 +334,117 @@ const scheduleInterview = async (applicationId, recruiterId, interviewData) => {
       mode: interviewData.mode || 'virtual',
       link: interviewData.link || ''
     };
+    await application.save();
+    
+    await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
+    
+    return application;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Schedule multi-round interview (recruiter only)
+ */
+const scheduleInterviewRound = async (applicationId, recruiterId, interviewData) => {
+  try {
+    const application = await ApplicationModel.findById(applicationId)
+      .populate('jobId');
+    
+    if (!application) {
+      const error = new Error('Application not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Verify the job belongs to the recruiter
+    if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
+      const error = new Error('Unauthorized');
+      error.statusCode = 403;
+      throw error;
+    }
+    
+    // Initialize interviews array if it doesn't exist
+    if (!application.interviews) {
+      application.interviews = [];
+    }
+    
+    // Auto-compute round number if not provided
+    const roundNumber = interviewData.roundNumber || (application.interviews.length + 1);
+    
+    // Create new interview round
+    const newInterview = {
+      roundNumber,
+      date: interviewData.date,
+      time: interviewData.time,
+      timezone: interviewData.timezone,
+      mode: interviewData.mode,
+      linkOrLocation: interviewData.linkOrLocation,
+      messageToCandidate: interviewData.messageToCandidate,
+      internalNotes: interviewData.internalNotes,
+      outcome: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    // Add to interviews array
+    application.interviews.push(newInterview);
+    
+    // Update status to interview if not already
+    if (application.status !== 'interview') {
+      application.status = 'interview';
+    }
+    
+    await application.save();
+    
+    // Populate before returning
+    await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
+    
+    return application;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Update interview feedback/outcome (recruiter only)
+ */
+const updateInterviewFeedback = async (applicationId, interviewId, recruiterId, feedbackData) => {
+  try {
+    const application = await ApplicationModel.findById(applicationId)
+      .populate('jobId');
+    
+    if (!application) {
+      const error = new Error('Application not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Verify the job belongs to the recruiter
+    if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
+      const error = new Error('Unauthorized');
+      error.statusCode = 403;
+      throw error;
+    }
+    
+    // Find the interview by ID
+    const interview = application.interviews.id(interviewId);
+    if (!interview) {
+      const error = new Error('Interview not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Update feedback fields
+    if (feedbackData.outcome) {
+      interview.outcome = feedbackData.outcome;
+    }
+    if (feedbackData.feedback !== undefined) {
+      interview.feedback = feedbackData.feedback;
+    }
+    interview.updatedAt = new Date();
+    
     await application.save();
     
     await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
@@ -412,6 +523,8 @@ module.exports = {
   withdrawApplication,
   shortlistCandidate,
   scheduleInterview,
+  scheduleInterviewRound,
+  updateInterviewFeedback,
   updateRecruiterNotes,
   getApplicationByJobAndCandidate
 };
