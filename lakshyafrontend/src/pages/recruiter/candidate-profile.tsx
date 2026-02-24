@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, ScheduleInterviewModal } from '../../components';
+import { ConfirmModal } from '../../components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { 
   useShortlistCandidate, 
@@ -53,6 +54,7 @@ const CandidateProfile: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [isDirty, setIsDirty] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showHireConfirm, setShowHireConfirm] = useState(false);
 
   // Fetch application with candidate profile and match snapshot
   const { data, isLoading } = useQuery({
@@ -240,9 +242,12 @@ const CandidateProfile: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to hire ${candidate?.fullName}?`)) {
-      return;
-    }
+    // Open confirmation modal instead of browser confirm
+    setShowHireConfirm(true);
+  };
+
+  const confirmHire = async () => {
+    if (!application?._id) return;
 
     try {
       await updateStatusMutation.mutateAsync({
@@ -250,8 +255,10 @@ const CandidateProfile: React.FC = () => {
         status: 'hired',
       });
       toast.success('Candidate marked as hired!');
+      setShowHireConfirm(false);
     } catch {
       toast.error('Failed to mark as hired');
+      // Keep modal open on error so user can retry
     }
   };
 
@@ -934,6 +941,21 @@ const CandidateProfile: React.FC = () => {
             onClose={() => setShowScheduleModal(false)}
           />
         )}
+
+        {/* Hire Confirmation Modal */}
+        <ConfirmModal
+          isOpen={showHireConfirm}
+          onClose={() => setShowHireConfirm(false)}
+          onConfirm={confirmHire}
+          title="Confirm Hire"
+          message={`Are you sure you want to hire ${
+            candidate?.fullName ?? 'this candidate'
+          }? This will mark the application as successfully completed.`}
+          confirmText="Hire Candidate"
+          cancelText="Cancel"
+          confirmButtonClass="bg-emerald-600 hover:bg-emerald-700 text-white"
+          isLoading={updateStatusMutation.isPending}
+        />
       </div>
     </DashboardLayout>
   );
