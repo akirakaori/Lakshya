@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { useScheduleInterviewRound } from '../../hooks';
 import type { Interview } from '../../services';
+import { today, type DateValue } from '@internationalized/date';
+import type { TimeValue } from 'react-aria-components';
+import { DatePicker } from '../ui/DatePicker';
+import { TimeField, formatTimeToString } from '../ui/TimeField';
 
 interface ScheduleInterviewModalProps {
   applicationId: string;
@@ -22,10 +26,14 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
   // Auto-compute next round number
   const nextRoundNumber = currentInterviews.length + 1;
   
+  // Separate state for DateValue (CalendarDate, CalendarDateTime, or ZonedDateTime)
+  const [interviewDate, setInterviewDate] = useState<DateValue | null>(null);
+  
+  // Separate state for TimeValue (Time object from @internationalized/date)
+  const [interviewTime, setInterviewTime] = useState<TimeValue | null>(null);
+  
   const [formData, setFormData] = useState({
     roundNumber: nextRoundNumber,
-    date: '',
-    time: '',
     timezone: 'IST',
     mode: 'online' as 'online' | 'onsite' | 'phone',
     linkOrLocation: '',
@@ -36,15 +44,30 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.date) {
+    if (!interviewDate) {
       toast.error('Please select interview date');
       return;
     }
 
+    if (!interviewTime) {
+      toast.error('Please select interview time');
+      return;
+    }
+
+    // Convert CalendarDate to YYYY-MM-DD string
+    const dateString = `${interviewDate.year}-${String(interviewDate.month).padStart(2, '0')}-${String(interviewDate.day).padStart(2, '0')}`;
+    
+    // Convert TimeValue to HH:mm string
+    const timeString = formatTimeToString(interviewTime);
+
     try {
       await scheduleInterviewMutation.mutateAsync({
         applicationId,
-        interviewData: formData,
+        interviewData: {
+          ...formData,
+          date: dateString,
+          time: timeString,
+        },
       });
       
       toast.success(`Interview Round ${formData.roundNumber} scheduled successfully!`);
@@ -96,27 +119,21 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
           {/* Date and Time */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                required
-                min={new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              <DatePicker
+                label="Date"
+                value={interviewDate}
+                onChange={setInterviewDate}
+                minValue={today('UTC')}
+                isRequired={true}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Time
-              </label>
-              <input
-                type="time"
-                value={formData.time}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              <TimeField
+                label="Time"
+                value={interviewTime}
+                onChange={setInterviewTime}
+                isRequired={true}
+                hourCycle={24}
               />
             </div>
           </div>
@@ -239,7 +256,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={scheduleInterviewMutation.isPending || !formData.date}
+              disabled={scheduleInterviewMutation.isPending || !interviewDate || !interviewTime}
               className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 font-medium"
             >
               {scheduleInterviewMutation.isPending ? 'Scheduling...' : `Schedule Round ${formData.roundNumber}`}
