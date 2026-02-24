@@ -222,6 +222,35 @@ const scheduleInterviewRound = async (req, res) => {
 };
 
 /**
+ * Update interview round details (reschedule) (recruiter only)
+ */
+const updateInterviewRound = async (req, res) => {
+  try {
+    const recruiterId = req.user.id;
+    const { applicationId, interviewId } = req.params;
+    const interviewData = req.body;
+    
+    const application = await applicationService.updateInterviewRound(
+      applicationId,
+      interviewId,
+      recruiterId,
+      interviewData
+    );
+    
+    res.status(200).json({
+      success: true,
+      message: 'Interview round updated successfully',
+      data: application
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
+/**
  * Update interview feedback/outcome (recruiter only)
  */
 const updateInterviewFeedback = async (req, res) => {
@@ -315,6 +344,7 @@ module.exports = {
   scheduleInterview,
   scheduleInterviewRound,
   updateInterviewFeedback,
+  updateInterviewRound,
   updateRecruiterNotes,
   getApplicationByJobAndCandidate
 };

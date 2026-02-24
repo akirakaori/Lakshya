@@ -456,6 +456,64 @@ const updateInterviewFeedback = async (applicationId, interviewId, recruiterId, 
 };
 
 /**
+ * Update interview round details (reschedule)
+ */
+const updateInterviewRound = async (applicationId, interviewId, recruiterId, interviewData) => {
+  try {
+    const application = await ApplicationModel.findById(applicationId)
+      .populate('jobId');
+    
+    if (!application) {
+      const error = new Error('Application not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Verify the job belongs to the recruiter
+    if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
+      const error = new Error('Unauthorized');
+      error.statusCode = 403;
+      throw error;
+    }
+    
+    // Find the interview by ID
+    const interview = application.interviews.id(interviewId);
+    
+    if (!interview) {
+      const error = new Error('Interview round not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    // Only allow editing if outcome is pending (not completed)
+    if (interview.outcome && interview.outcome !== 'pending') {
+      const error = new Error('Cannot edit completed interview rounds');
+      error.statusCode = 400;
+      throw error;
+    }
+    
+    // Update interview fields
+    if (interviewData.date !== undefined) interview.date = interviewData.date;
+    if (interviewData.time !== undefined) interview.time = interviewData.time;
+    if (interviewData.timezone !== undefined) interview.timezone = interviewData.timezone;
+    if (interviewData.mode !== undefined) interview.mode = interviewData.mode;
+    if (interviewData.linkOrLocation !== undefined) interview.linkOrLocation = interviewData.linkOrLocation;
+    if (interviewData.messageToCandidate !== undefined) interview.messageToCandidate = interviewData.messageToCandidate;
+    if (interviewData.internalNotes !== undefined) interview.internalNotes = interviewData.internalNotes;
+    interview.updatedAt = new Date();
+    
+    await application.save();
+    
+    // Populate applicant details
+    await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
+    
+    return application;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
  * Update recruiter notes (recruiter only)
  */
 const updateRecruiterNotes = async (applicationId, recruiterId, notes) => {
@@ -525,6 +583,7 @@ module.exports = {
   scheduleInterview,
   scheduleInterviewRound,
   updateInterviewFeedback,
+  updateInterviewRound,
   updateRecruiterNotes,
   getApplicationByJobAndCandidate
 };

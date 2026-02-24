@@ -68,6 +68,13 @@ router.patch('/:id/interview', authorizeRoles(ROLES.RECRUITER), applicationContr
 router.post('/:applicationId/interviews', authorizeRoles(ROLES.RECRUITER), applicationController.scheduleInterviewRound);
 
 /**
+ * @route   PATCH /api/applications/:applicationId/interviews/:interviewId
+ * @desc    Update interview round details (reschedule)
+ * @access  Private (Recruiter only - must be the job creator)
+ */
+router.patch('/:applicationId/interviews/:interviewId', authorizeRoles(ROLES.RECRUITER), applicationController.updateInterviewRound);
+
+/**
  * @route   PATCH /api/applications/:applicationId/interviews/:interviewId/feedback
  * @desc    Update interview feedback/outcome
  * @access  Private (Recruiter only - must be the job creator)

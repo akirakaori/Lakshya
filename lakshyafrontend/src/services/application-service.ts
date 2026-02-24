@@ -241,6 +241,19 @@ export const applicationService = {
     return response.data;
   },
 
+  // Update interview round (reschedule/edit) (recruiter only)
+  updateInterviewRound: async (
+    applicationId: string,
+    interviewId: string,
+    interviewData: ScheduleInterviewData
+  ): Promise<{ success: boolean; data: Application }> => {
+    const response = await axiosInstance.patch(
+      `/applications/${applicationId}/interviews/${interviewId}`,
+      interviewData
+    );
+    return response.data;
+  },
+
   // Update recruiter notes (recruiter only)
   updateNotes: async (applicationId: string, notes: string): Promise<{ success: boolean; data: Application }> => {
     const response = await axiosInstance.patch(`/applications/${applicationId}/notes`, { notes });

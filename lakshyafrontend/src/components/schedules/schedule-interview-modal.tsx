@@ -1,9 +1,10 @@
 import React from 'react';
 import { toast } from 'react-toastify';
-import { useScheduleInterviewRound } from '../../hooks';
+import { useScheduleInterviewRound, useUpdateInterviewRound } from '../../hooks';
 import type { Interview } from '../../services';
-import { today, type DateValue } from '@internationalized/date';
+import { today, type DateValue, parseDate } from '@internationalized/date';
 import type { TimeValue } from 'react-aria-components';
+import { Time } from '@internationalized/date';
 import { DatePicker } from '../ui/DatePicker';
 import { TimeField, formatTimeToString } from '../ui/TimeField';
 import { useForm, Controller } from 'react-hook-form';
@@ -14,6 +15,8 @@ interface ScheduleInterviewModalProps {
   currentInterviews?: Interview[];
   candidateName: string;
   onClose: () => void;
+  interviewToEdit?: Interview; // For edit mode
+  isEditMode?: boolean; // Indicates if we're editing
 }
 
 type ScheduleInterviewFormData = {
@@ -32,20 +35,53 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
   currentInterviews = [],
   candidateName,
   onClose,
+  interviewToEdit,
+  isEditMode = false,
 }) => {
   const scheduleInterviewMutation = useScheduleInterviewRound();
+  const updateInterviewMutation = useUpdateInterviewRound();
   
   // Auto-compute next round number
   const nextRoundNumber = currentInterviews.length + 1;
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors },
-    watch,
-  } = useForm<ScheduleInterviewFormData>({
-    defaultValues: {
+  // Parse existing interview data for edit mode
+  const getDefaultValues = (): ScheduleInterviewFormData => {
+    if (isEditMode && interviewToEdit) {
+      // Parse date string to DateValue
+      let parsedDate: DateValue | null = null;
+      if (interviewToEdit.date) {
+        try {
+          parsedDate = parseDate(interviewToEdit.date.split('T')[0]);
+        } catch (e) {
+          console.error('Failed to parse date:', e);
+        }
+      }
+
+      // Parse time string (HH:mm) to TimeValue
+      let parsedTime: TimeValue | null = null;
+      if (interviewToEdit.time) {
+        try {
+          const [hours, minutes] = interviewToEdit.time.split(':').map(Number);
+          parsedTime = new Time(hours, minutes);
+        } catch (e) {
+          console.error('Failed to parse time:', e);
+        }
+      }
+
+      return {
+        roundNumber: interviewToEdit.roundNumber,
+        date: parsedDate,
+        time: parsedTime,
+        timezone: interviewToEdit.timezone || 'IST',
+        mode: interviewToEdit.mode || 'online',
+        linkOrLocation: interviewToEdit.linkOrLocation || '',
+        messageToCandidate: interviewToEdit.messageToCandidate || '',
+        internalNotes: interviewToEdit.internalNotes || '',
+      };
+    }
+
+    // Default values for new interview
+    return {
       roundNumber: nextRoundNumber,
       date: null,
       time: null,
@@ -54,7 +90,17 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
       linkOrLocation: '',
       messageToCandidate: '',
       internalNotes: '',
-    },
+    };
+  };
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+    watch,
+  } = useForm<ScheduleInterviewFormData>({
+    defaultValues: getDefaultValues(),
   });
 
   const interviewDate = watch('date');
@@ -74,29 +120,42 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
     // Convert CalendarDate to YYYY-MM-DD string
     const dateString = `${data.date.year}-${String(data.date.month).padStart(2, '0')}-${String(data.date.day).padStart(2, '0')}`;
     
-    // Convert TimeValue to HH:mm string
+    // Convert TimeValue to HH:mm string (24-hour format for backend)
     const timeString = formatTimeToString(data.time);
 
+    const interviewData = {
+      roundNumber: data.roundNumber,
+      date: dateString,
+      time: timeString,
+      timezone: data.timezone,
+      mode: data.mode,
+      linkOrLocation: data.linkOrLocation,
+      messageToCandidate: data.messageToCandidate,
+      internalNotes: data.internalNotes,
+    };
+
     try {
-      await scheduleInterviewMutation.mutateAsync({
-        applicationId,
-        interviewData: {
-          roundNumber: data.roundNumber,
-          date: dateString,
-          time: timeString,
-          timezone: data.timezone,
-          mode: data.mode,
-          linkOrLocation: data.linkOrLocation,
-          messageToCandidate: data.messageToCandidate,
-          internalNotes: data.internalNotes,
-        },
-      });
+      if (isEditMode && interviewToEdit?._id) {
+        // Update existing interview
+        await updateInterviewMutation.mutateAsync({
+          applicationId,
+          interviewId: interviewToEdit._id,
+          interviewData,
+        });
+        toast.success(`Interview Round ${data.roundNumber} updated successfully!`);
+      } else {
+        // Schedule new interview
+        await scheduleInterviewMutation.mutateAsync({
+          applicationId,
+          interviewData,
+        });
+        toast.success(`Interview Round ${data.roundNumber} scheduled successfully!`);
+      }
       
-      toast.success(`Interview Round ${data.roundNumber} scheduled successfully!`);
       onClose();
     } catch (error) {
-      toast.error('Failed to schedule interview');
-      console.error('Schedule interview error:', error);
+      toast.error(isEditMode ? 'Failed to update interview' : 'Failed to schedule interview');
+      console.error('Interview operation error:', error);
     }
   };
 
@@ -106,9 +165,11 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 flex items-center justify-between rounded-t-xl">
           <div>
-            <h3 className="text-lg font-semibold text-white">Schedule Interview</h3>
+            <h3 className="text-lg font-semibold text-white">
+              {isEditMode ? 'Edit Interview' : 'Schedule Interview'}
+            </h3>
             <p className="text-sm text-indigo-100 mt-0.5">
-              {candidateName} - Round {nextRoundNumber}
+              {candidateName} - Round {watch('roundNumber')}
             </p>
           </div>
           <button
@@ -123,18 +184,22 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
-          {/* Round Number (display only, auto-computed) */}
+          {/* Round Number (display only, auto-computed or from edit) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Interview Round
             </label>
             <div className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 font-medium">
               Round {watch('roundNumber')}
-              {currentInterviews.length > 0 && (
+              {isEditMode ? (
+                <span className="text-xs text-blue-600 ml-2">
+                  (Editing existing round)
+                </span>
+              ) : currentInterviews.length > 0 ? (
                 <span className="text-xs text-gray-500 ml-2">
                   (Previous rounds: {currentInterviews.length})
                 </span>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -170,7 +235,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
                     value={field.value}
                     onChange={field.onChange}
                     isRequired={true}
-                    hourCycle={24}
+                    hourCycle={12}
                   />
                 )}
               />
@@ -293,17 +358,19 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              disabled={scheduleInterviewMutation.isPending}
+              disabled={isEditMode ? updateInterviewMutation.isPending : scheduleInterviewMutation.isPending}
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={scheduleInterviewMutation.isPending || !interviewDate || !interviewTime}
+              disabled={(isEditMode ? updateInterviewMutation.isPending : scheduleInterviewMutation.isPending) || !interviewDate || !interviewTime}
               className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 font-medium"
             >
-              {scheduleInterviewMutation.isPending ? 'Scheduling...' : `Schedule Round ${watch('roundNumber')}`}
+              {isEditMode 
+                ? (updateInterviewMutation.isPending ? 'Updating...' : `Update Round ${watch('roundNumber')}`)
+                : (scheduleInterviewMutation.isPending ? 'Scheduling...' : `Schedule Round ${watch('roundNumber')}`)}
             </button>
           </div>
         </form>

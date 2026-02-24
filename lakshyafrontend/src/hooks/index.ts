@@ -26,6 +26,7 @@ export {
   useShortlistCandidate,
   useScheduleInterview,
   useScheduleInterviewRound,
+  useUpdateInterviewRound,
   useUpdateApplicationNotes,
   useRecruiterJobApplications,
   useUpdateRecruiterApplicationStatus,
