@@ -736,7 +736,7 @@ export const useUpdateRecruiterApplicationStatus = () => {
       return { previousDetail, previousLists, jobId };
     },
     onSuccess: (_response, variables, context) => {
-      const { applicationId } = variables;
+      const { applicationId, status } = variables;
       console.log('✅ [STATUS UPDATE] Server confirmed');
       
       // Invalidate to sync with server (updates counts, etc.)
@@ -754,6 +754,18 @@ export const useUpdateRecruiterApplicationStatus = () => {
         // Fallback: invalidate all if jobId not found
         queryClient.invalidateQueries({ 
           queryKey: ['recruiter-job-applications']
+        });
+      }
+
+      // IMPORTANT: If status is hired/offer, invalidate candidate-side queries
+      // so they see the congratulations banner immediately
+      if (status === 'hired' || status === 'offer') {
+        console.log('🎉 [HIRED] Invalidating candidate queries for instant congratulations banner');
+        queryClient.invalidateQueries({ 
+          queryKey: ['applications', 'my']
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: ['applications', 'detail', applicationId]
         });
       }
     },

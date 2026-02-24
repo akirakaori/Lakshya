@@ -121,26 +121,56 @@ const CandidateProfile: React.FC = () => {
 
   // Compute interview rounds progress
   const interviewProgress = React.useMemo(() => {
-    if (!application) return { required: 2, completed: 0, eligible: false };
+    if (!application) return { 
+      required: 2, 
+      completed: 0, 
+      scheduled: 0,
+      eligible: false, 
+      canScheduleNext: false,
+      lastRound: null 
+    };
     
     // Get required rounds from job (default to 2)
     const jobData = typeof application.jobId === 'object' ? application.jobId : null;
     const requiredRounds = jobData?.interviewRoundsRequired ?? 2;
     
-    // Count completed rounds (outcome === 'pass')
-    const completedRounds = normalizedInterviews.filter(i => i.outcome === 'pass').length;
+    // Count scheduled and passed rounds
+    const scheduledRounds = normalizedInterviews.length;
+    const passedRounds = normalizedInterviews.filter(i => i.outcome === 'pass').length;
+    
+    // Get last interview round
+    const lastRound = normalizedInterviews.length > 0 
+      ? normalizedInterviews[normalizedInterviews.length - 1] 
+      : null;
     
     // Eligible for hire if all required rounds are passed
-    const eligible = completedRounds >= requiredRounds;
+    const eligible = passedRounds >= requiredRounds;
+    
+    // Can schedule next round ONLY if:
+    // 1. Last round outcome is "pass" (strict gating)
+    // 2. Not all required rounds are scheduled yet
+    const canScheduleNext = 
+      (!lastRound || lastRound.outcome === 'pass') && 
+      scheduledRounds < requiredRounds;
     
     console.log('🎯 [INTERVIEW PROGRESS]', {
       requiredRounds,
-      completedRounds,
+      scheduledRounds,
+      passedRounds,
       eligible,
+      canScheduleNext,
+      lastRoundOutcome: lastRound?.outcome,
       status: application.status
     });
     
-    return { required: requiredRounds, completed: completedRounds, eligible };
+    return { 
+      required: requiredRounds, 
+      completed: passedRounds,
+      scheduled: scheduledRounds,
+      eligible, 
+      canScheduleNext,
+      lastRound 
+    };
   }, [application, normalizedInterviews]);
 
   // Extract avatar URL and initials
@@ -665,7 +695,7 @@ const CandidateProfile: React.FC = () => {
                         )}
                       </div>
                       
-                      {/* Show HIRE button if all rounds completed */}
+                      {/* Show HIRE button if all rounds passed */}
                       {interviewProgress.eligible ? (
                         <button
                           onClick={handleHire}
@@ -677,8 +707,8 @@ const CandidateProfile: React.FC = () => {
                           </svg>
                           {updateStatusMutation.isPending ? 'Processing...' : 'Hire Candidate'}
                         </button>
-                      ) : (
-                        /* Show SCHEDULE NEXT ROUND if more rounds needed */
+                      ) : interviewProgress.canScheduleNext ? (
+                        /* Show SCHEDULE NEXT ROUND only if last round passed AND more rounds needed */
                         <button
                           onClick={() => setShowScheduleModal(true)}
                           className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium flex items-center justify-center gap-2"
@@ -686,8 +716,21 @@ const CandidateProfile: React.FC = () => {
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                           </svg>
-                          Schedule Next Round ({interviewProgress.completed + 1} of {interviewProgress.required})
+                          Schedule Next Round ({interviewProgress.scheduled + 1} of {interviewProgress.required})
                         </button>
+                      ) : (
+                        /* Show waiting message if last round not yet passed */
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-sm text-amber-800 font-medium flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Waiting for Round {interviewProgress.scheduled} outcome
+                          </p>
+                          <p className="text-xs text-amber-700 mt-1">
+                            Mark the current round as Pass to schedule the next round
+                          </p>
+                        </div>
                       )}
                       <button
                         onClick={handleReject}

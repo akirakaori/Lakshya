@@ -102,6 +102,8 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
     shortlisted: 0,
     interview: 0,
     rejected: 0,
+    hired: 0,
+    offer: 0,
     total: 0
   };
 
@@ -126,7 +128,7 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
  */
 const updateApplicationStatus = async (applicationId, recruiterId, newStatus) => {
   // Validate status
-  const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected'];
+  const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected', 'hired', 'offer'];
   if (!validStatuses.includes(newStatus)) {
     throw { statusCode: 400, message: 'Invalid status value' };
   }
@@ -162,7 +164,7 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
  */
 const bulkUpdateApplicationStatus = async (jobId, recruiterId, applicationIds, newStatus) => {
   // Validate status
-  const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected'];
+  const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected', 'hired', 'offer'];
   if (!validStatuses.includes(newStatus)) {
     throw { statusCode: 400, message: 'Invalid status value' };
   }

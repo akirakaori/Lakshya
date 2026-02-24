@@ -20,6 +20,10 @@ export function getStatusLabel(status?: string): string {
       return 'Interview';
     case 'rejected':
       return 'Rejected';
+    case 'hired':
+      return 'Selected';
+    case 'offer':
+      return 'Offer Extended';
     default:
       return 'Pending';
   }
@@ -42,6 +46,10 @@ export function getStatusBadgeClass(status?: string): string {
       return 'bg-purple-100 text-purple-700';
     case 'rejected':
       return 'bg-red-100 text-red-700';
+    case 'hired':
+      return 'bg-emerald-100 text-emerald-700';
+    case 'offer':
+      return 'bg-teal-100 text-teal-700';
     default:
       return 'bg-gray-100 text-gray-700';
   }

@@ -57,7 +57,13 @@ const MyApplications: React.FC = () => {
       shortlisted: allApps.filter(a => a.status === 'shortlisted').length,
       interview: allApps.filter(a => a.status === 'interview').length,
       rejected: allApps.filter(a => a.status === 'rejected').length,
+      hired: allApps.filter(a => a.status === 'hired' || a.status === 'offer').length,
     };
+  }, [applications]);
+
+  // Check if any application is hired (for congratulations banner)
+  const hiredApplications = useMemo(() => {
+    return applications.filter(app => app.status === 'hired' || app.status === 'offer');
   }, [applications]);
 
   const formatDate = (dateString: string) => {
@@ -68,9 +74,68 @@ const MyApplications: React.FC = () => {
     });
   };
 
+  // Helper to determine interview status for candidate view (privacy-safe)
+  const getInterviewStatus = (interview: Interview) => {
+    // Check if interview date has passed
+    const interviewDate = new Date(interview.date);
+    const now = new Date();
+    const isPast = interviewDate < now;
+
+    // If interview outcome is set (not pending), show as Completed
+    if (interview.outcome && interview.outcome !== 'pending') {
+      return { label: 'Completed', color: 'bg-gray-100 text-gray-600' };
+    }
+
+    // If date has passed but no outcome set, show as Completed
+    if (isPast) {
+      return { label: 'Completed', color: 'bg-gray-100 text-gray-600' };
+    }
+
+    // Otherwise, show as Scheduled (upcoming)
+    return { label: 'Scheduled', color: 'bg-blue-100 text-blue-600' };
+  };
+
   return (
     <DashboardLayout variant="job-seeker" title="My Applications">
       <div className="max-w-7xl mx-auto">
+        {/* Congratulations Banner for Hired Applications */}
+        {hiredApplications.length > 0 && (
+          <div className="mb-6 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold mb-2">
+                  🎉 Congratulations!
+                </h2>
+                <p className="text-emerald-50 text-lg mb-2">
+                  You've been selected for {hiredApplications.length} position{hiredApplications.length > 1 ? 's' : ''}!
+                </p>
+                <ul className="space-y-1 text-emerald-100">
+                  {hiredApplications.map(app => {
+                    const job = typeof app.jobId === 'object' ? app.jobId as Job : null;
+                    return (
+                      <li key={app._id} className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="font-medium">{job?.title || 'Position'}</span>
+                        <span className="text-sm text-emerald-200">at {job?.companyName || 'Company'}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="text-sm text-emerald-100 mt-3">
+                  The employer will contact you with next steps regarding your onboarding.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">My Applications</h1>
@@ -250,7 +315,10 @@ const MyApplications: React.FC = () => {
                             <td colSpan={7} className="px-6 py-4 bg-gray-50">
                               <div className="space-y-3">
                                 <h4 className="font-semibold text-gray-900 text-sm">Interview Schedule</h4>
-                                {interviews.map((interview: Interview, idx: number) => (
+                                {interviews.map((interview: Interview, idx: number) => {
+                                  const interviewStatus = getInterviewStatus(interview);
+                                  
+                                  return (
                                   <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-start justify-between mb-2">
                                       <div className="flex items-center gap-2">
@@ -261,16 +329,10 @@ const MyApplications: React.FC = () => {
                                           {interview.mode}
                                         </span>
                                       </div>
-                                      {interview.outcome && (
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                          interview.outcome === 'pass' ? 'bg-green-100 text-green-700' :
-                                          interview.outcome === 'fail' ? 'bg-red-100 text-red-700' :
-                                          interview.outcome === 'hold' ? 'bg-yellow-100 text-yellow-700' :
-                                          'bg-gray-100 text-gray-600'
-                                        }`}>
-                                          {interview.outcome === 'pending' ? 'Scheduled' : interview.outcome}
-                                        </span>
-                                      )}
+                                      {/* Candidate-safe status: only show Scheduled or Completed */}
+                                      <span className={`px-2 py-1 rounded text-xs font-medium ${interviewStatus.color}`}>
+                                        {interviewStatus.label}
+                                      </span>
                                     </div>
                                     <div className="text-sm space-y-2">
                                       <div className="flex items-center gap-2 text-gray-700">
@@ -320,9 +382,11 @@ const MyApplications: React.FC = () => {
                                           <p className="text-blue-700 text-sm">{interview.messageToCandidate}</p>
                                         </div>
                                       )}
+                                      {/* DO NOT SHOW: internalNotes, feedback, or pass/fail outcome - these are recruiter-only */}
                                     </div>
                                   </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </td>
                           </tr>
