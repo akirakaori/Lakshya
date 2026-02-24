@@ -31,7 +31,7 @@ const JobApplications: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
   
   // State
-  const [activeTab, setActiveTab] = useState<'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' >('all');
   const [sortBy, setSortBy] = useState<'newest' | 'match' | 'experience'>('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -78,7 +78,15 @@ const JobApplications: React.FC = () => {
   const bulkUpdateMutation = useBulkUpdateApplicationStatus(jobId || '');
 
   const job = data?.data?.job;
-  const counts = data?.data?.counts || { applied: 0, shortlisted: 0, interview: 0, rejected: 0, total: 0 };
+  const counts = data?.data?.counts || { 
+    applied: 0, 
+    shortlisted: 0, 
+    interview: 0, 
+    rejected: 0, 
+    hired: 0, 
+    offer: 0, 
+    total: 0 
+  };
   const applications = data?.data?.applications || [];
 
   // Handlers
@@ -100,7 +108,7 @@ const JobApplications: React.FC = () => {
     setSelectedApplications(newSet);
   };
 
-  const handleBulkStatusUpdate = async (status: 'applied' | 'shortlisted' | 'interview' | 'rejected') => {
+  const handleBulkStatusUpdate = async (status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer') => {
     if (selectedApplications.size === 0) {
       toast.error('Please select at least one application');
       return;
@@ -130,7 +138,7 @@ const JobApplications: React.FC = () => {
     (mustHaveSkill ? 1 : 0) + 
     (missingSkill ? 1 : 0);
 
-  const handleStatusChange = async (applicationId: string, status: 'applied' | 'shortlisted' | 'interview' | 'rejected') => {
+  const handleStatusChange = async (applicationId: string, status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer') => {
     try {
       await updateStatusMutation.mutateAsync({ applicationId, status });
       toast.success('Status updated successfully');
@@ -151,6 +159,10 @@ const JobApplications: React.FC = () => {
         return 'bg-purple-100 text-purple-700';
       case 'rejected':
         return 'bg-red-100 text-red-700';
+      case 'hired':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'offer':
+        return 'bg-teal-100 text-teal-700';
       default:
         return 'bg-gray-100 text-gray-700';
     }
@@ -202,7 +214,9 @@ const JobApplications: React.FC = () => {
         </div>
 
         {/* Tabs with Counts */}
-        <div className="bg-white rounded-xl border border-gray-200 mb-6">
+        <div className="hired', label: 'Hired', count: counts.hired || 0 },
+                { key: 'offer', label: 'Offer', count: counts.offer || 0 },
+                { key: 'bg-white rounded-xl border border-gray-200 mb-6">
           <div className="border-b border-gray-200">
             <nav className="flex -mb-px overflow-x-auto">
               {[
@@ -377,6 +391,20 @@ const JobApplications: React.FC = () => {
                 Interview
               </button>
               <button
+                onClick={() => handleBulkStatusUpdate('hired')}
+                disabled={bulkUpdateMutation.isPending}
+                className="text-sm text-emerald-600 hover:text-emerald-700 font-medium disabled:opacity-50"
+              >
+                Hire
+              </button>
+              <button
+                onClick={() => handleBulkStatusUpdate('offer')}
+                disabled={bulkUpdateMutation.isPending}
+                className="text-sm text-teal-600 hover:text-teal-700 font-medium disabled:opacity-50"
+              >
+                Offer
+              </button>
+              <button
                 onClick={() => handleBulkStatusUpdate('rejected')}
                 disabled={bulkUpdateMutation.isPending}
                 className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
@@ -530,7 +558,7 @@ const JobApplications: React.FC = () => {
                             value={application.status}
                             onChange={(e) => handleStatusChange(
                               application._id, 
-                              e.target.value as 'applied' | 'shortlisted' | 'interview' | 'rejected'
+                              e.target.value as 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer'
                             )}
                             disabled={updateStatusMutation.isPending}
                             className={`px-3 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${getStatusColor(application.status)} disabled:opacity-50`}
@@ -539,6 +567,8 @@ const JobApplications: React.FC = () => {
                             <option value="shortlisted">Shortlisted</option>
                             <option value="interview">Interview</option>
                             <option value="rejected">Rejected</option>
+                            <option value="hired">Hired</option>
+                            
                           </select>
                         </td>
                         <td className="px-4 py-4">

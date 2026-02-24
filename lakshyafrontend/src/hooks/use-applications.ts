@@ -683,10 +683,12 @@ export const useUpdateRecruiterApplicationStatus = () => {
       // Cancel outgoing refetches to avoid overwriting optimistic update
       await queryClient.cancelQueries({ queryKey: ['recruiterApplication', applicationId] });
       await queryClient.cancelQueries({ queryKey: ['recruiter-job-applications'] });
+      await queryClient.cancelQueries({ queryKey: ['applications'] }); // Cancel candidate queries too
       
       // Snapshot previous values for rollback
       const previousDetail = queryClient.getQueryData(['recruiterApplication', applicationId]);
       const previousLists = queryClient.getQueriesData({ queryKey: ['recruiter-job-applications'] });
+      const previousCandidateLists = queryClient.getQueriesData({ queryKey: ['applications', 'my'] });
       
       // Extract jobId from cached detail (needed for proper invalidation)
       let jobId: string | null = null;
@@ -701,6 +703,7 @@ export const useUpdateRecruiterApplicationStatus = () => {
       // Optimistically update the detail cache
       queryClient.setQueryData(['recruiterApplication', applicationId], (old: any) => {
         if (!old?.data?.application) return old;
+        console.log('✨ [OPTIMISTIC] Updating recruiterApplication detail cache');
         return {
           ...old,
           data: {
@@ -713,27 +716,55 @@ export const useUpdateRecruiterApplicationStatus = () => {
         };
       });
       
-      // Optimistically update ALL list cache variants for this jobId
-      if (jobId) {
-        queryClient.setQueriesData(
-          { queryKey: ['recruiter-job-applications', jobId] },
-          (old: any) => {
-            if (!old?.data?.applications) return old;
-            return {
-              ...old,
-              data: {
-                ...old.data,
-                applications: old.data.applications.map((app: any) =>
-                  app._id === applicationId ? { ...app, status } : app
-                )
-              }
-            };
-          }
-        );
-      }
+      // Optimistically update ALL list cache variants using setQueriesData
+      // This will update every cache that starts with ['recruiter-job-applications', jobId]
+      const updatedListCount = queryClient.setQueriesData(
+        { queryKey: ['recruiter-job-applications'] },
+        (old: any) => {
+          if (!old?.data?.applications) return old;
+          
+          // Check if this list contains the application we're updating
+          const hasApplication = old.data.applications.some((app: any) => app._id === applicationId);
+          if (!hasApplication) return old;
+          
+          console.log('✨ [OPTIMISTIC] Updating recruiter list cache variant');
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              applications: old.data.applications.map((app: any) =>
+                app._id === applicationId ? { ...app, status } : app
+              )
+            }
+          };
+        }
+      );
       
-      console.log('✨ [OPTIMISTIC] Status updated in cache immediately');
-      return { previousDetail, previousLists, jobId };
+      console.log(`✨ [OPTIMISTIC] Updated ${updatedListCount} recruiter list cache variants`);
+      
+      // Optimistically update candidate-side caches
+      const updatedCandidateCount = queryClient.setQueriesData(
+        { queryKey: ['applications', 'my'] },
+        (old: any) => {
+          if (!old?.data) return old;
+          const applications = Array.isArray(old.data) ? old.data : [];
+          
+          const hasApplication = applications.some((app: any) => app._id === applicationId);
+          if (!hasApplication) return old;
+          
+          console.log('✨ [OPTIMISTIC] Updating candidate my-applications cache');
+          return {
+            ...old,
+            data: applications.map((app: any) =>
+              app._id === applicationId ? { ...app, status } : app
+            )
+          };
+        }
+      );
+      
+      console.log(`✨ [OPTIMISTIC] Updated ${updatedCandidateCount} candidate cache variants`);
+      
+      return { previousDetail, previousLists, previousCandidateLists, jobId };
     },
     onSuccess: (_response, variables, context) => {
       const { applicationId, status } = variables;
@@ -782,6 +813,12 @@ export const useUpdateRecruiterApplicationStatus = () => {
       
       if (context?.previousLists) {
         context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      
+      if (context?.previousCandidateLists) {
+        context.previousCandidateLists.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data);
         });
       }
