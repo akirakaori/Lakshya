@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { toast } from 'react-toastify';
 import { useScheduleInterviewRound } from '../../hooks';
 import type { Interview } from '../../services';
@@ -6,6 +6,7 @@ import { today, type DateValue } from '@internationalized/date';
 import type { TimeValue } from 'react-aria-components';
 import { DatePicker } from '../ui/DatePicker';
 import { TimeField, formatTimeToString } from '../ui/TimeField';
+import { useForm, Controller } from 'react-hook-form';
 
 interface ScheduleInterviewModalProps {
   applicationId: string;
@@ -14,6 +15,17 @@ interface ScheduleInterviewModalProps {
   candidateName: string;
   onClose: () => void;
 }
+
+type ScheduleInterviewFormData = {
+  roundNumber: number;
+  date: DateValue | null;
+  time: TimeValue | null;
+  timezone: string;
+  mode: 'online' | 'onsite' | 'phone';
+  linkOrLocation: string;
+  messageToCandidate: string;
+  internalNotes: string;
+};
 
 const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
   applicationId,
@@ -25,52 +37,62 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
   
   // Auto-compute next round number
   const nextRoundNumber = currentInterviews.length + 1;
-  
-  // Separate state for DateValue (CalendarDate, CalendarDateTime, or ZonedDateTime)
-  const [interviewDate, setInterviewDate] = useState<DateValue | null>(null);
-  
-  // Separate state for TimeValue (Time object from @internationalized/date)
-  const [interviewTime, setInterviewTime] = useState<TimeValue | null>(null);
-  
-  const [formData, setFormData] = useState({
-    roundNumber: nextRoundNumber,
-    timezone: 'IST',
-    mode: 'online' as 'online' | 'onsite' | 'phone',
-    linkOrLocation: '',
-    messageToCandidate: '',
-    internalNotes: '',
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+    watch,
+  } = useForm<ScheduleInterviewFormData>({
+    defaultValues: {
+      roundNumber: nextRoundNumber,
+      date: null,
+      time: null,
+      timezone: 'IST',
+      mode: 'online',
+      linkOrLocation: '',
+      messageToCandidate: '',
+      internalNotes: '',
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!interviewDate) {
+  const interviewDate = watch('date');
+  const interviewTime = watch('time');
+
+  const onSubmit = async (data: ScheduleInterviewFormData) => {
+    if (!data.date) {
       toast.error('Please select interview date');
       return;
     }
 
-    if (!interviewTime) {
+    if (!data.time) {
       toast.error('Please select interview time');
       return;
     }
 
     // Convert CalendarDate to YYYY-MM-DD string
-    const dateString = `${interviewDate.year}-${String(interviewDate.month).padStart(2, '0')}-${String(interviewDate.day).padStart(2, '0')}`;
+    const dateString = `${data.date.year}-${String(data.date.month).padStart(2, '0')}-${String(data.date.day).padStart(2, '0')}`;
     
     // Convert TimeValue to HH:mm string
-    const timeString = formatTimeToString(interviewTime);
+    const timeString = formatTimeToString(data.time);
 
     try {
       await scheduleInterviewMutation.mutateAsync({
         applicationId,
         interviewData: {
-          ...formData,
+          roundNumber: data.roundNumber,
           date: dateString,
           time: timeString,
+          timezone: data.timezone,
+          mode: data.mode,
+          linkOrLocation: data.linkOrLocation,
+          messageToCandidate: data.messageToCandidate,
+          internalNotes: data.internalNotes,
         },
       });
       
-      toast.success(`Interview Round ${formData.roundNumber} scheduled successfully!`);
+      toast.success(`Interview Round ${data.roundNumber} scheduled successfully!`);
       onClose();
     } catch (error) {
       toast.error('Failed to schedule interview');
@@ -86,7 +108,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
           <div>
             <h3 className="text-lg font-semibold text-white">Schedule Interview</h3>
             <p className="text-sm text-indigo-100 mt-0.5">
-              {candidateName} - Round {formData.roundNumber}
+              {candidateName} - Round {nextRoundNumber}
             </p>
           </div>
           <button
@@ -100,14 +122,14 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
           {/* Round Number (display only, auto-computed) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Interview Round
             </label>
             <div className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 font-medium">
-              Round {formData.roundNumber}
+              Round {watch('roundNumber')}
               {currentInterviews.length > 0 && (
                 <span className="text-xs text-gray-500 ml-2">
                   (Previous rounds: {currentInterviews.length})
@@ -119,22 +141,42 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
           {/* Date and Time */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <DatePicker
-                label="Date"
-                value={interviewDate}
-                onChange={setInterviewDate}
-                minValue={today('UTC')}
-                isRequired={true}
+              <Controller
+                name="date"
+                control={control}
+                rules={{ required: 'Date is required' }}
+                render={({ field }) => (
+                  <DatePicker
+                    label="Date"
+                    value={field.value}
+                    onChange={field.onChange}
+                    minValue={today('UTC')}
+                    isRequired={true}
+                  />
+                )}
               />
+              {errors.date && (
+                <p className="text-sm text-red-600 mt-1">{errors.date.message}</p>
+              )}
             </div>
             <div>
-              <TimeField
-                label="Time"
-                value={interviewTime}
-                onChange={setInterviewTime}
-                isRequired={true}
-                hourCycle={24}
+              <Controller
+                name="time"
+                control={control}
+                rules={{ required: 'Time is required' }}
+                render={({ field }) => (
+                  <TimeField
+                    label="Time"
+                    value={field.value}
+                    onChange={field.onChange}
+                    isRequired={true}
+                    hourCycle={24}
+                  />
+                )}
               />
+              {errors.time && (
+                <p className="text-sm text-red-600 mt-1">{errors.time.message}</p>
+              )}
             </div>
           </div>
 
@@ -144,8 +186,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
               Timezone
             </label>
             <select
-              value={formData.timezone}
-              onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+              {...register('timezone')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="IST">IST (Indian Standard Time)</option>
@@ -161,52 +202,57 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Interview Mode <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-3 gap-3">
-              {(['online', 'onsite', 'phone'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, mode })}
-                  className={`px-4 py-2 rounded-lg border-2 font-medium transition-colors ${
-                    formData.mode === mode
-                      ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-300 text-gray-700 hover:border-gray-400'
-                  }`}
-                >
-                  {mode === 'online' && (
-                    <svg className="w-5 h-5 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  )}
-                  {mode === 'onsite' && (
-                    <svg className="w-5 h-5 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  )}
-                  {mode === 'phone' && (
-                    <svg className="w-5 h-5 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  )}
-                  <div className="text-xs capitalize">{mode}</div>
-                </button>
-              ))}
-            </div>
+            <Controller
+              name="mode"
+              control={control}
+              render={({ field }) => (
+                <div className="grid grid-cols-3 gap-3">
+                  {(['online', 'onsite', 'phone'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => field.onChange(mode)}
+                      className={`px-4 py-2 rounded-lg border-2 font-medium transition-colors ${
+                        field.value === mode
+                          ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                          : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                      }`}
+                    >
+                      {mode === 'online' && (
+                        <svg className="w-5 h-5 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                      {mode === 'onsite' && (
+                        <svg className="w-5 h-5 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                      )}
+                      {mode === 'phone' && (
+                        <svg className="w-5 h-5 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                      )}
+                      <div className="text-xs capitalize">{mode}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            />
           </div>
 
           {/* Link or Location */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {formData.mode === 'online' ? 'Meeting Link' : formData.mode === 'onsite' ? 'Office Address' : 'Phone Number'}
+              {watch('mode') === 'online' ? 'Meeting Link' : watch('mode') === 'onsite' ? 'Office Address' : 'Phone Number'}
             </label>
             <input
               type="text"
-              value={formData.linkOrLocation}
-              onChange={(e) => setFormData({ ...formData, linkOrLocation: e.target.value })}
+              {...register('linkOrLocation')}
               placeholder={
-                formData.mode === 'online'
+                watch('mode') === 'online'
                   ? 'https://meet.google.com/xyz or Zoom link'
-                  : formData.mode === 'onsite'
+                  : watch('mode') === 'onsite'
                   ? 'Office address or room number'
                   : 'Contact number for the interview'
               }
@@ -221,8 +267,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
               <span className="ml-2 text-xs text-gray-500">(Candidate will see this)</span>
             </label>
             <textarea
-              value={formData.messageToCandidate}
-              onChange={(e) => setFormData({ ...formData, messageToCandidate: e.target.value })}
+              {...register('messageToCandidate')}
               rows={3}
               placeholder="E.g., Please be ready with your portfolio. We'll discuss your React projects in detail."
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
@@ -236,8 +281,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
               <span className="ml-2 text-xs text-amber-600 font-medium">(Recruiter-only, NOT visible to candidate)</span>
             </label>
             <textarea
-              value={formData.internalNotes}
-              onChange={(e) => setFormData({ ...formData, internalNotes: e.target.value })}
+              {...register('internalNotes')}
               rows={2}
               placeholder="Private notes for internal team use only..."
               className="w-full px-3 py-2 border border-amber-200 bg-amber-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none"
@@ -259,7 +303,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
               disabled={scheduleInterviewMutation.isPending || !interviewDate || !interviewTime}
               className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 font-medium"
             >
-              {scheduleInterviewMutation.isPending ? 'Scheduling...' : `Schedule Round ${formData.roundNumber}`}
+              {scheduleInterviewMutation.isPending ? 'Scheduling...' : `Schedule Round ${watch('roundNumber')}`}
             </button>
           </div>
         </form>

@@ -4,6 +4,25 @@ import { DashboardLayout, LoadingSpinner } from '../../components';
 import { useCreateJob, useUpdateJob, useJob } from '../../hooks';
 import { toast } from 'react-toastify';
 import SearchableSelect from '../../components/ui/searchable-select';
+import { useForm, Controller } from 'react-hook-form';
+
+type JobFormData = {
+  title: string;
+  description: string;
+  companyName: string;
+  location: string;
+  type: string;
+  experienceLevel: string;
+  salary: {
+    min: string;
+    max: string;
+    currency: string;
+  };
+  skills: string[];
+  requirements: string;
+  benefits: string;
+  interviewRoundsRequired: number;
+};
 
 const CURRENCY_OPTIONS = [
   { value: 'USD', label: 'USD ($) - US Dollar' },
@@ -26,31 +45,42 @@ const PostJob: React.FC = () => {
   const updateJobMutation = useUpdateJob();
   const { data: jobData, isLoading: isLoadingJob } = useJob(jobId || '');
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    companyName: '',
-    location: '',
-    type: 'full-time',
-    experienceLevel: 'mid',
-    salary: {
-      min: '',
-      max: '',
-      currency: 'USD',
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+    setValue,
+    watch,
+    reset,
+  } = useForm<JobFormData>({
+    defaultValues: {
+      title: '',
+      description: '',
+      companyName: '',
+      location: '',
+      type: 'full-time',
+      experienceLevel: 'mid',
+      salary: {
+        min: '',
+        max: '',
+        currency: 'USD',
+      },
+      skills: [],
+      requirements: '',
+      benefits: '',
+      interviewRoundsRequired: 2,
     },
-    skills: [] as string[],
-    requirements: '',
-    benefits: '',
-    interviewRoundsRequired: 2, // Default to 2 rounds
   });
 
   const [newSkill, setNewSkill] = useState('');
+  const skills = watch('skills');
 
   // Prefill form when editing
   useEffect(() => {
     if (isEditMode && jobData?.data) {
       const job = jobData.data;
-      setFormData({
+      reset({
         title: job.title || '',
         description: job.description || '',
         companyName: job.companyName || '',
@@ -68,67 +98,32 @@ const PostJob: React.FC = () => {
         interviewRoundsRequired: job.interviewRoundsRequired || 2,
       });
     }
-  }, [isEditMode, jobData]);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    if (name.startsWith('salary.')) {
-      const field = name.split('.')[1];
-      setFormData(prev => ({
-        ...prev,
-        salary: {
-          ...prev.salary,
-          [field]: value,
-        },
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
+  }, [isEditMode, jobData, reset]);
 
   const addSkill = () => {
-    if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        skills: [...prev.skills, newSkill.trim()],
-      }));
+    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
+      setValue('skills', [...skills, newSkill.trim()]);
       setNewSkill('');
     }
   };
 
   const removeSkill = (skillToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: prev.skills.filter(skill => skill !== skillToRemove),
-    }));
+    setValue('skills', skills.filter(skill => skill !== skillToRemove));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validation
-    if (!formData.title || !formData.description || !formData.companyName || !formData.location) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
+  const onSubmit = async (data: JobFormData) => {
     // Prepare data
     const jobPayload = {
-      ...formData,
+      ...data,
       salary: {
-        min: parseInt(formData.salary.min) || 0,
-        max: parseInt(formData.salary.max) || 0,
-        currency: formData.salary.currency,
+        min: parseInt(data.salary.min) || 0,
+        max: parseInt(data.salary.max) || 0,
+        currency: data.salary.currency,
       },
-      skillsRequired: formData.skills,
-      requirements: formData.requirements.split('\n').filter(r => r.trim()),
-      benefits: formData.benefits.split('\n').filter(b => b.trim()),
-      interviewRoundsRequired: parseInt(formData.interviewRoundsRequired.toString()) || 2,
+      skillsRequired: data.skills,
+      requirements: data.requirements.split('\n').filter(r => r.trim()),
+      benefits: data.benefits.split('\n').filter(b => b.trim()),
+      interviewRoundsRequired: parseInt(data.interviewRoundsRequired.toString()) || 2,
     };
 
     try {
@@ -168,7 +163,7 @@ const PostJob: React.FC = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Basic Information */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
@@ -179,12 +174,15 @@ const PostJob: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
                   placeholder="e.g. Senior Software Engineer"
+                  {...register('title', {
+                    required: 'Job title is required',
+                  })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
+                {errors.title && (
+                  <p className="text-sm text-red-600 mt-1">{errors.title.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -192,12 +190,15 @@ const PostJob: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  name="companyName"
-                  value={formData.companyName}
-                  onChange={handleInputChange}
                   placeholder="e.g. Tech Corp"
+                  {...register('companyName', {
+                    required: 'Company name is required',
+                  })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
+                {errors.companyName && (
+                  <p className="text-sm text-red-600 mt-1">{errors.companyName.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -205,19 +206,20 @@ const PostJob: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
                   placeholder="e.g. Remote, New York, NY"
+                  {...register('location', {
+                    required: 'Location is required',
+                  })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
+                {errors.location && (
+                  <p className="text-sm text-red-600 mt-1">{errors.location.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Job Type</label>
                 <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
+                  {...register('type')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="full-time">Full-time</option>
@@ -230,9 +232,7 @@ const PostJob: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Experience Level</label>
                 <select
-                  name="experienceLevel"
-                  value={formData.experienceLevel}
-                  onChange={handleInputChange}
+                  {...register('experienceLevel')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="entry">Entry Level</option>
@@ -248,9 +248,7 @@ const PostJob: React.FC = () => {
                   <span className="ml-2 text-xs text-gray-500">(How many rounds before hire?)</span>
                 </label>
                 <select
-                  name="interviewRoundsRequired"
-                  value={formData.interviewRoundsRequired}
-                  onChange={handleInputChange}
+                  {...register('interviewRoundsRequired')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value={1}>1 Round</option>
@@ -259,7 +257,7 @@ const PostJob: React.FC = () => {
                   <option value={4}>4 Rounds</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Candidates must pass all {formData.interviewRoundsRequired} round{formData.interviewRoundsRequired > 1 ? 's' : ''} before being eligible for hire
+                  Candidates must pass all {watch('interviewRoundsRequired')} round{watch('interviewRoundsRequired') > 1 ? 's' : ''} before being eligible for hire
                 </p>
               </div>
             </div>
@@ -273,10 +271,8 @@ const PostJob: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Salary</label>
                 <input
                   type="number"
-                  name="salary.min"
-                  value={formData.salary.min}
-                  onChange={handleInputChange}
                   placeholder="50000"
+                  {...register('salary.min')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
@@ -284,23 +280,35 @@ const PostJob: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Salary</label>
                 <input
                   type="number"
-                  name="salary.max"
-                  value={formData.salary.max}
-                  onChange={handleInputChange}
                   placeholder="80000"
+                  {...register('salary.max', {
+                    validate: value => {
+                      const min = watch('salary.min');
+                      if (min && value && parseInt(value) < parseInt(min)) {
+                        return 'Maximum salary must be greater than minimum';
+                      }
+                      return true;
+                    }
+                  })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
+                {errors.salary?.max && (
+                  <p className="text-sm text-red-600 mt-1">{errors.salary.max.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-                <SearchableSelect
-                  value={formData.salary.currency}
-                  onChange={(value) => setFormData(prev => ({
-                    ...prev,
-                    salary: { ...prev.salary, currency: value }
-                  }))}
-                  options={CURRENCY_OPTIONS}
-                  placeholder="Select currency"
+                <Controller
+                  name="salary.currency"
+                  control={control}
+                  render={({ field }) => (
+                    <SearchableSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={CURRENCY_OPTIONS}
+                      placeholder="Select currency"
+                    />
+                  )}
                 />
               </div>
             </div>
@@ -314,13 +322,16 @@ const PostJob: React.FC = () => {
                 Description <span className="text-red-500">*</span>
               </label>
               <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
                 rows={6}
                 placeholder="Describe the role, responsibilities, and what makes this opportunity exciting..."
+                {...register('description', {
+                  required: 'Job description is required',
+                })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
+              {errors.description && (
+                <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>
+              )}
             </div>
           </div>
 
@@ -345,7 +356,7 @@ const PostJob: React.FC = () => {
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {formData.skills.map((skill, index) => (
+              {skills.map((skill, index) => (
                 <span
                   key={index}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm"
@@ -360,7 +371,7 @@ const PostJob: React.FC = () => {
                   </button>
                 </span>
               ))}
-              {formData.skills.length === 0 && (
+              {skills.length === 0 && (
                 <p className="text-gray-500 text-sm">No skills added yet. Add skills that are required for this position.</p>
               )}
             </div>
@@ -374,11 +385,9 @@ const PostJob: React.FC = () => {
                 List Requirements (one per line)
               </label>
               <textarea
-                name="requirements"
-                value={formData.requirements}
-                onChange={handleInputChange}
                 rows={5}
                 placeholder="5+ years of experience in software development&#10;Bachelor's degree in Computer Science or related field&#10;Strong problem-solving skills"
+                {...register('requirements')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
@@ -392,11 +401,9 @@ const PostJob: React.FC = () => {
                 List Benefits (one per line)
               </label>
               <textarea
-                name="benefits"
-                value={formData.benefits}
-                onChange={handleInputChange}
                 rows={5}
                 placeholder="Competitive salary and equity&#10;Health, dental, and vision insurance&#10;Flexible working hours and remote options&#10;Professional development budget"
+                {...register('benefits')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>

@@ -3,6 +3,14 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api-client';
 import { Footer } from '../components';
+import { useForm } from 'react-hook-form';
+
+type ResetPasswordFormData = {
+  email: string;
+  otp: string;
+  newPassword: string;
+  confirmPassword: string;
+};
 
 function ResetPassword() {
   const location = useLocation();
@@ -11,89 +19,54 @@ function ResetPassword() {
   // Get email from navigation state if available
   const emailFromState = location.state?.email || "";
 
-  const [email, setEmail] = useState(emailFromState);
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState({
-    email: "",
-    otp: "",
-    newPassword: "",
-    confirmPassword: ""
-  });
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setError,
+  } = useForm<ResetPasswordFormData>({
+    defaultValues: {
+      email: emailFromState,
+      otp: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  });
+
+  const newPassword = watch('newPassword');
 
   const resetPasswordMutation = useMutation({
     mutationFn: authApi.resetPassword,
     onSuccess: (data: any) => {
       if (data.success) {
         setIsSuccess(true);
-        setErrors({ email: "", otp: "", newPassword: "", confirmPassword: "" });
         setTimeout(() => navigate("/login"), 2000);
       } else {
-        setErrors(prev => ({ ...prev, email: data.message || "Failed to reset password" }));
+        setError('email', {
+          type: 'manual',
+          message: data.message || "Failed to reset password"
+        });
       }
     },
     onError: () => {
-      setErrors(prev => ({ ...prev, email: "Something went wrong. Please try again." }));
+      setError('email', {
+        type: 'manual',
+        message: "Something went wrong. Please try again."
+      });
     }
   });
 
-  const validateForm = (): boolean => {
-    const newErrors = { email: "", otp: "", newPassword: "", confirmPassword: "" };
-    let isValid = true;
-
-    if (!email) {
-      newErrors.email = "Email is required";
-      isValid = false;
-    }
-
-    if (!otp) {
-      newErrors.otp = "OTP is required";
-      isValid = false;
-    }
-
-    if (!newPassword) {
-      newErrors.newPassword = "Password is required";
-      isValid = false;
-    } else if (newPassword.length < 8) {
-      newErrors.newPassword = "Password must be at least 8 characters";
-      isValid = false;
-    }
-
-    if (!confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
-      isValid = false;
-    } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    resetPasswordMutation.mutate({ email, otp, newPassword });
-  };
-
-  const handleFieldChange = (field: string, value: string) => {
-    if (field === 'email') setEmail(value);
-    if (field === 'otp') setOtp(value);
-    if (field === 'newPassword') setNewPassword(value);
-    if (field === 'confirmPassword') setConfirmPassword(value);
-
-    if (errors[field as keyof typeof errors]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
-    }
+  const onSubmit = (data: ResetPasswordFormData) => {
+    resetPasswordMutation.mutate({
+      email: data.email,
+      otp: data.otp,
+      newPassword: data.newPassword
+    });
   };
 
   return (
@@ -150,7 +123,7 @@ function ResetPassword() {
             </div>
           ) : (
             /* Default/Error/Loading State */
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Email Field */}
               <div className="space-y-2">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -158,16 +131,21 @@ function ResetPassword() {
                 </label>
                 <input
                   id="email"
-                  name="email"
                   type="email"
                   placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => handleFieldChange('email', e.target.value)}
-                  className={`w-full px-4 py-3 bg-gray-50 border ${errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
-                    } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
+                  {...register('email', {
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      message: 'Please enter a valid email address',
+                    },
+                  })}
+                  className={`w-full px-4 py-3 bg-gray-50 border ${
+                    errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                  } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
                 />
                 {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email}</p>
+                  <p className="text-sm text-red-600">{errors.email.message}</p>
                 )}
               </div>
 
@@ -178,16 +156,17 @@ function ResetPassword() {
                 </label>
                 <input
                   id="otp"
-                  name="otp"
                   type="text"
                   placeholder="Enter OTP from email"
-                  value={otp}
-                  onChange={(e) => handleFieldChange('otp', e.target.value)}
-                  className={`w-full px-4 py-3 bg-gray-50 border ${errors.otp ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
-                    } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
+                  {...register('otp', {
+                    required: 'OTP is required',
+                  })}
+                  className={`w-full px-4 py-3 bg-gray-50 border ${
+                    errors.otp ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                  } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
                 />
                 {errors.otp && (
-                  <p className="text-sm text-red-600">{errors.otp}</p>
+                  <p className="text-sm text-red-600">{errors.otp.message}</p>
                 )}
               </div>
 
@@ -199,13 +178,18 @@ function ResetPassword() {
                 <div className="relative">
                   <input
                     id="newPassword"
-                    name="newPassword"
                     type={showNewPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    value={newPassword}
-                    onChange={(e) => handleFieldChange('newPassword', e.target.value)}
-                    className={`w-full px-4 py-3 pr-10 bg-gray-50 border ${errors.newPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
-                      } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
+                    {...register('newPassword', {
+                      required: 'Password is required',
+                      minLength: {
+                        value: 8,
+                        message: 'Password must be at least 8 characters',
+                      },
+                    })}
+                    className={`w-full px-4 py-3 pr-10 bg-gray-50 border ${
+                      errors.newPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                    } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
                   />
                   <button
                     type="button"
@@ -229,7 +213,7 @@ function ResetPassword() {
                   <p className="text-xs text-gray-500">Password must be at least 8 characters</p>
                 )}
                 {errors.newPassword && (
-                  <p className="text-sm text-red-600">{errors.newPassword}</p>
+                  <p className="text-sm text-red-600">{errors.newPassword.message}</p>
                 )}
               </div>
 
@@ -241,13 +225,16 @@ function ResetPassword() {
                 <div className="relative">
                   <input
                     id="confirmPassword"
-                    name="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
-                    className={`w-full px-4 py-3 pr-10 bg-gray-50 border ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
-                      } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
+                    {...register('confirmPassword', {
+                      required: 'Please confirm your password',
+                      validate: value =>
+                        value === newPassword || 'Passwords do not match',
+                    })}
+                    className={`w-full px-4 py-3 pr-10 bg-gray-50 border ${
+                      errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                    } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
                   />
                   <button
                     type="button"
@@ -268,7 +255,7 @@ function ResetPassword() {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-sm text-red-600">{errors.confirmPassword}</p>
+                  <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
                 )}
               </div>
 

@@ -1,60 +1,52 @@
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api-client';
 import { Footer } from '../components';
+import { useForm } from 'react-hook-form';
+
+type ForgotPasswordFormData = {
+  email: string;
+};
 
 function ForgotPassword() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm<ForgotPasswordFormData>({
+    defaultValues: {
+      email: '',
+    },
+  });
 
   const forgotPasswordMutation = useMutation({
     mutationFn: authApi.forgotPassword,
-    onSuccess: (data: any) => {
+    onSuccess: (data: any, variables) => {
       if (data.success) {
         // Navigate to reset password page with email
         navigate("/reset-password", {
-          state: { email }
+          state: { email: variables }
         });
       } else {
-        setEmailError(data.message || "Failed to send OTP");
+        setError('email', {
+          type: 'manual',
+          message: data.message || "Failed to send OTP"
+        });
       }
     },
     onError: () => {
-      setEmailError("Something went wrong. Please try again.");
+      setError('email', {
+        type: 'manual',
+        message: "Something went wrong. Please try again."
+      });
     }
   });
 
-  const validateEmail = (email: string): boolean => {
-    if (!email) {
-      setEmailError("Email is required");
-      return false;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setEmailError("Please enter a valid email address");
-      return false;
-    }
-    setEmailError("");
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateEmail(email)) {
-      return;
-    }
-
-    forgotPasswordMutation.mutate(email);
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (emailError) {
-      setEmailError("");
-    }
+  const onSubmit = (data: ForgotPasswordFormData) => {
+    forgotPasswordMutation.mutate(data.email);
   };
 
   return (
@@ -89,7 +81,7 @@ function ForgotPassword() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Email Field */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -97,19 +89,21 @@ function ForgotPassword() {
               </label>
               <input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="name@example.com"
-                value={email}
-                onChange={handleEmailChange}
-                className={`w-full px-4 py-3 bg-gray-50 border ${emailError
-                  ? 'border-red-500 focus:ring-red-500'
-                  : 'border-gray-200 focus:ring-indigo-500'
-                  } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: 'Please enter a valid email address',
+                  },
+                })}
+                className={`w-full px-4 py-3 bg-gray-50 border ${
+                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
               />
-
-              {emailError && (
-                <p className="text-sm text-red-600 mt-1">{emailError}</p>
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email.message}</p>
               )}
             </div>
 

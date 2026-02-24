@@ -8,17 +8,29 @@ import { authApi } from '../api/api-client';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/auth-context';
 import { Footer } from '../components';
+import { useForm } from 'react-hook-form';
 
+type LoginFormData = {
+  email: string;
+  password: string;
+};
 
 function Login() {
-  const [loginInfo, setLoginInfo] = useState({
-    email: "",
-    password: ""
-  });
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
   const queryClient = useQueryClient();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
@@ -60,21 +72,9 @@ function Login() {
     }
   });
 
-  const handleChange = (e: any) => {
-    const { name, value } = e.target;
-    const copyLoginInfo = { ...loginInfo };
-    copyLoginInfo[name as keyof typeof loginInfo] = value;
-    setLoginInfo(copyLoginInfo);
-  }
-  
-  const handleLogin = async (e: any) => {
-    e.preventDefault();
-    const { email, password } = loginInfo;
-    if (!email || !password) {
-      return handleError("All fields are required");
-    }
-    loginMutation.mutate(loginInfo);
-  }
+  const onSubmit = (data: LoginFormData) => {
+    loginMutation.mutate(data);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -104,7 +104,7 @@ function Login() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Email Field */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -112,13 +112,22 @@ function Login() {
               </label>
               <input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="name@example.com"
-                value={loginInfo.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: 'Please enter a valid email address',
+                  },
+                })}
+                className={`w-full px-4 py-3 bg-gray-50 border ${
+                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
               />
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email.message}</p>
+              )}
             </div>
 
             {/* Password Field */}
@@ -129,12 +138,18 @@ function Login() {
               <div className="relative">
                 <input
                   id="password"
-                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  value={loginInfo.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 pr-10 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                  {...register('password', {
+                    required: 'Password is required',
+                    minLength: {
+                      value: 6,
+                      message: 'Password must be at least 6 characters',
+                    },
+                  })}
+                  className={`w-full px-4 py-3 pr-10 bg-gray-50 border ${
+                    errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                  } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
                 />
                 <button
                   type="button"
@@ -154,6 +169,9 @@ function Login() {
                   )}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-red-600">{errors.password.message}</p>
+              )}
             </div>
 
             {/* Login Button */}

@@ -7,21 +7,35 @@ import { useParams } from "react-router-dom";
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api-client';
 import { Footer } from '../components';
+import { useForm } from 'react-hook-form';
 
+type SignupFormData = {
+  name: string;
+  email: string;
+  number: string;
+  password: string;
+  companyName?: string;
+  location?: string;
+};
 
 function Signup() {
   const { role } = useParams();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
-  const [signupInfo, setSignupInfo] = useState({
-    name: "",
-    email: "",
-    number: "",
-    password: "",
-    companyName: "",
-    location: "",
-    role: role === "recruiter" ? "recruiter" : "job_seeker"
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignupFormData>({
+    defaultValues: {
+      name: '',
+      email: '',
+      number: '',
+      password: '',
+      companyName: '',
+      location: '',
+    },
   });
 
   const signupMutation = useMutation({
@@ -53,41 +67,22 @@ function Signup() {
     return <h2>Invalid signup type</h2>;
   }
 
-  const handleChange = (e: any) => {
-    const { name, value } = e.target;
-    const copySignupInfo = { ...signupInfo };
-    copySignupInfo[name as keyof typeof signupInfo] = value;
-    setSignupInfo(copySignupInfo);
-  }
-  
-  const handleSignup = async (e: any) => {
-    e.preventDefault();
-    const { name, email, number, password, companyName, location } = signupInfo;
-
-    if (!name || !email || !number || !password) {
-      return handleError("All fields are required");
-    }
-    if (role === "recruiter") {
-      if (!companyName || !location) {
-        return handleError("Company name and location are required for recruiters");
-      }
-    }
-    
+  const onSubmit = (data: SignupFormData) => {
     const signupData: any = {
-      name,
-      email,
-      number,
-      password,
+      name: data.name,
+      email: data.email,
+      number: data.number,
+      password: data.password,
       role: role === "recruiter" ? "recruiter" : "job_seeker",
     };
     
     if (role === "recruiter") {
-      signupData.companyName = companyName;
-      signupData.location = location;
+      signupData.companyName = data.companyName;
+      signupData.location = data.location;
     }
     
     signupMutation.mutate(signupData);
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -118,7 +113,7 @@ function Signup() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSignup} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Name Field */}
             <div className="space-y-2">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -126,14 +121,23 @@ function Signup() {
               </label>
               <input
                 id="name"
-                name="name"
                 type="text"
                 placeholder="John Doe"
-                value={signupInfo.name}
-                onChange={handleChange}
                 autoFocus
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                {...register('name', {
+                  required: 'Full name is required',
+                  minLength: {
+                    value: 2,
+                    message: 'Name must be at least 2 characters',
+                  },
+                })}
+                className={`w-full px-4 py-3 bg-gray-50 border ${
+                  errors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
               />
+              {errors.name && (
+                <p className="text-sm text-red-600">{errors.name.message}</p>
+              )}
             </div>
 
             {/* Email Field */}
@@ -143,13 +147,22 @@ function Signup() {
               </label>
               <input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="name@example.com"
-                value={signupInfo.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: 'Please enter a valid email address',
+                  },
+                })}
+                className={`w-full px-4 py-3 bg-gray-50 border ${
+                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
               />
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email.message}</p>
+              )}
             </div>
 
             {/* Phone Field */}
@@ -159,13 +172,22 @@ function Signup() {
               </label>
               <input
                 id="number"
-                name="number"
                 type="tel"
-                placeholder="+91 9876543210"
-                value={signupInfo.number}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                placeholder="9876543210"
+                {...register('number', {
+                  required: 'Phone number is required',
+                  pattern: {
+                    value: /^[0-9]{10}$/,
+                    message: 'Phone number must be exactly 10 digits',
+                  },
+                })}
+                className={`w-full px-4 py-3 bg-gray-50 border ${
+                  errors.number ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
               />
+              {errors.number && (
+                <p className="text-sm text-red-600">{errors.number.message}</p>
+              )}
             </div>
 
             {/* Password Field */}
@@ -176,12 +198,18 @@ function Signup() {
               <div className="relative">
                 <input
                   id="password"
-                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  value={signupInfo.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 pr-10 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                  {...register('password', {
+                    required: 'Password is required',
+                    minLength: {
+                      value: 8,
+                      message: 'Password must be at least 8 characters',
+                    },
+                  })}
+                  className={`w-full px-4 py-3 pr-10 bg-gray-50 border ${
+                    errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                  } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
                 />
                 <button
                   type="button"
@@ -201,6 +229,9 @@ function Signup() {
                   )}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-red-600">{errors.password.message}</p>
+              )}
             </div>
 
             {/* Recruiter-specific fields */}
@@ -212,13 +243,18 @@ function Signup() {
                   </label>
                   <input
                     id="companyName"
-                    name="companyName"
                     type="text"
                     placeholder="Acme Corp"
-                    value={signupInfo.companyName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                    {...register('companyName', {
+                      required: role === 'recruiter' ? 'Company name is required for recruiters' : false,
+                    })}
+                    className={`w-full px-4 py-3 bg-gray-50 border ${
+                      errors.companyName ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                    } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
                   />
+                  {errors.companyName && (
+                    <p className="text-sm text-red-600">{errors.companyName.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="location" className="block text-sm font-medium text-gray-700">
@@ -226,13 +262,18 @@ function Signup() {
                   </label>
                   <input
                     id="location"
-                    name="location"
                     type="text"
                     placeholder="Mumbai, India"
-                    value={signupInfo.location}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                    {...register('location', {
+                      required: role === 'recruiter' ? 'Location is required for recruiters' : false,
+                    })}
+                    className={`w-full px-4 py-3 bg-gray-50 border ${
+                      errors.location ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
+                    } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
                   />
+                  {errors.location && (
+                    <p className="text-sm text-red-600">{errors.location.message}</p>
+                  )}
                 </div>
               </>
             )}
