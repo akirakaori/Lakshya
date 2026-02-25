@@ -1,9 +1,20 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require("crypto");
+const mongoose = require('mongoose');
 const UserModel = require('../models/user-model');
 const { ROLES } = require('../Library/roles');
 const sendEmail = require("../Library/send-emails");
+
+const ensureDatabaseConnection = () => {
+  if (mongoose.connection.readyState !== 1) {
+    const error = new Error('Database is unavailable. Please check MongoDB connection and try again.');
+    error.statusCode = 503;
+    error.success = false;
+    error.errorField = 'message';
+    throw error;
+  }
+};
 
 /**
  * Service function for user signup
@@ -12,6 +23,8 @@ const sendEmail = require("../Library/send-emails");
  * @throws {Error} - Error with statusCode and message properties
  */
 const signupService = async (data) => {
+  ensureDatabaseConnection();
+
   const { name, email, password, number, role, companyName, location } = data;
 
   // Define allowed signup roles
@@ -89,6 +102,8 @@ const signupService = async (data) => {
  * @throws {Error} - Error with statusCode and message properties
  */
 const loginService = async (data) => {
+  ensureDatabaseConnection();
+
   const { email, password } = data;
 
   // Find user by email (include password field which is hidden by default)
@@ -140,6 +155,8 @@ const loginService = async (data) => {
  * @throws {Error} - Error with statusCode and message properties
  */
 const forgotPasswordService = async (data) => {
+  ensureDatabaseConnection();
+
   const { email } = data;
 
   // Find user by email
@@ -180,6 +197,8 @@ const forgotPasswordService = async (data) => {
  * @throws {Error} - Error with statusCode and message properties
  */
 const resetPasswordService = async (data) => {
+  ensureDatabaseConnection();
+
   const { email, otp, newPassword } = data;
 
   // Find user and validate OTP

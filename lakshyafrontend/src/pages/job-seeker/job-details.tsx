@@ -22,8 +22,23 @@ const formatSalary = (salary: Job['salary']) => {
 
 const JobDetails: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
+  const safeJobId = jobId ?? '';
   const [coverLetter, setCoverLetter] = useState('');
   const [showApplyModal, setShowApplyModal] = useState(false);
+
+  const { data: jobData, isLoading, error } = useJob(safeJobId);
+  const { data: relatedJobsData } = useJobs({ limit: 4 });
+  const applyMutation = useApplyForJob();
+  const hasApplied = useHasApplied(safeJobId);
+  const { user } = useAuth();
+  const { data: matchData } = useJobMatch(jobId);
+
+  const job = jobData?.data;
+  const relatedJobs = relatedJobsData?.data?.filter((j: Job) => j._id !== safeJobId).slice(0, 4) || [];
+
+  const isJobSeeker = user?.role === 'job_seeker';
+  const hasAnalysis = !!matchData?.data;
+  const isAnalysisOutdated = matchData?.isOutdated || false;
 
   // Guard: Invalid jobId parameter
   if (!jobId) {
@@ -44,20 +59,6 @@ const JobDetails: React.FC = () => {
       </DashboardLayout>
     );
   }
-
-  const { data: jobData, isLoading, error } = useJob(jobId);
-  const { data: relatedJobsData } = useJobs({ limit: 4 });
-  const applyMutation = useApplyForJob();
-  const hasApplied = useHasApplied(jobId);
-  const { user } = useAuth();
-  const { data: matchData } = useJobMatch(jobId);
-
-  const job = jobData?.data;
-  const relatedJobs = relatedJobsData?.data?.filter((j: Job) => j._id !== jobId).slice(0, 4) || [];
-
-  const isJobSeeker = user?.role === 'job_seeker';
-  const hasAnalysis = !!matchData?.data;
-  const isAnalysisOutdated = matchData?.isOutdated || false;
 
   const handleApply = async () => {
     if (!jobId) return;
@@ -90,8 +91,15 @@ const JobDetails: React.FC = () => {
       toast.success('Application submitted successfully!');
       setShowApplyModal(false);
       setCoverLetter('');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to submit application');
+    } catch (err: unknown) {
+      const errorMessage =
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : 'Failed to submit application';
+      toast.error(errorMessage);
     }
   };
 

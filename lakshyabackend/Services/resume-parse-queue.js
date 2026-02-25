@@ -43,6 +43,9 @@ const initializeQueue = async () => {
       };
 
       const testRedis = new Redis(redisConfig);
+      testRedis.on('error', () => {
+        // Suppress expected connection errors during availability check
+      });
       await testRedis.connect();
       await testRedis.ping();
       await testRedis.quit();
