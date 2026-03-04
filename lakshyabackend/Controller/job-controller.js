@@ -145,14 +145,36 @@ const getJobById = async (req, res) => {
  */
 const searchJobs = async (req, res) => {
   try {
+    console.log('='.repeat(80));
+    console.log('[searchJobs Controller] Received request');
+    console.log('[searchJobs Controller] req.query:', JSON.stringify(req.query, null, 2));
+    console.log('[searchJobs Controller] Query keys:', Object.keys(req.query));
+    
+    // Extract experienceLevel array from query params
+    let experienceLevels = req.query.experienceLevel;
+    if (experienceLevels && !Array.isArray(experienceLevels)) {
+      experienceLevels = [experienceLevels];
+    }
+    console.log('[Controller] 🎯 Experience levels extracted:', experienceLevels);
+
     const filters = {
       keyword: req.query.keyword,
       location: req.query.location,
+      category: req.query.category,
       skills: req.query.skill || req.query.skills,
       jobType: req.query.jobType,
+      remoteType: req.query.remoteType,
+      companySize: req.query.companySize,
+      salaryMin: req.query.salaryMin ? parseInt(req.query.salaryMin) : undefined,
+      salaryMax: req.query.salaryMax ? parseInt(req.query.salaryMax) : undefined,
+      experienceLevels: experienceLevels,
+      postedWithinDays: req.query.postedWithinDays ? parseInt(req.query.postedWithinDays) : undefined,
       page: req.query.page || 1,
       limit: req.query.limit || 10
     };
+
+    console.log('[searchJobs Controller] Parsed filters:', JSON.stringify(filters, null, 2));
+    console.log('='.repeat(80));
     
     const result = await jobService.searchJobs(filters);
     
@@ -163,6 +185,7 @@ const searchJobs = async (req, res) => {
       pagination: result.pagination
     });
   } catch (error) {
+    console.error('[searchJobs Controller] Error:', error.message);
     res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || 'Internal server error'
