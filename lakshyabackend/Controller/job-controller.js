@@ -150,12 +150,22 @@ const searchJobs = async (req, res) => {
     console.log('[searchJobs Controller] req.query:', JSON.stringify(req.query, null, 2));
     console.log('[searchJobs Controller] Query keys:', Object.keys(req.query));
     
-    // Extract experienceLevel array from query params
-    let experienceLevels = req.query.experienceLevel;
+    // Extract experienceLevel(s) array from query params
+    // Support BOTH 'experienceLevels' (plural) and 'experienceLevel' (singular, repeated)
+    // URL: ?experienceLevel=Mid-level&experienceLevel=Senior-level becomes req.query.experienceLevel = ['Mid-level', 'Senior-level']
+    let experienceLevels = req.query.experienceLevels || req.query.experienceLevel;
+    
+    // Normalize to array (Express auto-converts repeated params to array)
     if (experienceLevels && !Array.isArray(experienceLevels)) {
       experienceLevels = [experienceLevels];
     }
-    console.log('[Controller] 🎯 Experience levels extracted:', experienceLevels);
+    
+    console.log('[Controller] 🎯 Experience levels extraction:');
+    console.log('  - req.query.experienceLevel:', req.query.experienceLevel);
+    console.log('  - req.query.experienceLevels:', req.query.experienceLevels);
+    console.log('  - Final extracted:', experienceLevels);
+    console.log('  - Is array?', Array.isArray(experienceLevels));
+    console.log('  - Count:', experienceLevels?.length ?? 0);
 
     const filters = {
       keyword: req.query.keyword,

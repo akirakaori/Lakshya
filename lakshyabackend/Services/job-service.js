@@ -247,11 +247,40 @@ const getJobById = async (jobId) => {
 };
 
 /**
+ * Escape special regex characters for safe RegExp construction
+ */
+const escapeRegExp = (str) => {
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
+/**
  * Browse and search jobs with filters
  */
 const searchJobs = async (filters) => {
   try {
-    const { keyword, location, skills, jobType, page = 1, limit = 10 } = filters;
+    const { 
+      keyword, 
+      location, 
+      category,
+      skills, 
+      jobType, 
+      remoteType,
+      companySize,
+      salaryMin,
+      salaryMax,
+      experienceLevels,
+      postedWithinDays,
+      page = 1, 
+      limit = 10 
+    } = filters;
+    
+    // DEBUG: Log received filters
+    console.log('='.repeat(60));
+    console.log('[searchJobs] Received filters:', JSON.stringify(filters, null, 2));
+    console.log('[searchJobs] Category received:', category);
+    console.log('[searchJobs] Category type:', typeof category);
+    console.log('[searchJobs] Category trimmed:', category ? String(category).trim() : 'N/A');
+    console.log('='.repeat(60));
     
     // Only show active, non-deleted jobs to job seekers
     const query = { 
@@ -266,6 +295,54 @@ const searchJobs = async (filters) => {
         { title: { $regex: keyword, $options: 'i' } },
         { description: { $regex: keyword, $options: 'i' } }
       ];
+      console.log('[searchJobs] Keyword filter applied:', keyword);
+    }
+    
+    // Category filter - FLEXIBLE SEARCH across category, title, description
+    // Allows user-selected category to match relevant jobs even if category differs slightly
+    // Example: "Tutor" search can match jobs with "Teacher" in category/title/description
+    if (category) {
+      const normalizedCategory = String(category).trim();
+      
+      if (normalizedCategory) {
+        // Escape special regex characters for safe regex construction
+        const escapedCategory = escapeRegExp(normalizedCategory);
+        const categoryRegex = { $regex: escapedCategory, $options: 'i' };
+        
+        console.log('[searchJobs] 🔍 Category FLEXIBLE filter applied:');
+        console.log('  - Original:', category);
+        console.log('  - Normalized:', normalizedCategory);
+        console.log('  - Escaped:', escapedCategory);
+        console.log('  - Regex (no anchors for partial match):', escapedCategory);
+        
+        // Create $or condition for category search across multiple fields
+        const categoryCondition = {
+          $or: [
+            { category: categoryRegex },
+            { title: categoryRegex },
+            { description: categoryRegex }
+          ]
+        };
+        
+        // Merge with existing $or (keyword) using $and
+        if (query.$or) {
+          console.log('[searchJobs] 🔀 Merging category $or with existing keyword $or using $and');
+          // Move existing $or into $and, then add category $or
+          query.$and = query.$and || [];
+          query.$and.push({ $or: query.$or });
+          query.$and.push(categoryCondition);
+          delete query.$or;
+        } else {
+          console.log('[searchJobs] 🔀 No existing $or, adding category $or directly');
+          query.$or = categoryCondition.$or;
+        }
+        
+        console.log('[searchJobs] Category search will match in: category, title, description');
+      } else {
+        console.log('[searchJobs] Category filter skipped (empty after trim)');
+      }
+    } else {
+      console.log('[searchJobs] No category filter (undefined/null)');
     }
     
     // Location filter
@@ -284,6 +361,92 @@ const searchJobs = async (filters) => {
       query.jobType = jobType;
     }
     
+    // Remote type filter
+    if (remoteType) {
+      query.remoteType = remoteType;
+    }
+    
+    // Company size filter
+    if (companySize) {
+      query.companySize = companySize;
+    }
+    
+    // Salary OVERLAP filter logic
+    // ONLY apply salary filter if user actually specified salaryMin or salaryMax (and > 0)
+    // User wants jobs where: job.salary.min <= filterMax AND job.salary.max >= filterMin
+    const hasSalaryFilter = (salaryMin !== undefined && salaryMin > 0) || (salaryMax !== undefined && salaryMax > 0);
+    
+    if (hasSalaryFilter) {
+      const salaryConditions = [];
+      
+      if (salaryMin !== undefined && salaryMin > 0) {
+        // Job's max salary should be >= user's minimum requirement
+        salaryConditions.push({ 'salary.max': { $gte: salaryMin } });
+        console.log('[searchJobs] Applying salary min filter:', salaryMin);
+      }
+      
+      if (salaryMax !== undefined && salaryMax > 0) {
+        // Job's min salary should be <= user's maximum budget
+        salaryConditions.push({ 'salary.min': { $lte: salaryMax } });
+        console.log('[searchJobs] Applying salary max filter:', salaryMax);
+      }
+      
+      if (salaryConditions.length > 0) {
+        query.$and = query.$and || [];
+        query.$and.push(...salaryConditions);
+      }
+    } else {
+      console.log('[searchJobs] No salary filter applied (salaryMin/Max not provided or = 0)');
+    }
+    
+    // Experience level filter (array - match any)
+    // Frontend now sends database values: 'entry', 'mid', 'senior', 'lead', 'executive'
+    // Use simple $in query with case-insensitive match for safety
+    if (experienceLevels && experienceLevels.length > 0) {
+      console.log('[searchJobs] 🎯 Experience level filter:');
+      console.log('  - Raw input:', experienceLevels);
+      console.log('  - Type:', typeof experienceLevels, 'IsArray:', Array.isArray(experienceLevels));
+      console.log('  - Count:', experienceLevels.length);
+      
+      // Filter out empty values and create case-insensitive regex for each
+      // This handles minor case variations ('Mid' vs 'mid')
+      const validLevels = experienceLevels
+        .filter(level => level && String(level).trim())
+        .map(level => {
+          const trimmed = String(level).trim();
+          return new RegExp(`^${escapeRegExp(trimmed)}$`, 'i');
+        });
+      
+      if (validLevels.length > 0) {
+        query.experienceLevel = { $in: validLevels };
+        console.log('  - ✅ MongoDB filter applied with', validLevels.length, 'levels');
+        console.log('  - Expected DB values:', experienceLevels.map(l => `"${l}"`).join(', '));
+        console.log('  - Query:', JSON.stringify(query.experienceLevel, null, 2));
+      } else {
+        console.log('  - ⚠️ All levels empty after filtering, skipping');
+      }
+    } else {
+      console.log('[searchJobs] No experience level filter (empty or undefined)');
+    }
+    
+    // Posted within days filter
+    if (postedWithinDays && postedWithinDays > 0) {
+      const daysAgo = new Date(Date.now() - postedWithinDays * 24 * 60 * 60 * 1000);
+      query.createdAt = { $gte: daysAgo };
+    }
+    
+    console.log('[searchJobs] 📋 Final MongoDB query:', JSON.stringify(query, null, 2));
+    console.log('[searchJobs] Query structure breakdown:');
+    console.log('  - Base: status=open, isActive=true, isDeleted=false');
+    console.log('  - Has $or:', !!query.$or, query.$or ? `(${query.$or.length} conditions)` : '');
+    console.log('  - Has $and:', !!query.$and, query.$and ? `(${query.$and.length} conditions)` : '');
+    console.log('  - Category direct field:', query.category ? 'YES' : 'NO');
+    console.log('  - jobType:', query.jobType || 'N/A');
+    console.log('  - remoteType:', query.remoteType || 'N/A');
+    console.log('  - companySize:', query.companySize || 'N/A');
+    console.log('  - All filter keys:', Object.keys(query).join(', '));
+    console.log('='.repeat(60));
+    
     const skip = (page - 1) * limit;
     
     const jobs = await JobModel.find(query)
@@ -293,6 +456,8 @@ const searchJobs = async (filters) => {
       .populate('createdBy', 'name companyName');
     
     const total = await JobModel.countDocuments(query);
+    
+    console.log('[searchJobs] Found', total, 'jobs');
     
     return {
       jobs,

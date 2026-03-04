@@ -4,6 +4,8 @@ import { DashboardLayout, LoadingSpinner } from '../../components';
 import { useCreateJob, useUpdateJob, useJob } from '../../hooks';
 import { toast } from 'react-toastify';
 import SearchableSelect from '../../components/ui/searchable-select';
+import CategoryDropdown from '../../components/CategoryDropdown';
+import { getCategoryMeta } from '../../constants/jobCategories';
 import { useForm, Controller } from 'react-hook-form';
 
 type JobFormData = {
@@ -11,13 +13,17 @@ type JobFormData = {
   description: string;
   companyName: string;
   location: string;
-  type: string;
+  type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Freelance';
+  remoteType: 'Remote' | 'Onsite' | 'Hybrid';
+  category: string;
+  companySize: '1-10' | '11-50' | '51-200' | '201-500' | '501-1000' | '1000+' | '';
   experienceLevel: string;
   salary: {
     min: string;
     max: string;
     currency: string;
   };
+  salaryVisible: boolean;
   skills: string[];
   requirements: string;
   benefits: string;
@@ -53,19 +59,24 @@ const PostJob: React.FC = () => {
     setValue,
     watch,
     reset,
+    getValues,
   } = useForm<JobFormData>({
     defaultValues: {
       title: '',
       description: '',
       companyName: '',
       location: '',
-      type: 'full-time',
+      type: 'Full-time',
+      remoteType: 'Onsite',
+      category: '',
+      companySize: '',
       experienceLevel: 'mid',
       salary: {
         min: '',
         max: '',
         currency: 'USD',
       },
+      salaryVisible: true,
       skills: [],
       requirements: '',
       benefits: '',
@@ -80,18 +91,26 @@ const PostJob: React.FC = () => {
   useEffect(() => {
     if (isEditMode && jobData?.data) {
       const job = jobData.data;
+      const jobType = (job.type || job.jobType || 'Full-time') as JobFormData['type'];
+      const jobRemoteType = (job.remoteType || 'Onsite') as JobFormData['remoteType'];
+      const jobCompanySize = (job.companySize || '') as JobFormData['companySize'];
+      
       reset({
         title: job.title || '',
         description: job.description || '',
         companyName: job.companyName || '',
         location: job.location || '',
-        type: job.type || job.jobType || 'full-time',
+        type: jobType,
+        remoteType: jobRemoteType,
+        category: job.category || '',
+        companySize: jobCompanySize,
         experienceLevel: job.experienceLevel || 'mid',
         salary: {
           min: job.salary?.min?.toString() || '',
           max: job.salary?.max?.toString() || '',
           currency: job.salary?.currency || 'USD',
         },
+        salaryVisible: job.salaryVisible !== false, // default to true if not set
         skills: job.skills || job.skillsRequired || [],
         requirements: Array.isArray(job.requirements) ? job.requirements.join('\n') : '',
         benefits: Array.isArray(job.benefits) ? job.benefits.join('\n') : '',
@@ -115,6 +134,7 @@ const PostJob: React.FC = () => {
     // Prepare data
     const jobPayload = {
       ...data,
+      companySize: data.companySize || undefined, // Convert empty string to undefined
       salary: {
         min: parseInt(data.salary.min) || 0,
         max: parseInt(data.salary.max) || 0,
@@ -222,11 +242,73 @@ const PostJob: React.FC = () => {
                   {...register('type')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
-                  <option value="full-time">Full-time</option>
-                  <option value="part-time">Part-time</option>
-                  <option value="contract">Contract</option>
-                  <option value="internship">Internship</option>
-                  <option value="remote">Remote</option>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Internship">Internship</option>
+                  <option value="Freelance">Freelance</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Work Location</label>
+                <select
+                  {...register('remoteType')}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="Onsite">Onsite</option>
+                  <option value="Remote">Remote</option>
+                  <option value="Hybrid">Hybrid</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <Controller
+                  name="category"
+                  control={control}
+                  rules={{ required: 'Please select a category' }}
+                  render={({ field, fieldState }) => (
+                    <div>
+                      <CategoryDropdown
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Search and select category..."
+                        error={fieldState.error?.message}
+                      />
+                      {/* Category Preview Badge */}
+                      {field.value && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-xs text-gray-500">Preview:</span>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border ${
+                            getCategoryMeta(field.value).bgClass
+                          } ${
+                            getCategoryMeta(field.value).colorClass
+                          } ${
+                            getCategoryMeta(field.value).borderClass
+                          }`}>
+                            <span>{getCategoryMeta(field.value).icon}</span>
+                            <span>{field.value}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
+                <select
+                  {...register('companySize')}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">Not specified</option>
+                  <option value="1-10">1-10 employees</option>
+                  <option value="11-50">11-50 employees</option>
+                  <option value="51-200">51-200 employees</option>
+                  <option value="201-500">201-500 employees</option>
+                  <option value="501-1000">501-1000 employees</option>
+                  <option value="1000+">1000+ employees</option>
                 </select>
               </div>
               <div>
@@ -283,7 +365,7 @@ const PostJob: React.FC = () => {
                   placeholder="80000"
                   {...register('salary.max', {
                     validate: value => {
-                      const min = watch('salary.min');
+                      const min = getValues('salary.min');
                       if (min && value && parseInt(value) < parseInt(min)) {
                         return 'Maximum salary must be greater than minimum';
                       }
@@ -311,6 +393,18 @@ const PostJob: React.FC = () => {
                   )}
                 />
               </div>
+            </div>
+            <div className="mt-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  {...register('salaryVisible')}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-700">
+                  Display salary publicly (uncheck to show "Negotiable")
+                </span>
+              </label>
             </div>
           </div>
 

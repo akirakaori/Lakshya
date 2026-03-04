@@ -4,6 +4,7 @@ export { Sidebar, Navbar, DashboardLayout, Footer } from './layout';
 // Job components
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { JobCard, JobFilter, JobMatchPanel } from './jobs';
+export { default as ActiveFilters } from './ActiveFilters';
 
 // Application components
 export { ApplicationCard } from './applications';

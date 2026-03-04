@@ -7,6 +7,7 @@ import { useJob, useJobs, useApplyForJob, useHasApplied, useJobMatch } from '../
 import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
 import type { Job } from '../../services';
+import { getCategoryMeta } from '../../constants/jobCategories';
 
 const formatSalary = (salary: Job['salary']) => {
   if (!salary) return null;
@@ -195,8 +196,23 @@ const JobDetails: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 mt-4">
+              <div className="flex flex-wrap items-center gap-2 mt-4">
+                {/* Category Badge */}
+                {job.category && (
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium border ${
+                    getCategoryMeta(job.category).bgClass
+                  } ${
+                    getCategoryMeta(job.category).colorClass
+                  } ${
+                    getCategoryMeta(job.category).borderClass
+                  }`}>
+                    <span>{getCategoryMeta(job.category).icon}</span>
+                    <span>{job.category}</span>
+                  </span>
+                )}
+                {/* Job Type Badge */}
                 <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{job.jobType}</span>
+                {/* Posted Date */}
                 <span className="text-sm text-gray-500">
                   Posted {new Date(job.createdAt).toLocaleDateString()}
                 </span>

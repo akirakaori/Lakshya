@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Job } from '../../services/job-service';
+import { getCategoryMeta } from '../../constants/jobCategories';
 
 interface JobCardProps {
   job: Job;
@@ -9,8 +10,9 @@ interface JobCardProps {
   matchScore?: number;
 }
 
-const formatSalary = (salary: Job['salary']) => {
+const formatSalary = (salary: Job['salary'], salaryVisible?: boolean) => {
   if (!salary) return null;
+  if (salaryVisible === false) return 'Negotiable';
   if (typeof salary === 'string') return salary;
   if (!salary.min && !salary.max) return null;
   const formatter = new Intl.NumberFormat('en-US', {
@@ -29,7 +31,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, variant = 'default', showMatchSc
     return 'bg-gray-100 text-gray-700';
   };
   
-  const salaryDisplay = formatSalary(job.salary);
+  const salaryDisplay = formatSalary(job.salary, job.salaryVisible);
 
   if (variant === 'compact') {
     return (
@@ -93,6 +95,19 @@ const JobCard: React.FC<JobCardProps> = ({ job, variant = 'default', showMatchSc
 
         {/* Meta Badges Row */}
         <div className="flex flex-wrap gap-2 mt-4">
+          {/* Category Badge */}
+          {job.category && (
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border ${
+              getCategoryMeta(job.category).bgClass
+            } ${
+              getCategoryMeta(job.category).colorClass
+            } ${
+              getCategoryMeta(job.category).borderClass
+            }`}>
+              <span>{getCategoryMeta(job.category).icon}</span>
+              <span>{job.category}</span>
+            </span>
+          )}
           {job.jobType && (
             <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-medium">
               {job.jobType}

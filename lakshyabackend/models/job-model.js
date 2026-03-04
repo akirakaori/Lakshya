@@ -62,6 +62,23 @@ const jobSchema = new Schema({
     enum: ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'],
     default: 'Full-time'
   },
+  remoteType: {
+    type: String,
+    enum: ['Remote', 'Onsite', 'Hybrid'],
+    default: 'Onsite'
+  },
+  category: {
+    type: String,
+    trim: true
+  },
+  companySize: {
+    type: String,
+    enum: ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'],
+  },
+  salaryVisible: {
+    type: Boolean,
+    default: true
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -111,6 +128,9 @@ jobSchema.index({ title: 'text', description: 'text' });
 jobSchema.index({ location: 1 });
 jobSchema.index({ skillsRequired: 1 });
 jobSchema.index({ jobType: 1 });
+jobSchema.index({ remoteType: 1 });
+jobSchema.index({ category: 1 });
+jobSchema.index({ createdAt: -1 });
 jobSchema.index({ createdBy: 1 });
 jobSchema.index({ status: 1 });
 

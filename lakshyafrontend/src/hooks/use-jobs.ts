@@ -14,9 +14,15 @@ export const jobKeys = {
 
 // Get jobs with filters
 export const useJobs = (filters: JobFilters = {}) => {
+  console.log('[useJobs] Hook called with filters:', JSON.stringify(filters, null, 2));
+  console.log('[useJobs] QueryKey will be:', jobKeys.list(filters));
+  
   return useQuery({
     queryKey: jobKeys.list(filters),
-    queryFn: () => jobService.getJobs(filters),
+    queryFn: () => {
+      console.log('[useJobs] queryFn executing with filters:', filters);
+      return jobService.getJobs(filters);
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

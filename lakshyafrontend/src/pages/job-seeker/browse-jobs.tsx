@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { DashboardLayout, JobCard, JobFilter, LoadingSpinner, EmptyState } from '../../components';
+import { DashboardLayout, JobCard, JobFilter, LoadingSpinner, EmptyState, ActiveFilters } from '../../components';
 import { useJobs, useJobMatchScores } from '../../hooks';
 import type { JobFilters } from '../../services';
 
@@ -17,9 +17,12 @@ const urlParamsToFilters = (params: URLSearchParams): JobFilters => {
   if (params.get('keyword')) filters.keyword = params.get('keyword')!;
   if (params.get('category')) filters.category = params.get('category')!;
   if (params.get('jobType')) filters.jobType = params.get('jobType')!;
+  if (params.get('remoteType')) filters.remoteType = params.get('remoteType')!;
+  if (params.get('companySize')) filters.companySize = params.get('companySize')!;
   if (params.get('location')) filters.location = params.get('location')!;
   if (params.get('salaryMin')) filters.salaryMin = parseInt(params.get('salaryMin')!);
   if (params.get('salaryMax')) filters.salaryMax = parseInt(params.get('salaryMax')!);
+  if (params.get('postedWithinDays')) filters.postedWithinDays = parseInt(params.get('postedWithinDays')!);
   if (params.get('aiMatchMin')) filters.aiMatchMin = parseInt(params.get('aiMatchMin')!);
   if (params.get('page')) filters.page = parseInt(params.get('page')!);
   
@@ -37,9 +40,12 @@ const filtersToUrlParams = (filters: JobFilters): URLSearchParams => {
   if (filters.keyword) params.set('keyword', filters.keyword);
   if (filters.category) params.set('category', filters.category);
   if (filters.jobType) params.set('jobType', filters.jobType);
+  if (filters.remoteType) params.set('remoteType', filters.remoteType);
+  if (filters.companySize) params.set('companySize', filters.companySize);
   if (filters.location) params.set('location', filters.location);
   if (filters.salaryMin) params.set('salaryMin', filters.salaryMin.toString());
   if (filters.salaryMax) params.set('salaryMax', filters.salaryMax.toString());
+  if (filters.postedWithinDays && filters.postedWithinDays > 0) params.set('postedWithinDays', filters.postedWithinDays.toString());
   if (filters.aiMatchMin && filters.aiMatchMin > 0) params.set('aiMatchMin', filters.aiMatchMin.toString());
   if (filters.page && filters.page > 1) params.set('page', filters.page.toString());
   
@@ -63,7 +69,18 @@ const BrowseJobs: React.FC = () => {
   // Search keyword state (for search bar)
   const [searchKeyword, setSearchKeyword] = useState(initialFilters.keyword || '');
 
+  // Debug: Log filters before API call
+  useEffect(() => {
+    console.log('='.repeat(80));
+    console.log('[BrowseJobs] Applied filters changed - will trigger useJobs');
+    console.log('[BrowseJobs] appliedFilters:', JSON.stringify(appliedFilters, null, 2));
+    console.log('[BrowseJobs] Filter count:', Object.keys(appliedFilters).length);
+    console.log('[BrowseJobs] Active filters:', Object.entries(appliedFilters).filter(([, v]) => v !== undefined && v !== null && v !== ''));
+    console.log('='.repeat(80));
+  }, [appliedFilters]);
+
   // Fetch jobs using applied filters
+  console.log('[BrowseJobs] About to call useJobs with:', appliedFilters);
   const { data, isLoading, isFetching } = useJobs(appliedFilters);
 
   const jobs = data?.data || [];
@@ -75,6 +92,18 @@ const BrowseJobs: React.FC = () => {
   // Fetch match scores for all visible jobs
   const { data: matchScoresResponse } = useJobMatchScores(jobIds.length > 0 ? jobIds : undefined);
   const matchScores = matchScoresResponse?.data || {};
+
+  // Apply AI match filter on frontend (not sent to backend)
+  const filteredJobs = useMemo(() => {
+    if (!appliedFilters.aiMatchMin || appliedFilters.aiMatchMin === 0) {
+      return jobs;
+    }
+    return jobs.filter(job => {
+      const matchData = matchScores[job._id];
+      const matchScore = matchData?.matchScore ?? null;
+      return matchScore !== null && matchScore >= appliedFilters.aiMatchMin!;
+    });
+  }, [jobs, matchScores, appliedFilters.aiMatchMin]);
 
   // Update URL when applied filters change
   useEffect(() => {
@@ -94,10 +123,23 @@ const BrowseJobs: React.FC = () => {
 
   // Handle filter sidebar applying filters
   const handleFilterChange = (newFilters: JobFilters) => {
+    console.log('[BrowseJobs] Filter change received:', newFilters);
+    // Replace all filters (except page/limit) with the new clean filters
     setAppliedFilters({
       ...newFilters,
       page: 1, // Reset to first page when filters change
-      limit: appliedFilters.limit
+      limit: appliedFilters.limit ?? 12
+    });
+  };
+
+  // Remove a single filter
+  const handleRemoveFilter = (filterKey: keyof JobFilters) => {
+    console.log('[BrowseJobs] Removing filter:', filterKey);
+    setAppliedFilters(prev => {
+      const updated = { ...prev };
+      delete updated[filterKey];
+      updated.page = 1; // Reset to first page
+      return updated;
     });
   };
 
@@ -186,7 +228,12 @@ const BrowseJobs: React.FC = () => {
             {/* Results Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900">
-                {isLoading ? 'Searching...' : `${pagination?.total || 0} Job${pagination?.total !== 1 ? 's' : ''} Found`}
+                {isLoading ? 'Searching...' : `${filteredJobs.length} Job${filteredJobs.length !== 1 ? 's' : ''} Found`}
+                {appliedFilters.aiMatchMin && appliedFilters.aiMatchMin > 0 && (
+                  <span className="text-sm text-gray-500 ml-2">
+                    (filtered by {appliedFilters.aiMatchMin}%+ match)
+                  </span>
+                )}
               </h2>
               {isFetching && !isLoading && (
                 <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -199,29 +246,16 @@ const BrowseJobs: React.FC = () => {
               )}
             </div>
 
-            {/* Active Filters Display */}
-            {Object.keys(appliedFilters).some(key => 
-              key !== 'page' && key !== 'limit' && appliedFilters[key as keyof JobFilters]
-            ) && (
-              <div className="mb-4 p-3 bg-indigo-50 rounded-lg flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-indigo-700">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                  <span className="font-medium">Filters Active</span>
-                </div>
-                <button
-                  onClick={handleClearFilters}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                >
-                  Clear All
-                </button>
-              </div>
-            )}
+            {/* Active Filters Chips */}
+            <ActiveFilters
+              filters={appliedFilters}
+              onRemoveFilter={handleRemoveFilter}
+              onClearAll={handleClearFilters}
+            />
 
             {isLoading ? (
               <LoadingSpinner text="Finding the best opportunities for you..." />
-            ) : jobs.length === 0 ? (
+            ) : filteredJobs.length === 0 ? (
               <EmptyState
                 title="No jobs found"
                 description="We couldn't find any jobs matching your criteria. Try adjusting your filters or search keywords."
@@ -238,7 +272,7 @@ const BrowseJobs: React.FC = () => {
               <>
                 {/* Job Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
-                  {jobs.map((job) => {
+                  {filteredJobs.map((job) => {
                     const matchData = matchScores[job._id];
                     const matchScore = matchData?.matchScore ?? undefined;
                     return (
