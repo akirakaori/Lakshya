@@ -1,20 +1,57 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Footer } from "../components";
-import { getLandingData } from "../services/public-service";
+import { getLandingData, searchPublicJobs } from "../services/landing-service";
 import { useAuth } from "../context/auth-context";
 
 function Landing() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // Search state
+  const [searchInput, setSearchInput] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState<string | undefined>(undefined);
 
-  // Fetch landing data from API
-  const { data, isLoading, isError } = useQuery({
+  // Fetch landing data from API (used when no search)
+  const { data: landingData, isLoading: isLoadingLanding, isError: isErrorLanding } = useQuery({
     queryKey: ['public-landing'],
     queryFn: getLandingData,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
   });
+
+  // Fetch search results (used when search is applied)
+  const { data: searchData, isLoading: isLoadingSearch, isError: isErrorSearch } = useQuery({
+    queryKey: ['public-jobs-search', appliedSearch],
+    queryFn: () => searchPublicJobs({ keyword: appliedSearch, limit: 8 }),
+    enabled: appliedSearch !== undefined && appliedSearch.length >= 2,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
+  });
+
+  // Determine which data to display
+  const isSearchActive = appliedSearch !== undefined && appliedSearch.length >= 2;
+  const displayJobs = isSearchActive ? searchData?.data.jobs : landingData?.data.jobs;
+  const isLoading = isSearchActive ? isLoadingSearch : isLoadingLanding;
+  const isError = isSearchActive ? isErrorSearch : isErrorLanding;
+
+  // Handle search - filter jobs on same page (no navigation)
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const normalized = searchInput.trim().toLowerCase();
+    if (normalized.length < 2) {
+      setAppliedSearch(undefined);
+    } else {
+      setAppliedSearch(normalized);
+    }
+  };
+
+  // Handle clear search
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setAppliedSearch(undefined);
+  };
 
   // Format date for job posting
   const formatDate = (dateString: string) => {
@@ -108,21 +145,30 @@ function Landing() {
           <p className="text-sm md:text-base mb-8 opacity-90 leading-relaxed select-none max-w-2xl mx-auto">
             The first AI-powered job portal where scores truly matter and Lakshya goes beyond finding jobs.
           </p>
-          <div className="bg-white rounded-lg p-3 md:p-4 flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 shadow-2xl max-w-3xl mx-auto">
+          <form 
+            onSubmit={handleSearch}
+            className="bg-white rounded-lg p-3 md:p-4 flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 shadow-2xl max-w-3xl mx-auto"
+          >
             <input
               type="text"
-              placeholder="Job Position, or Company"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearch();
+                }
+              }}
+              placeholder="Search jobs, skills, companies or location"
               className="flex-1 px-4 py-2.5 outline-none border border-gray-200 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent text-gray-700 text-sm select-text transition-all"
             />
-            <select className="px-4 py-2.5 bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer text-gray-700 text-sm select-none transition-all">
-              <option>Kathmandu</option>
-              <option>Pokhara</option>
-              <option>Lalitpur</option>
-            </select>
-            <button className="px-6 md:px-8 py-2.5 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-200 ease-in-out whitespace-nowrap select-none">
+            <button 
+              type="submit"
+              className="px-6 md:px-8 py-2.5 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-200 ease-in-out whitespace-nowrap select-none"
+            >
               Search Jobs
             </button>
-          </div>
+          </form>
         </div>
       </section>
 
@@ -131,14 +177,33 @@ function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 select-none">
-              Latest Job Openings
+              {isSearchActive ? (
+                <>
+                  Search Results
+                  {searchData?.data.pagination.totalJobs !== undefined && (
+                    <span className="text-lg text-gray-600 ml-2">({searchData.data.pagination.totalJobs} jobs)</span>
+                  )}
+                </>
+              ) : (
+                'Latest Job Openings'
+              )}
             </h2>
-            <button 
-              className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none"
-              onClick={() => navigate("/job-seeker/browse-jobs")}
-            >
-              View All Jobs
-            </button>
+            <div className="flex gap-3">
+              {isSearchActive && (
+                <button 
+                  className="px-5 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none"
+                  onClick={handleClearSearch}
+                >
+                  Clear Search
+                </button>
+              )}
+              <button 
+                className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none"
+                onClick={() => navigate("/browse-jobs")}
+              >
+                View All Jobs
+              </button>
+            </div>
           </div>
 
           {/* Loading State */}
@@ -169,9 +234,9 @@ function Landing() {
           )}
 
           {/* Jobs Grid */}
-          {!isLoading && !isError && data?.data.jobs && data.data.jobs.length > 0 && (
+          {!isLoading && !isError && displayJobs && displayJobs.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {data.data.jobs.map((job) => (
+              {displayJobs.map((job) => (
                 <div
                   key={job._id}
                   className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out"
@@ -223,9 +288,21 @@ function Landing() {
           )}
 
           {/* No Jobs State */}
-          {!isLoading && !isError && data?.data.jobs && data.data.jobs.length === 0 && (
+          {!isLoading && !isError && displayJobs && displayJobs.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">No jobs available at the moment.</p>
+              <p className="text-gray-500 mb-2">
+                {isSearchActive 
+                  ? `No jobs found for "${appliedSearch}"`
+                  : "No jobs available at the moment."}
+              </p>
+              {isSearchActive && (
+                <button 
+                  className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors mt-4"
+                  onClick={handleClearSearch}
+                >
+                  Clear Search
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -271,7 +348,7 @@ function Landing() {
               ) : isError ? (
                 "—"
               ) : (
-                `${data?.data.stats.activeJobs || 0}+`
+                `${landingData?.data.stats.totalJobs || 0}+`
               )}
             </div>
             <div className="text-sm text-gray-600 select-none">Active Jobs</div>
@@ -283,10 +360,10 @@ function Landing() {
               ) : isError ? (
                 "—"
               ) : (
-                `${data?.data.stats.verifiedStudents || 0}+`
+                `${landingData?.data.stats.totalUsers || 0}+`
               )}
             </div>
-            <div className="text-sm text-gray-600 select-none">Verified Students</div>
+            <div className="text-sm text-gray-600 select-none">Verified Users</div>
           </div>
           <div className="bg-white border border-gray-300 rounded-lg p-8 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out cursor-pointer">
             <div className="text-4xl md:text-5xl font-bold text-primary mb-2 select-none">
@@ -295,7 +372,7 @@ function Landing() {
               ) : isError ? (
                 "—"
               ) : (
-                `${data?.data.stats.topCompanies || 0}+`
+                `${landingData?.data.stats.totalCompanies || 0}+`
               )}
             </div>
             <div className="text-sm text-gray-600 select-none">Top Companies</div>

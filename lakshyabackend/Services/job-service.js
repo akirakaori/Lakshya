@@ -289,13 +289,17 @@ const searchJobs = async (filters) => {
       isDeleted: false
     };
     
-    // Keyword search (title and description)
+    // Keyword search across multiple fields: title, description, skillsRequired, companyName, location
     if (keyword) {
+      const keywordRegex = { $regex: keyword, $options: 'i' };
       query.$or = [
-        { title: { $regex: keyword, $options: 'i' } },
-        { description: { $regex: keyword, $options: 'i' } }
+        { title: keywordRegex },
+        { description: keywordRegex },
+        { companyName: keywordRegex },
+        { location: keywordRegex },
+        { skillsRequired: { $elemMatch: { $regex: keyword, $options: 'i' } } }
       ];
-      console.log('[searchJobs] Keyword filter applied:', keyword);
+      console.log('[searchJobs] Keyword filter applied across title, description, companyName, location, skillsRequired:', keyword);
     }
     
     // Category filter - FLEXIBLE SEARCH across category, title, description

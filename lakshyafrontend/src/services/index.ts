@@ -3,7 +3,7 @@ export { authService } from './auth-service';
 export { jobService } from './job-service';
 export { applicationService } from './application-service';
 export { profileService } from './profile-service';
-export { getLandingData } from './public-service';
+export { getLandingData } from './landing-service';
 
 export type { LoginCredentials, RegisterData, AuthResponse } from './auth-service';
 export type { Job, JobFilters, JobsResponse, CreateJobData, JobMatchAnalysis, JobMatchScore, BatchMatchScoresResponse } from './job-service';
@@ -19,4 +19,4 @@ export type {
   ScheduleInterviewData
 } from './application-service';
 export type { UserProfile, UpdateProfileData } from './profile-service';
-export type { LandingStats, LandingJob, LandingData, LandingResponse } from './public-service';
+export type { LandingStats, LandingJob, LandingData, LandingResponse } from './landing-service';

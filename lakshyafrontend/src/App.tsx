@@ -73,6 +73,9 @@ function App() {
             
             {/* Public Job Details Route */}
             <Route path="/jobs/:jobId" element={<JobDetails />} />
+            
+            {/* Public Browse Jobs Route */}
+            <Route path="/browse-jobs" element={<BrowseJobs />} />
 
             {/* Protected Home Route */}
             <Route path="/home" element={<PrivateRoute element={<Home />} />} />

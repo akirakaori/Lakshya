@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { DashboardLayout, JobCard, JobFilter, LoadingSpinner, EmptyState, ActiveFilters } from '../../components';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { DashboardLayout, JobCard, JobFilter, LoadingSpinner, EmptyState, ActiveFilters, Footer } from '../../components';
 import { useJobs, useJobMatchScores } from '../../hooks';
+import { useAuth } from '../../context/auth-context';
 import type { JobFilters } from '../../services';
 
 // Default filters
@@ -59,6 +60,11 @@ const filtersToUrlParams = (filters: JobFilters): URLSearchParams => {
 
 const BrowseJobs: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Check if user is authenticated job seeker
+  const isAuthenticatedJobSeeker = user?.role === 'job_seeker';
   
   // Initialize filters from URL on mount
   const initialFilters = urlParamsToFilters(searchParams);
@@ -89,8 +95,10 @@ const BrowseJobs: React.FC = () => {
   // Extract job IDs for batch match score fetch
   const jobIds = useMemo(() => jobs.map(job => job._id), [jobs]);
 
-  // Fetch match scores for all visible jobs
-  const { data: matchScoresResponse } = useJobMatchScores(jobIds.length > 0 ? jobIds : undefined);
+  // Fetch match scores for all visible jobs (only for authenticated job seekers)
+  const { data: matchScoresResponse } = useJobMatchScores(
+    isAuthenticatedJobSeeker && jobIds.length > 0 ? jobIds : undefined
+  );
   const matchScores = matchScoresResponse?.data || {};
 
   // Apply AI match filter on frontend (not sent to backend)
@@ -156,9 +164,42 @@ const BrowseJobs: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  return (
-    <DashboardLayout variant="job-seeker" title="Job Search">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+  // Public Navbar Component (for non-authenticated users)
+  const PublicNavbar = () => (
+    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 w-full">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-row justify-between items-center gap-8">
+        {/* Logo - Left */}
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
+            <span className="text-xl">💼</span>
+          </div>
+          <span className="text-xl font-bold text-gray-800 cursor-default select-none">
+            Lakshya
+          </span>
+        </div>
+        
+        {/* Auth Buttons - Right */}
+        <div className="flex flex-row items-center gap-3">
+          <button 
+            className="text-sm text-white bg-indigo-400 hover:bg-indigo-500 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm px-4 py-2 rounded-lg transition-all duration-200 ease-in-out select-none"
+            onClick={() => navigate("/login")}
+          >
+            Login
+          </button>
+          <button 
+            className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none whitespace-nowrap"
+            onClick={() => navigate("/signup-choice")}
+          >
+            Sign Up (Free)
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+
+  // Main content (shared between authenticated and public views)
+  const JobContent = () => (
+    <>
         {/* Blue Gradient Search Header Banner */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700 px-4 sm:px-6 lg:px-10 py-6 sm:py-8 mb-6">
           {/* Decorative Shapes */}
@@ -340,8 +381,27 @@ const BrowseJobs: React.FC = () => {
             )}
           </div>
         </div>
+    </>
+  );
+
+  // Conditional rendering based on authentication
+  if (isAuthenticatedJobSeeker) {
+    return (
+      <DashboardLayout variant="job-seeker" title="Job Search">
+        <JobContent />
+      </DashboardLayout>
+    );
+  }
+
+  // Public view
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <PublicNavbar />
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <JobContent />
       </div>
-    </DashboardLayout>
+      <Footer variant="public" />
+    </div>
   );
 };
 

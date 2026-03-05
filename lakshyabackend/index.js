@@ -15,7 +15,7 @@ const applicationRoutes = require('./Routes/application-routes');
 const adminRoutes = require('./Routes/admin-routes');
 const recruiterRoutes = require('./Routes/recruiter-routes');
 const jobSeekerRoutes = require('./Routes/job-seeker-routes');
-const publicRoutes = require('./routes/public-routes');
+const landingRoutes = require('./routes/landing-routes');
 
 // Import middleware
 const errorHandler = require('./Middleware/error-handler');
@@ -52,7 +52,7 @@ app.get('/ping', (req, res) => {
 });
 
 // API Routes
-app.use('/api/public', publicRoutes);
+app.use('/api/public', landingRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/jobs', jobRoutes);
