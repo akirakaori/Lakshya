@@ -70,6 +70,37 @@ export const authApi = {
 
 // Admin API functions
 export const adminApi = {
+  getAnalytics: (): Promise<{ 
+    success: boolean; 
+    data: {
+      totals: {
+        totalUsers: number;
+        totalRecruiters: number;
+        totalJobSeekers: number;
+        totalJobs: number;
+        openJobs: number;
+        closedJobs: number;
+        totalApplications: number;
+        applicationsToday: number;
+        userChange: string;
+        jobSeekerChange: string;
+        recruiterChange: string;
+        jobChange: string;
+      };
+      trend14d: Array<{ date: string; count: number }>;
+      topJobs: Array<{ jobId: string; title: string; companyName: string; count: number }>;
+      topSkills: Array<{ skill: string; count: number }>;
+      recruiterActivity: Array<{
+        recruiterId: string;
+        recruiterName: string;
+        recruiterEmail: string;
+        jobsPosted: number;
+        applicationsReceived: number;
+        status: string;
+      }>;
+    };
+  }> => apiRequest('/admin/analytics', { method: 'GET' }),
+
   getUsers: (): Promise<{ success: boolean; users: any[] }> => 
     apiRequest('/admin/users', { method: 'GET' }),
 

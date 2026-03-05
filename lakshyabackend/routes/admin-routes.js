@@ -4,6 +4,15 @@ const authorizeRoles = require("../Middleware/role-middleware");
 const ROLES = require("../Library/roles").ROLES;
 const { getAllUsers, getAllPosts, deletePost, editUser, deleteUser, editPost } = require("../Controller/admin-controller");
 const adminJobController = require("../Controller/admin-job-controller");
+const { getAdminAnalytics } = require("../Controller/admin-analytics-controller");
+
+// Get analytics data
+router.get(
+  "/analytics",
+  authenticate,
+  authorizeRoles(ROLES.ADMIN),
+  getAdminAnalytics
+);
 
 // Get all users
 router.get(

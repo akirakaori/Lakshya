@@ -4,6 +4,7 @@ import { handleSuccess, handleError } from '../../utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/api-client';
 import { Footer } from '../../components';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface User {
   _id: string;
@@ -69,6 +70,15 @@ function AdminDashboard() {
 
   const posts = postsData?.posts || [];
   const totalPosts = postsData?.total || posts.length;
+
+  // Fetch analytics data
+  const { data: analyticsRes, isLoading: loadingAnalytics, isFetching: fetchingAnalytics } = useQuery({
+    queryKey: ['admin-analytics'],
+    queryFn: adminApi.getAnalytics,
+    staleTime: 60_000, // Cache for 1 minute
+  });
+
+  const analytics = analyticsRes?.data;
 
   // Update user mutation
   const updateUserMutation = useMutation({
@@ -194,19 +204,6 @@ function AdminDashboard() {
     }, 1000);
   };
 
-  const activeUsers = users.filter(u => u.isActive);
-  const jobSeekers = activeUsers.filter(u => u.role === 'job_seeker');
-  const recruiters = activeUsers.filter(u => u.role === 'recruiter');
-  const openJobs = posts.filter(p => p.status === 'open');
-  const closedJobs = posts.filter(p => p.status === 'closed');
-  
-  const stats = [
-    { title: 'Total Users', value: activeUsers.length.toString(), description: 'Active users', icon: '', color: 'bg-blue-500' },
-    { title: 'Job Seekers', value: jobSeekers.length.toString(), description: 'Active job seekers', icon: '', color: 'bg-green-500' },
-    { title: 'Recruiters', value: recruiters.length.toString(), description: 'Active recruiters', icon: '', color: 'bg-purple-500' },
-    { title: 'Open Jobs', value: openJobs.length.toString(), description: `${closedJobs.length} closed`, icon: '', color: 'bg-orange-500' },
-  ];
-
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -290,16 +287,306 @@ function AdminDashboard() {
           <main className='min-h-screen p-8'>
           {activeNav === 'dashboard' && (
             <>
+              {/* Top Stats Cards with Percentage Changes */}
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
-                {stats.map((stat, index) => (
-                  <div key={index} className='bg-white rounded-xl shadow-sm p-6 border border-gray-100'>
-                    <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center text-2xl mb-4`}>{stat.icon}</div>
-                    <h3 className='text-3xl font-bold text-gray-800 mb-2'>{stat.value}</h3>
-                    <p className='text-sm font-semibold text-gray-600 mb-1'>{stat.title}</p>
-                    <p className='text-xs text-gray-500'>{stat.description}</p>
-                  </div>
-                ))}
+                {loadingAnalytics ? (
+                  <>
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className='bg-white rounded-xl shadow-sm p-6 border border-gray-100 animate-pulse'>
+                        <div className='h-12 w-12 bg-gray-200 rounded-lg mb-4'></div>
+                        <div className='h-8 w-20 bg-gray-200 rounded mb-2'></div>
+                        <div className='h-4 w-24 bg-gray-200 rounded mb-1'></div>
+                        <div className='h-3 w-16 bg-gray-200 rounded'></div>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <div className='bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow'>
+                      <div className='flex items-center justify-between mb-3'>
+                        <div className='w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center'>
+                          <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' />
+                          </svg>
+                        </div>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded ${parseFloat(analytics?.totals.userChange || '0') >= 0 ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}`}>
+                          {parseFloat(analytics?.totals.userChange || '0') > 0 ? '+' : ''}{analytics?.totals.userChange}%
+                        </span>
+                      </div>
+                      <h3 className='text-3xl font-bold text-gray-900 mb-1'>{analytics?.totals.totalUsers.toLocaleString() || '0'}</h3>
+                      <p className='text-sm font-semibold text-gray-700 mb-1'>TOTAL USERS</p>
+                      <p className='text-xs text-gray-500'>Active users on platform</p>
+                    </div>
+
+                    <div className='bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow'>
+                      <div className='flex items-center justify-between mb-3'>
+                        <div className='w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center'>
+                          <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' />
+                          </svg>
+                        </div>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded ${parseFloat(analytics?.totals.jobSeekerChange || '0') >= 0 ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}`}>
+                          {parseFloat(analytics?.totals.jobSeekerChange || '0') > 0 ? '+' : ''}{analytics?.totals.jobSeekerChange}%
+                        </span>
+                      </div>
+                      <h3 className='text-3xl font-bold text-gray-900 mb-1'>{analytics?.totals.totalJobSeekers.toLocaleString() || '0'}</h3>
+                      <p className='text-sm font-semibold text-gray-700 mb-1'>JOB SEEKERS</p>
+                      <p className='text-xs text-gray-500'>Active job seekers</p>
+                    </div>
+
+                    <div className='bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow'>
+                      <div className='flex items-center justify-between mb-3'>
+                        <div className='w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center'>
+                          <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' />
+                          </svg>
+                        </div>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded ${parseFloat(analytics?.totals.recruiterChange || '0') >= 0 ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}`}>
+                          {parseFloat(analytics?.totals.recruiterChange || '0') > 0 ? '+' : ''}{analytics?.totals.recruiterChange}%
+                        </span>
+                      </div>
+                      <h3 className='text-3xl font-bold text-gray-900 mb-1'>{analytics?.totals.totalRecruiters.toLocaleString() || '0'}</h3>
+                      <p className='text-sm font-semibold text-gray-700 mb-1'>RECRUITERS</p>
+                      <p className='text-xs text-gray-500'>Active recruiters</p>
+                    </div>
+
+                    <div className='bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow'>
+                      <div className='flex items-center justify-between mb-3'>
+                        <div className='w-12 h-12 bg-cyan-500 rounded-lg flex items-center justify-center'>
+                          <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' />
+                          </svg>
+                        </div>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded ${parseFloat(analytics?.totals.jobChange || '0') >= 0 ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}`}>
+                          {parseFloat(analytics?.totals.jobChange || '0') > 0 ? '+' : ''}{analytics?.totals.jobChange}%
+                        </span>
+                      </div>
+                      <h3 className='text-3xl font-bold text-gray-900 mb-1'>{analytics?.totals.openJobs.toLocaleString() || '0'}</h3>
+                      <p className='text-sm font-semibold text-gray-700 mb-1'>OPEN JOBS</p>
+                      <p className='text-xs text-gray-500'>{analytics?.totals.closedJobs || 0} closed</p>
+                    </div>
+                  </>
+                )}
               </div>
+
+              {/* Analytics Section */}
+              {!loadingAnalytics && analytics && (
+                <div className='mb-8 space-y-6'>
+                  {/* Secondary Stats Row */}
+                  <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
+                    <div className='bg-white rounded-lg border border-gray-200 p-5'>
+                      <p className='text-xs font-semibold text-gray-600 uppercase mb-1'>TOTAL APPLICATIONS</p>
+                      <p className='text-2xl font-bold text-gray-900'>{analytics.totals.totalApplications.toLocaleString()}</p>
+                    </div>
+                    <div className='bg-white rounded-lg border border-gray-200 p-5'>
+                      <p className='text-xs font-semibold text-gray-600 uppercase mb-1'>APPLICATIONS TODAY</p>
+                      <p className='text-2xl font-bold text-gray-900'>{analytics.totals.applicationsToday.toLocaleString()}</p>
+                    </div>
+                    <div className='bg-white rounded-lg border border-gray-200 p-5'>
+                      <p className='text-xs font-semibold text-gray-600 uppercase mb-1'>TOTAL JOBS LIVE</p>
+                      <p className='text-2xl font-bold text-gray-900'>{analytics.totals.openJobs.toLocaleString()}</p>
+                    </div>
+                    <div className='bg-white rounded-lg border border-gray-200 p-5'>
+                      <p className='text-xs font-semibold text-gray-600 uppercase mb-1'>TOP SKILL IN DEMAND</p>
+                      <p className='text-2xl font-bold text-gray-900 capitalize'>{analytics.topSkills[0]?.skill || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  {/* Charts Row */}
+                  <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                    {/* Applications Trend */}
+                    <div className='bg-white rounded-lg border border-gray-200 p-6'>
+                      <div className='flex items-center justify-between mb-5'>
+                        <div>
+                          <h3 className='text-base font-bold text-gray-900'>Applications Trend</h3>
+                          <p className='text-xs text-gray-500'>Daily incoming applications (Last 30 days)</p>
+                        </div>
+                        {fetchingAnalytics && (
+                          <span className='text-xs text-blue-600'>Refreshing...</span>
+                        )}
+                      </div>
+                      <ResponsiveContainer width='100%' height={250}>
+                        <LineChart data={analytics.trend14d}>
+                          <CartesianGrid strokeDasharray='3 3' stroke='#f0f0f0' />
+                          <XAxis 
+                            dataKey='date' 
+                            tick={{ fontSize: 11, fill: '#6b7280' }}
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return `${date.getMonth() + 1}/${date.getDate()}`;
+                            }}
+                          />
+                          <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#fff', 
+                              border: '1px solid #e5e7eb', 
+                              borderRadius: '6px',
+                              fontSize: '12px'
+                            }}
+                            labelFormatter={(value) => {
+                              const date = new Date(value);
+                              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            }}
+                          />
+                          <Line 
+                            type='monotone' 
+                            dataKey='count' 
+                            stroke='#3b82f6' 
+                            strokeWidth={2}
+                            dot={{ fill: '#3b82f6', r: 4 }}
+                            activeDot={{ r: 6 }}
+                            name='New Apps'
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Popular Job Categories */}
+                    <div className='bg-white rounded-lg border border-gray-200 p-6'>
+                      <h3 className='text-base font-bold text-gray-900 mb-1'>Popular Job Categories</h3>
+                      <p className='text-xs text-gray-500 mb-5'>Based on application volume</p>
+                      <ResponsiveContainer width='100%' height={250}>
+                        <BarChart data={analytics.topJobs} layout='vertical'>
+                          <CartesianGrid strokeDasharray='3 3' stroke='#f0f0f0' />
+                          <XAxis type='number' tick={{ fontSize: 11, fill: '#6b7280' }} />
+                          <YAxis 
+                            type='category' 
+                            dataKey='title' 
+                            tick={{ fontSize: 11, fill: '#6b7280' }}
+                            width={120}
+                          />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#fff', 
+                              border: '1px solid #e5e7eb', 
+                              borderRadius: '6px',
+                              fontSize: '12px'
+                            }}
+                          />
+                          <Bar dataKey='count' fill='#3b82f6' radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Skills and Recruiter Activity Row */}
+                  <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                    {/* Top Skills in Demand */}
+                    <div className='bg-white rounded-lg border border-gray-200 p-6'>
+                      <div className='flex items-center justify-between mb-5'>
+                        <div>
+                          <h3 className='text-base font-bold text-gray-900'>Top Skills in Demand</h3>
+                          <p className='text-xs text-gray-500'>Extracted from top 500 active job postings</p>
+                        </div>
+                        <button 
+                          onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-analytics'] })}
+                          className='text-xs text-blue-600 hover:text-blue-700 font-medium'
+                        >
+                          View Full Report
+                        </button>
+                      </div>
+                      <ResponsiveContainer width='100%' height={250}>
+                        <BarChart data={analytics.topSkills}>
+                          <CartesianGrid strokeDasharray='3 3' stroke='#f0f0f0' />
+                          <XAxis 
+                            dataKey='skill' 
+                            tick={{ fontSize: 11, fill: '#6b7280' }}
+                            angle={-45}
+                            textAnchor='end'
+                            height={80}
+                          />
+                          <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#fff', 
+                              border: '1px solid #e5e7eb', 
+                              borderRadius: '6px',
+                              fontSize: '12px'
+                            }}
+                          />
+                          <Bar dataKey='count' fill='#06d6a0' radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Recent Recruiter Activity */}
+                    <div className='bg-white rounded-lg border border-gray-200 p-6'>
+                      <div className='flex items-center justify-between mb-4'>
+                        <div>
+                          <h3 className='text-base font-bold text-gray-900'>Recent Recruiter Activity</h3>
+                        </div>
+                        <div className='flex gap-2'>
+                          <button className='px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200'>
+                            All Recruiters
+                          </button>
+                          <button className='px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded'>
+                            Active Only
+                          </button>
+                        </div>
+                      </div>
+                      <div className='overflow-hidden'>
+                        <table className='w-full'>
+                          <thead>
+                            <tr className='border-b border-gray-200'>
+                              <th className='text-left text-xs font-semibold text-gray-600 uppercase pb-2'>RECRUITER NAME</th>
+                              <th className='text-center text-xs font-semibold text-gray-600 uppercase pb-2'>JOBS POSTED</th>
+                              <th className='text-center text-xs font-semibold text-gray-600 uppercase pb-2'>APPLICATIONS RECEIVED</th>
+                              <th className='text-center text-xs font-semibold text-gray-600 uppercase pb-2'>STATUS</th>
+                            </tr>
+                          </thead>
+                          <tbody className='divide-y divide-gray-100'>
+                            {analytics.recruiterActivity.slice(0, 5).map((recruiter, idx) => (
+                              <tr key={idx} className='hover:bg-gray-50'>
+                                <td className='py-3'>
+                                  <div className='flex items-center gap-2'>
+                                    <div className='w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                                      {recruiter.recruiterName.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <p className='text-sm font-medium text-gray-900'>{recruiter.recruiterName}</p>
+                                      <p className='text-xs text-gray-500'>{recruiter.recruiterEmail}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className='text-center text-sm font-semibold text-gray-900'>{recruiter.jobsPosted}</td>
+                                <td className='text-center'>
+                                  <div className='flex items-center justify-center gap-2'>
+                                    <div className='flex-1 bg-gray-200 rounded-full h-1.5 max-w-[60px]'>
+                                      <div 
+                                        className='bg-blue-600 h-1.5 rounded-full' 
+                                        style={{ width: `${Math.min((recruiter.applicationsReceived / 5000) * 100, 100)}%` }}
+                                      ></div>
+                                    </div>
+                                    <span className='text-sm font-semibold text-gray-900'>{recruiter.applicationsReceived.toLocaleString()}</span>
+                                  </div>
+                                </td>
+                                <td className='text-center'>
+                                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${
+                                    recruiter.status === 'Active' 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {recruiter.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {analytics.recruiterActivity.length > 5 && (
+                          <div className='mt-3 text-center'>
+                            <p className='text-xs text-gray-500'>
+                              Showing 5 of {analytics.recruiterActivity.length} recruiters
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* User Management Section */}
               <div className='mb-8'>
                 <h3 className='text-xl font-bold text-gray-800 mb-4'>User Management</h3>
