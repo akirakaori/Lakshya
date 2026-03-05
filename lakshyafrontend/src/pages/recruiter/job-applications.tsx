@@ -33,33 +33,30 @@ const JobApplications: React.FC = () => {
   // State
   const [activeTab, setActiveTab] = useState<'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' >('all');
   const [sortBy, setSortBy] = useState<'newest' | 'match' | 'experience'>('newest');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedApplications, setSelectedApplications] = useState<Set<string>>(new Set());
   const [viewingDetailsId, setViewingDetailsId] = useState<string | null>(null);
   
-  // Advanced filters
-  const [minScore, setMinScore] = useState<number>(0);
-  const [mustHaveSkill, setMustHaveSkill] = useState('');
-  const [missingSkill, setMissingSkill] = useState('');
+  // Filters - input state (typing) vs applied state (API filter)
+  const [searchInput, setSearchInput] = useState('');
+  const [minScoreInput, setMinScoreInput] = useState<number>(0);
+  const [mustHaveSkillInput, setMustHaveSkillInput] = useState('');
+  const [missingSkillInput, setMissingSkillInput] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
-  // Debounce search input for better performance
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  // Applied filters (what triggers API refetch via React Query)
+  const [appliedSearch, setAppliedSearch] = useState<string | undefined>(undefined);
+  const [appliedMinScore, setAppliedMinScore] = useState<number | undefined>(undefined);
+  const [appliedMustHave, setAppliedMustHave] = useState<string | undefined>(undefined);
+  const [appliedMissing, setAppliedMissing] = useState<string | undefined>(undefined);
   
   // Queries and mutations
-  const { data, isLoading } = useRecruiterJobApplications(jobId || '', {
+  const { data, isLoading, isFetching } = useRecruiterJobApplications(jobId || '', {
     status: activeTab,
     sort: sortBy,
-    search: debouncedSearch,
-    minScore: minScore || undefined,
-    mustHave: mustHaveSkill || undefined,
-    missing: missingSkill || undefined
+    search: appliedSearch,
+    minScore: appliedMinScore,
+    mustHave: appliedMustHave,
+    missing: appliedMissing
   });
   
   // Fetch application details for drawer (real-time query, not stale snapshot)
@@ -126,17 +123,37 @@ const JobApplications: React.FC = () => {
     }
   };
 
+  const handleApplyFilters = () => {
+    // Normalize and apply all filters at once
+    const safeSearch = searchInput.trim().toLowerCase();
+    const safeMustHave = mustHaveSkillInput.trim().toLowerCase();
+    const safeMissing = missingSkillInput.trim().toLowerCase();
+    
+    setAppliedSearch(safeSearch.length >= 2 ? safeSearch : undefined);
+    setAppliedMinScore(minScoreInput > 0 ? minScoreInput : undefined);
+    setAppliedMustHave(safeMustHave.length >= 2 ? safeMustHave : undefined);
+    setAppliedMissing(safeMissing.length >= 2 ? safeMissing : undefined);
+  };
+
   const clearFilters = () => {
-    setMinScore(0);
-    setMustHaveSkill('');
-    setMissingSkill('');
-    setSearchQuery('');
+    // Reset input states
+    setSearchInput('');
+    setMinScoreInput(0);
+    setMustHaveSkillInput('');
+    setMissingSkillInput('');
+    
+    // Reset applied states (triggers API refetch with no filters)
+    setAppliedSearch(undefined);
+    setAppliedMinScore(undefined);
+    setAppliedMustHave(undefined);
+    setAppliedMissing(undefined);
   };
 
   const activeFilterCount = 
-    (minScore > 0 ? 1 : 0) + 
-    (mustHaveSkill ? 1 : 0) + 
-    (missingSkill ? 1 : 0);
+    (appliedSearch ? 1 : 0) + 
+    (appliedMinScore ? 1 : 0) + 
+    (appliedMustHave ? 1 : 0) + 
+    (appliedMissing ? 1 : 0);
 
   const handleStatusChange = async (applicationId: string, status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer') => {
     try {
@@ -272,8 +289,13 @@ const JobApplications: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Search by name or email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleApplyFilters();
+                    }
+                  }}
                   className="w-full pl-10 pr-4 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
@@ -319,8 +341,8 @@ const JobApplications: React.FC = () => {
                     Minimum Match Score
                   </label>
                   <select
-                    value={minScore}
-                    onChange={(e) => setMinScore(parseInt(e.target.value))}
+                    value={minScoreInput}
+                    onChange={(e) => setMinScoreInput(parseInt(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="0">No minimum</option>
@@ -338,8 +360,13 @@ const JobApplications: React.FC = () => {
                   <input
                     type="text"
                     placeholder="e.g., React, Python"
-                    value={mustHaveSkill}
-                    onChange={(e) => setMustHaveSkill(e.target.value)}
+                    value={mustHaveSkillInput}
+                    onChange={(e) => setMustHaveSkillInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleApplyFilters();
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
@@ -350,22 +377,33 @@ const JobApplications: React.FC = () => {
                   <input
                     type="text"
                     placeholder="e.g., Docker, AWS"
-                    value={missingSkill}
-                    onChange={(e) => setMissingSkill(e.target.value)}
+                    value={missingSkillInput}
+                    onChange={(e) => setMissingSkillInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleApplyFilters();
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
               </div>
-              {activeFilterCount > 0 && (
-                <div className="mt-3 flex justify-end">
+              <div className="mt-3 flex justify-end gap-3">
+                {activeFilterCount > 0 && (
                   <button
                     onClick={clearFilters}
-                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-700 font-medium border border-gray-300 rounded-lg hover:bg-gray-50"
                   >
-                    Clear all filters
+                    Clear
                   </button>
-                </div>
-              )}
+                )}
+                <button
+                  onClick={handleApplyFilters}
+                  className="px-4 py-2 text-sm text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg shadow-sm"
+                >
+                  Apply Filters
+                </button>
+              </div>
             </div>
           )}
 
@@ -421,6 +459,17 @@ const JobApplications: React.FC = () => {
           )}
         </div>
         </div>
+
+        {/* Filtering Indicator */}
+        {isFetching && !isLoading && (
+          <div className="mb-4 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-lg flex items-center gap-2">
+            <svg className="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="text-sm text-indigo-700 font-medium">Filtering...</span>
+          </div>
+        )}
 
         {/* Applications List */}
         {applications.length === 0 ? (
