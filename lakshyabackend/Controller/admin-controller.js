@@ -3,12 +3,14 @@ const adminService = require("../Services/admin-service");
 // Get all users
 const getAllUsers = async (req, res) => {
   try {
-    const { search, role, isActive } = req.query;
+    const { search, role, isActive, page, limit } = req.query;
     
     const result = await adminService.getAllUsersService({
       search,
       role,
       isActive,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 10,
     });
     
     res.json(result);

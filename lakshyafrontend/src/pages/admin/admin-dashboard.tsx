@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { handleSuccess, handleError } from '../../Utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/api-client';
-import { Footer } from '../../components';
+import { Footer, PageSizeSelect, PaginationControls, type PaginationMeta } from '../../components';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface User {
@@ -36,8 +36,29 @@ function AdminDashboard() {
   const loggedInUser = localStorage.getItem('loggedInUser') || 'Admin';
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeNav, setActiveNav] = useState('dashboard');
+  
+  // Preview tables pagination (dashboard tab only)
+  const [previewUsersPage, setPreviewUsersPage] = useState(1);
+  const [previewUsersLimit, setPreviewUsersLimit] = useState(5);
+  const [previewUsersSearch, setPreviewUsersSearch] = useState('');
+  const [appliedPreviewUsersSearch, setAppliedPreviewUsersSearch] = useState<string | undefined>(undefined);
+  
+  const [previewJobsPage, setPreviewJobsPage] = useState(1);
+  const [previewJobsLimit, setPreviewJobsLimit] = useState(5);
+  const [previewJobsSearch, setPreviewJobsSearch] = useState('');
+  const [appliedPreviewJobsSearch, setAppliedPreviewJobsSearch] = useState<string | undefined>(undefined);
+  
+  // Users pagination & filters (full tabs)
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersLimit, setUsersLimit] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
+  const [appliedUserSearch, setAppliedUserSearch] = useState<string | undefined>(undefined);
+  
+  // Posts pagination & filters (full tabs)
+  const [postsPage, setPostsPage] = useState(1);
+  const [postsLimit, setPostsLimit] = useState(10);
   const [postSearchQuery, setPostSearchQuery] = useState('');
+  const [appliedPostSearch, setAppliedPostSearch] = useState<string | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState('all');
   
   const [showEditUserModal, setShowEditUserModal] = useState(false);
@@ -55,21 +76,82 @@ function AdminDashboard() {
   const queryClient = useQueryClient();
 
   // Fetch users with useQuery
-  const { data: usersData, isLoading: loadingUsers } = useQuery<{ success: boolean; users: User[] }>({
-    queryKey: ['admin-users'],
-    queryFn: adminApi.getUsers,
+  const { data: usersData, isLoading: loadingUsers, isFetching: fetchingUsers } = useQuery<{ 
+    success: boolean; 
+    users: User[]; 
+    pagination?: PaginationMeta;
+  }>({
+    queryKey: ['admin-users', { page: usersPage, limit: usersLimit, search: appliedUserSearch }],
+    queryFn: () => adminApi.getUsers({ 
+      page: usersPage, 
+      limit: usersLimit, 
+      search: appliedUserSearch 
+    }),
   });
 
   const users = usersData?.users || [];
+  const usersPagination = usersData?.pagination;
+
+  // Fetch preview users (for dashboard tab only)
+  const { data: previewUsersData, isLoading: loadingPreviewUsers, isFetching: fetchingPreviewUsers } = useQuery<{ 
+    success: boolean; 
+    users: User[]; 
+    pagination?: PaginationMeta;
+  }>({
+    queryKey: ['admin-preview-users', { page: previewUsersPage, limit: previewUsersLimit, search: appliedPreviewUsersSearch }],
+    queryFn: () => adminApi.getUsers({ 
+      page: previewUsersPage, 
+      limit: previewUsersLimit, 
+      search: appliedPreviewUsersSearch 
+    }),
+    enabled: activeNav === 'dashboard', // Only fetch when on dashboard tab
+  });
+
+  const previewUsers = previewUsersData?.users || [];
+  const previewUsersPagination = previewUsersData?.pagination;
 
   // Fetch posts with useQuery
-  const { data: postsData, isLoading: loadingPosts } = useQuery<{ success: boolean; posts: Post[]; total?: number }>({
-    queryKey: ['admin-posts'],
-    queryFn: adminApi.getPosts,
+  const { data: postsData, isLoading: loadingPosts, isFetching: fetchingPosts } = useQuery<{ 
+    success: boolean; 
+    posts: Post[]; 
+    total?: number;
+    pagination?: PaginationMeta;
+  }>({
+    queryKey: ['admin-posts', { 
+      page: postsPage, 
+      limit: postsLimit, 
+      search: appliedPostSearch, 
+      status: statusFilter !== 'all' ? statusFilter : undefined 
+    }],
+    queryFn: () => adminApi.getPosts({ 
+      page: postsPage, 
+      limit: postsLimit, 
+      search: appliedPostSearch,
+      status: statusFilter !== 'all' ? statusFilter : undefined
+    }),
   });
 
   const posts = postsData?.posts || [];
-  const totalPosts = postsData?.total || posts.length;
+  const postsPagination = postsData?.pagination;
+
+  // Fetch preview jobs (for dashboard tab only)
+  const { data: previewJobsData, isLoading: loadingPreviewJobs, isFetching: fetchingPreviewJobs } = useQuery<{ 
+    success: boolean; 
+    posts: Post[]; 
+    total?: number;
+    pagination?: PaginationMeta;
+  }>({
+    queryKey: ['admin-preview-jobs', { page: previewJobsPage, limit: previewJobsLimit, search: appliedPreviewJobsSearch }],
+    queryFn: () => adminApi.getPosts({ 
+      page: previewJobsPage, 
+      limit: previewJobsLimit, 
+      search: appliedPreviewJobsSearch 
+    }),
+    enabled: activeNav === 'dashboard', // Only fetch when on dashboard tab
+  });
+
+  const previewJobs = previewJobsData?.posts || [];
+  const previewJobsPagination = previewJobsData?.pagination;
 
   // Fetch analytics data
   const { data: analyticsRes, isLoading: loadingAnalytics, isFetching: fetchingAnalytics } = useQuery({
@@ -137,6 +219,97 @@ function AdminDashboard() {
     }
   });
 
+  // Pagination & search handlers
+  const handleUsersLimitChange = (newLimit: number) => {
+    setUsersLimit(newLimit);
+    setUsersPage(1);
+  };
+
+  const handleUsersPageChange = (newPage: number) => {
+    setUsersPage(newPage);
+  };
+
+  const handleApplyUserSearch = () => {
+    const trimmed = searchQuery.trim().toLowerCase();
+    setAppliedUserSearch(trimmed.length >= 2 ? trimmed : undefined);
+    setUsersPage(1);
+  };
+
+  const handleClearUserSearch = () => {
+    setSearchQuery('');
+    setAppliedUserSearch(undefined);
+    setUsersPage(1);
+  };
+
+  const handlePostsLimitChange = (newLimit: number) => {
+    setPostsLimit(newLimit);
+    setPostsPage(1);
+  };
+
+  const handlePostsPageChange = (newPage: number) => {
+    setPostsPage(newPage);
+  };
+
+  const handleApplyPostSearch = () => {
+    const trimmed = postSearchQuery.trim().toLowerCase();
+    setAppliedPostSearch(trimmed.length >= 2 ? trimmed : undefined);
+    setPostsPage(1);
+  };
+
+  const handleClearPostSearch = () => {
+    setPostSearchQuery('');
+    setAppliedPostSearch(undefined);
+    setPostsPage(1);
+  };
+
+  const handleStatusFilterChange = (newStatus: string) => {
+    setStatusFilter(newStatus);
+    setPostsPage(1);
+  };
+
+  // Preview tables handlers (dashboard tab)
+  const handlePreviewUsersLimitChange = (newLimit: number) => {
+    setPreviewUsersLimit(newLimit);
+    setPreviewUsersPage(1);
+  };
+
+  const handlePreviewUsersPageChange = (newPage: number) => {
+    setPreviewUsersPage(newPage);
+  };
+
+  const handleApplyPreviewUsersSearch = () => {
+    const trimmed = previewUsersSearch.trim().toLowerCase();
+    setAppliedPreviewUsersSearch(trimmed.length >= 2 ? trimmed : undefined);
+    setPreviewUsersPage(1);
+  };
+
+  const handleClearPreviewUsersSearch = () => {
+    setPreviewUsersSearch('');
+    setAppliedPreviewUsersSearch(undefined);
+    setPreviewUsersPage(1);
+  };
+
+  const handlePreviewJobsLimitChange = (newLimit: number) => {
+    setPreviewJobsLimit(newLimit);
+    setPreviewJobsPage(1);
+  };
+
+  const handlePreviewJobsPageChange = (newPage: number) => {
+    setPreviewJobsPage(newPage);
+  };
+
+  const handleApplyPreviewJobsSearch = () => {
+    const trimmed = previewJobsSearch.trim().toLowerCase();
+    setAppliedPreviewJobsSearch(trimmed.length >= 2 ? trimmed : undefined);
+    setPreviewJobsPage(1);
+  };
+
+  const handleClearPreviewJobsSearch = () => {
+    setPreviewJobsSearch('');
+    setAppliedPreviewJobsSearch(undefined);
+    setPreviewJobsPage(1);
+  };
+
   const handleEditUser = (user: User) => {
     setEditingUser(user);
     setEditUserData({
@@ -203,22 +376,6 @@ function AdminDashboard() {
       navigate('/login', { replace: true });
     }, 1000);
   };
-
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(postSearchQuery.toLowerCase()) ||
-      post.company.toLowerCase().includes(postSearchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'open' && post.status === 'open') ||
-      (statusFilter === 'closed' && post.status === 'closed');
-    
-    return matchesSearch && matchesStatus;
-  });
 
   return (
     <div className='flex h-screen bg-gray-50'>
@@ -592,12 +749,54 @@ function AdminDashboard() {
                 <h3 className='text-xl font-bold text-gray-800 mb-4'>User Management</h3>
                 <div className='bg-white rounded-xl shadow-sm border border-gray-100'>
                   <div className='p-6 border-b'>
-                    <input type='text' placeholder='Search users...' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className='w-full px-4 py-3 border rounded-lg' />
+                    <div className='flex gap-3 items-center'>
+                      <input 
+                        type='text' 
+                        placeholder='Search users...' 
+                        value={previewUsersSearch} 
+                        onChange={(e) => setPreviewUsersSearch(e.target.value)} 
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleApplyPreviewUsersSearch();
+                          }
+                        }}
+                        className='flex-1 px-4 py-3 border rounded-lg' 
+                      />
+                      <button
+                        onClick={handleApplyPreviewUsersSearch}
+                        className='px-5 py-3 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors'
+                      >
+                        Apply Search
+                      </button>
+                      {appliedPreviewUsersSearch && (
+                        <button
+                          onClick={handleClearPreviewUsersSearch}
+                          className='px-5 py-3 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors'
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className='p-4 border-b bg-gray-50 flex justify-between items-center'>
+                    <PageSizeSelect
+                      value={previewUsersLimit}
+                      onChange={handlePreviewUsersLimitChange}
+                      options={[5, 10, 15, 20]}
+                      disabled={loadingPreviewUsers}
+                    />
+                    {previewUsersPagination && (
+                      <span className='text-sm text-gray-600'>
+                        Total users: {previewUsersPagination.total}
+                        {fetchingPreviewUsers && <span className='ml-2 text-indigo-600 animate-pulse'>Updating...</span>}
+                      </span>
+                    )}
                   </div>
                   <div className='overflow-x-auto'>
                     <table className='w-full'>
                       <thead className='bg-gray-50 border-b'>
                         <tr>
+                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>S.N.</th>
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Name</th>
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Email</th>
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Role</th>
@@ -607,31 +806,43 @@ function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className='divide-y'>
-                        {loadingUsers ? (
-                          <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
-                        ) : filteredUsers.length === 0 ? (
-                          <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>No users found</td></tr>
-                        ) : filteredUsers.slice(0, 5).map((user) => (
-                          <tr key={user._id} className='hover:bg-gray-50'>
-                            <td className='px-6 py-4'><div className='text-sm font-medium text-gray-900'>{user.name}</div></td>
-                            <td className='px-6 py-4'><div className='text-sm text-gray-600'>{user.email}</div></td>
-                            <td className='px-6 py-4'><span className='px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800'>{user.role}</span></td>
-                            <td className='px-6 py-4'><span className={`px-3 py-1 text-xs rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Suspended'}</span></td>
-                            <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(user.createdAt)}</td>
-                            <td className='px-6 py-4 space-x-2'>
-                              <button onClick={() => handleEditUser(user)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
-                              <button onClick={() => handleDeleteClick('user', user._id)} className='text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50'>Delete</button>
-                            </td>
-                          </tr>
-                        ))}
+                        {loadingPreviewUsers ? (
+                          <tr><td colSpan={7} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
+                        ) : previewUsers.length === 0 ? (
+                          <tr><td colSpan={7} className='px-6 py-8 text-center text-gray-500'>No users found</td></tr>
+                        ) : previewUsers.map((user, index) => {
+                          const serial = (previewUsersPage - 1) * previewUsersLimit + index + 1;
+                          return (
+                            <tr key={user._id} className='hover:bg-gray-50'>
+                              <td className='px-6 py-4 text-sm text-gray-900'>{serial}</td>
+                              <td className='px-6 py-4'><div className='text-sm font-medium text-gray-900'>{user.name}</div></td>
+                              <td className='px-6 py-4'><div className='text-sm text-gray-600'>{user.email}</div></td>
+                              <td className='px-6 py-4'><span className='px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800'>{user.role}</span></td>
+                              <td className='px-6 py-4'><span className={`px-3 py-1 text-xs rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Suspended'}</span></td>
+                              <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(user.createdAt)}</td>
+                              <td className='px-6 py-4 space-x-2'>
+                                <button onClick={() => handleEditUser(user)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
+                                <button onClick={() => handleDeleteClick('user', user._id)} className='text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50'>Delete</button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
-                  {filteredUsers.length > 5 && (
-                    <div className='p-4 border-t bg-gray-50 text-center'>
-                      <button onClick={() => setActiveNav('users')} className='text-indigo-600 hover:text-indigo-900 font-medium'>View all {filteredUsers.length} users →</button>
+                  {previewUsersPagination && previewUsersPagination.pages > 1 && (
+                    <div className='p-4 border-t'>
+                      <PaginationControls
+                        pagination={previewUsersPagination}
+                        onPageChange={handlePreviewUsersPageChange}
+                        isLoading={loadingPreviewUsers}
+                        isFetching={fetchingPreviewUsers}
+                      />
                     </div>
                   )}
+                  <div className='p-4 border-t bg-gray-50 text-center'>
+                    <button onClick={() => setActiveNav('users')} className='text-indigo-600 hover:text-indigo-900 font-medium'>View full users list →</button>
+                  </div>
                 </div>
               </div>
 
@@ -640,12 +851,54 @@ function AdminDashboard() {
                 <h3 className='text-xl font-bold text-gray-800 mb-4'>Job Management Overview</h3>
                 <div className='bg-white rounded-xl shadow-sm border border-gray-100'>
                   <div className='p-6 border-b'>
-                    <input type='text' placeholder='Search jobs...' value={postSearchQuery} onChange={(e) => setPostSearchQuery(e.target.value)} className='w-full px-4 py-3 border rounded-lg' />
+                    <div className='flex gap-3 items-center'>
+                      <input 
+                        type='text' 
+                        placeholder='Search jobs...' 
+                        value={previewJobsSearch} 
+                        onChange={(e) => setPreviewJobsSearch(e.target.value)} 
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleApplyPreviewJobsSearch();
+                          }
+                        }}
+                        className='flex-1 px-4 py-3 border rounded-lg' 
+                      />
+                      <button
+                        onClick={handleApplyPreviewJobsSearch}
+                        className='px-5 py-3 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors'
+                      >
+                        Apply Search
+                      </button>
+                      {appliedPreviewJobsSearch && (
+                        <button
+                          onClick={handleClearPreviewJobsSearch}
+                          className='px-5 py-3 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors'
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className='p-4 border-b bg-gray-50 flex justify-between items-center'>
+                    <PageSizeSelect
+                      value={previewJobsLimit}
+                      onChange={handlePreviewJobsLimitChange}
+                      options={[5, 10, 15, 20]}
+                      disabled={loadingPreviewJobs}
+                    />
+                    {previewJobsPagination && (
+                      <span className='text-sm text-gray-600'>
+                        Total jobs: {previewJobsPagination.total}
+                        {fetchingPreviewJobs && <span className='ml-2 text-indigo-600 animate-pulse'>Updating...</span>}
+                      </span>
+                    )}
                   </div>
                   <div className='overflow-x-auto'>
                     <table className='w-full'>
                       <thead className='bg-gray-50 border-b'>
                         <tr>
+                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>S.N.</th>
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Title</th>
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Company</th>
                           <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Posted By</th>
@@ -655,189 +908,306 @@ function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className='divide-y'>
-                        {loadingPosts ? (
-                          <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
-                        ) : filteredPosts.length === 0 ? (
-                          <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>No jobs found</td></tr>
-                        ) : filteredPosts.slice(0, 5).map((post) => (
-                          <tr key={post._id} className='hover:bg-gray-50'>
-                            <td className='px-6 py-4'>
-                              <div className='text-sm font-medium text-gray-900'>{post.title}</div>
-                              <div className='text-xs text-gray-500'>{post.jobType}</div>
-                            </td>
-                            <td className='px-6 py-4'>
-                              <div className='text-sm text-gray-900'>{post.company}</div>
-                              <div className='text-xs text-gray-500'>{post.location}</div>
-                            </td>
-                            <td className='px-6 py-4'><div className='text-sm text-gray-600'>{post.createdByName}</div></td>
-                            <td className='px-6 py-4'>
-                              <span className={`px-3 py-1 text-xs rounded-full ${
-                                post.status === 'open' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {post.status === 'open' ? 'Open' : 'Closed'}
-                              </span>
-                            </td>
-                            <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(post.createdAt)}</td>
-                            <td className='px-6 py-4 space-x-2'>
-                              <button onClick={() => handleEditPost(post)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
-                              <button onClick={() => handleDeleteClick('post', post._id)} className='text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50'>Delete</button>
-                            </td>
-                          </tr>
-                        ))}
+                        {loadingPreviewJobs ? (
+                          <tr><td colSpan={7} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
+                        ) : previewJobs.length === 0 ? (
+                          <tr><td colSpan={7} className='px-6 py-8 text-center text-gray-500'>No jobs found</td></tr>
+                        ) : previewJobs.map((post, index) => {
+                          const serial = (previewJobsPage - 1) * previewJobsLimit + index + 1;
+                          return (
+                            <tr key={post._id} className='hover:bg-gray-50'>
+                              <td className='px-6 py-4 text-sm text-gray-900'>{serial}</td>
+                              <td className='px-6 py-4'>
+                                <div className='text-sm font-medium text-gray-900'>{post.title}</div>
+                                <div className='text-xs text-gray-500'>{post.jobType}</div>
+                              </td>
+                              <td className='px-6 py-4'>
+                                <div className='text-sm text-gray-900'>{post.company}</div>
+                                <div className='text-xs text-gray-500'>{post.location}</div>
+                              </td>
+                              <td className='px-6 py-4'><div className='text-sm text-gray-600'>{post.createdByName}</div></td>
+                              <td className='px-6 py-4'>
+                                <span className={`px-3 py-1 text-xs rounded-full ${
+                                  post.status === 'open' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {post.status === 'open' ? 'Open' : 'Closed'}
+                                </span>
+                              </td>
+                              <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(post.createdAt)}</td>
+                              <td className='px-6 py-4 space-x-2'>
+                                <button onClick={() => handleEditPost(post)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
+                                <button onClick={() => handleDeleteClick('post', post._id)} className='text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50'>Delete</button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
-                  {filteredPosts.length > 5 && (
-                    <div className='p-4 border-t bg-gray-50 text-center'>
-                      <button onClick={() => setActiveNav('posts')} className='text-indigo-600 hover:text-indigo-900 font-medium'>View all {filteredPosts.length} posts →</button>
+                  {previewJobsPagination && previewJobsPagination.pages > 1 && (
+                    <div className='p-4 border-t'>
+                      <PaginationControls
+                        pagination={previewJobsPagination}
+                        onPageChange={handlePreviewJobsPageChange}
+                        isLoading={loadingPreviewJobs}
+                        isFetching={fetchingPreviewJobs}
+                      />
                     </div>
                   )}
+                  <div className='p-4 border-t bg-gray-50 text-center'>
+                    <button onClick={() => setActiveNav('posts')} className='text-indigo-600 hover:text-indigo-900 font-medium'>View full jobs list →</button>
+                  </div>
                 </div>
               </div>            </>
           )}
 
           {activeNav === 'users' && (
             <div className='bg-white rounded-xl shadow-sm border border-gray-100'>
-              <div className='p-6 border-b'>
-                <input type='text' placeholder='Search users...' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className='w-full px-4 py-3 pl-11 border rounded-lg' />
+              {/* Search & Filters */}
+              <div className='p-6 border-b space-y-4'>
+                <div className='flex flex-col md:flex-row gap-4'>
+                  <input 
+                    type='text' 
+                    placeholder='Search by name or email...' 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleApplyUserSearch()}
+                    className='flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent' 
+                  />
+                  <div className='flex gap-2'>
+                    <button
+                      onClick={handleApplyUserSearch}
+                      className='px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium'
+                    >
+                      Apply Search
+                    </button>
+                    {appliedUserSearch && (
+                      <button
+                        onClick={handleClearUserSearch}
+                        className='px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium'
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className='flex items-center justify-between'>
+                  <PageSizeSelect 
+                    value={usersLimit} 
+                    onChange={handleUsersLimitChange}
+                    disabled={loadingUsers}
+                  />
+                  {usersPagination && (
+                    <div className='text-sm text-gray-600'>
+                      {fetchingUsers && <span className='text-indigo-600 mr-2'>Updating...</span>}
+                      Total: <span className='font-semibold'>{usersPagination.total}</span> users
+                    </div>
+                  )}
+                </div>
               </div>
-              <table className='w-full'>
-                <thead className='bg-gray-50 border-b'>
-                  <tr>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Name</th>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Email</th>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Role</th>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Status</th>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Joined</th>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Actions</th>
-                  </tr>
-                </thead>
-                <tbody className='divide-y'>
-                  {loadingUsers ? (
-                    <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
-                  ) : filteredUsers.length === 0 ? (
-                    <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>No users found</td></tr>
-                  ) : filteredUsers.map((user) => (
-                    <tr key={user._id} className='hover:bg-gray-50'>
-                      <td className='px-6 py-4'><div className='text-sm font-medium text-gray-900'>{user.name}</div></td>
-                      <td className='px-6 py-4'><div className='text-sm text-gray-600'>{user.email}</div></td>
-                      <td className='px-6 py-4'><span className='px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800'>{user.role}</span></td>
-                      <td className='px-6 py-4'><span className={`px-3 py-1 text-xs rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Suspended'}</span></td>
-                      <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(user.createdAt)}</td>
-                      <td className='px-6 py-4 space-x-2'>
-                        <button onClick={() => handleEditUser(user)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
-                        <button onClick={() => handleDeleteClick('user', user._id)} className='text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50'>Delete</button>
-                      </td>
+
+              {/* Table */}
+              <div className='overflow-x-auto'>
+                <table className='w-full'>
+                  <thead className='bg-gray-50 border-b'>
+                    <tr>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase w-20'>S.N.</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Name</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Email</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Role</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Status</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Joined</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className='divide-y'>
+                    {loadingUsers ? (
+                      <tr><td colSpan={7} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
+                    ) : users.length === 0 ? (
+                      <tr><td colSpan={7} className='px-6 py-8 text-center text-gray-500'>No users found</td></tr>
+                    ) : users.map((user, index) => {
+                      const serial = (usersPage - 1) * usersLimit + index + 1;
+                      return (
+                        <tr key={user._id} className='hover:bg-gray-50'>
+                          <td className='px-6 py-4 text-sm text-gray-600'>{serial}</td>
+                          <td className='px-6 py-4'><div className='text-sm font-medium text-gray-900'>{user.name}</div></td>
+                          <td className='px-6 py-4'><div className='text-sm text-gray-600'>{user.email}</div></td>
+                          <td className='px-6 py-4'><span className='px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800'>{user.role}</span></td>
+                          <td className='px-6 py-4'><span className={`px-3 py-1 text-xs rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Suspended'}</span></td>
+                          <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(user.createdAt)}</td>
+                          <td className='px-6 py-4 space-x-2'>
+                            <button onClick={() => handleEditUser(user)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
+                            <button onClick={() => handleDeleteClick('user', user._id)} className='text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50'>Delete</button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {usersPagination && usersPagination.pages > 1 && (
+                <PaginationControls
+                  pagination={usersPagination}
+                  onPageChange={handleUsersPageChange}
+                  isLoading={loadingUsers}
+                  isFetching={fetchingUsers}
+                />
+              )}
             </div>
           )}
 
           {activeNav === 'posts' && (
             <div className='bg-white rounded-xl shadow-sm border border-gray-100'>
-              <div className='p-6 border-b'>
+              {/* Search & Filters */}
+              <div className='p-6 border-b space-y-4'>
                 <div className='flex flex-col md:flex-row gap-4'>
                   <input 
                     type='text' 
                     placeholder='Search jobs by title or company...' 
                     value={postSearchQuery} 
-                    onChange={(e) => setPostSearchQuery(e.target.value)} 
+                    onChange={(e) => setPostSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleApplyPostSearch()}
                     className='flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent' 
                   />
                   <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => handleStatusFilterChange(e.target.value)}
                     className='px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
                   >
                     <option value='all'>All Status</option>
                     <option value='open'>Open</option>
                     <option value='closed'>Closed</option>
                   </select>
+                  <div className='flex gap-2'>
+                    <button
+                      onClick={handleApplyPostSearch}
+                      className='px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium'
+                    >
+                      Apply Search
+                    </button>
+                    {appliedPostSearch && (
+                      <button
+                        onClick={handleClearPostSearch}
+                        className='px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium'
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className='mt-3 text-sm text-gray-600'>
-                  Showing {filteredPosts.length} of {totalPosts} jobs
+                <div className='flex items-center justify-between'>
+                  <PageSizeSelect 
+                    value={postsLimit} 
+                    onChange={handlePostsLimitChange}
+                    disabled={loadingPosts}
+                  />
+                  {postsPagination && (
+                    <div className='text-sm text-gray-600'>
+                      {fetchingPosts && <span className='text-indigo-600 mr-2'>Updating...</span>}
+                      Total: <span className='font-semibold'>{postsPagination.total}</span> jobs
+                    </div>
+                  )}
                 </div>
               </div>
-              <table className='w-full'>
-                <thead className='bg-gray-50 border-b'>
-                  <tr>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Title</th>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Company</th>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Posted By</th>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Status</th>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Date</th>
-                    <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Actions</th>
-                  </tr>
-                </thead>
-                <tbody className='divide-y'>
-                  {loadingPosts ? (
-                    <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
-                  ) : filteredPosts.length === 0 ? (
-                    <tr><td colSpan={6} className='px-6 py-8 text-center text-gray-500'>No jobs found</td></tr>
-                  ) : filteredPosts.map((post) => (
-                    <tr key={post._id} className='hover:bg-gray-50'>
-                      <td className='px-6 py-4'>
-                        <div className='text-sm font-medium text-gray-900'>{post.title}</div>
-                        <div className='text-xs text-gray-500'>{post.jobType}</div>
-                      </td>
-                      <td className='px-6 py-4'>
-                        <div className='text-sm text-gray-900'>{post.company}</div>
-                        <div className='text-xs text-gray-500'>{post.location}</div>
-                      </td>
-                      <td className='px-6 py-4'>
-                        <div className='text-sm text-gray-600'>{post.createdByName}</div>
-                      </td>
-                      <td className='px-6 py-4'>
-                        <div className="flex flex-col gap-1">
-                          <span className={`px-3 py-1 text-xs rounded-full inline-block ${
-                            post.status === 'open' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {post.status === 'open' ? 'Open' : 'Closed'}
-                          </span>
-                          {post.isDeleted && (
-                            <span className="px-3 py-1 text-xs rounded-full inline-block bg-red-100 text-red-800">
-                              Deleted
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(post.createdAt)}</td>
-                      <td className='px-6 py-4 space-x-2'>
-                        <button 
-                          onClick={() => handleEditPost(post)} 
-                          disabled={post.isDeleted}
-                          className={`p-2 rounded-lg ${
-                            post.isDeleted 
-                              ? 'text-gray-400 cursor-not-allowed' 
-                              : 'text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50'
-                          }`}
-                          title={post.isDeleted ? 'Cannot edit deleted jobs' : 'Edit job'}
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteClick('post', post._id)} 
-                          disabled={post.isDeleted}
-                          className={`p-2 rounded-lg ${
-                            post.isDeleted 
-                              ? 'text-gray-400 cursor-not-allowed' 
-                              : 'text-red-600 hover:text-red-900 hover:bg-red-50'
-                          }`}
-                          title={post.isDeleted ? 'Already deleted' : 'Delete job'}
-                        >
-                          Delete
-                        </button>
-                      </td>
+
+              {/* Table */}
+              <div className='overflow-x-auto'>
+                <table className='w-full'>
+                  <thead className='bg-gray-50 border-b'>
+                    <tr>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase w-20'>S.N.</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Title</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Company</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Posted By</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Status</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Date</th>
+                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase'>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className='divide-y'>
+                    {loadingPosts ? (
+                      <tr><td colSpan={7} className='px-6 py-8 text-center text-gray-500'>Loading...</td></tr>
+                    ) : posts.length === 0 ? (
+                      <tr><td colSpan={7} className='px-6 py-8 text-center text-gray-500'>No jobs found</td></tr>
+                    ) : posts.map((post, index) => {
+                      const serial = (postsPage - 1) * postsLimit + index + 1;
+                      return (
+                        <tr key={post._id} className='hover:bg-gray-50'>
+                          <td className='px-6 py-4 text-sm text-gray-600'>{serial}</td>
+                          <td className='px-6 py-4'>
+                            <div className='text-sm font-medium text-gray-900'>{post.title}</div>
+                            <div className='text-xs text-gray-500'>{post.jobType}</div>
+                          </td>
+                          <td className='px-6 py-4'>
+                            <div className='text-sm text-gray-900'>{post.company}</div>
+                            <div className='text-xs text-gray-500'>{post.location}</div>
+                          </td>
+                          <td className='px-6 py-4'>
+                            <div className='text-sm text-gray-600'>{post.createdByName}</div>
+                          </td>
+                          <td className='px-6 py-4'>
+                            <div className="flex flex-col gap-1">
+                              <span className={`px-3 py-1 text-xs rounded-full inline-block ${
+                                post.status === 'open' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {post.status === 'open' ? 'Open' : 'Closed'}
+                              </span>
+                              {post.isDeleted && (
+                                <span className="px-3 py-1 text-xs rounded-full inline-block bg-red-100 text-red-800">
+                                  Deleted
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(post.createdAt)}</td>
+                          <td className='px-6 py-4 space-x-2'>
+                            <button 
+                              onClick={() => handleEditPost(post)} 
+                              disabled={post.isDeleted}
+                              className={`p-2 rounded-lg ${
+                                post.isDeleted 
+                                  ? 'text-gray-400 cursor-not-allowed' 
+                                  : 'text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50'
+                              }`}
+                              title={post.isDeleted ? 'Cannot edit deleted jobs' : 'Edit job'}
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteClick('post', post._id)} 
+                              disabled={post.isDeleted}
+                              className={`p-2 rounded-lg ${
+                                post.isDeleted 
+                                  ? 'text-gray-400 cursor-not-allowed' 
+                                  : 'text-red-600 hover:text-red-900 hover:bg-red-50'
+                              }`}
+                              title={post.isDeleted ? 'Already deleted' : 'Delete job'}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {postsPagination && postsPagination.pages > 1 && (
+                <PaginationControls
+                  pagination={postsPagination}
+                  onPageChange={handlePostsPageChange}
+                  isLoading={loadingPosts}
+                  isFetching={fetchingPosts}
+                />
+              )}
             </div>
           )}
           </main>

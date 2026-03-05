@@ -101,11 +101,56 @@ export const adminApi = {
     };
   }> => apiRequest('/admin/analytics', { method: 'GET' }),
 
-  getUsers: (): Promise<{ success: boolean; users: any[] }> => 
-    apiRequest('/admin/users', { method: 'GET' }),
+  getUsers: (params?: { 
+    search?: string; 
+    role?: string; 
+    isActive?: string | boolean; 
+    page?: number; 
+    limit?: number;
+  }): Promise<{ 
+    success: boolean; 
+    users: any[]; 
+    pagination?: { page: number; limit: number; total: number; pages: number };
+  }> => {
+    const queryParams = new URLSearchParams();
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.role) queryParams.append('role', params.role);
+    if (params?.isActive !== undefined) queryParams.append('isActive', String(params.isActive));
+    if (params?.page) queryParams.append('page', String(params.page));
+    if (params?.limit) queryParams.append('limit', String(params.limit));
+    
+    const queryString = queryParams.toString();
+    return apiRequest(`/admin/users${queryString ? `?${queryString}` : ''}`, { method: 'GET' });
+  },
 
-  getPosts: (): Promise<{ success: boolean; posts: any[] }> => 
-    apiRequest('/admin/posts', { method: 'GET' }),
+  getPosts: (params?: {
+    search?: string;
+    status?: string;
+    isActive?: string | boolean;
+    jobType?: string;
+    company?: string;
+    location?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ 
+    success: boolean; 
+    posts: any[]; 
+    total?: number;
+    pagination?: { page: number; limit: number; total: number; pages: number; totalPages?: number };
+  }> => {
+    const queryParams = new URLSearchParams();
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.isActive !== undefined) queryParams.append('isActive', String(params.isActive));
+    if (params?.jobType) queryParams.append('jobType', params.jobType);
+    if (params?.company) queryParams.append('company', params.company);
+    if (params?.location) queryParams.append('location', params.location);
+    if (params?.page) queryParams.append('page', String(params.page));
+    if (params?.limit) queryParams.append('limit', String(params.limit));
+    
+    const queryString = queryParams.toString();
+    return apiRequest(`/admin/posts${queryString ? `?${queryString}` : ''}`, { method: 'GET' });
+  },
 
   updateUser: (userId: string, userData: { role?: string; isActive?: boolean; password?: string }): Promise<{ success: boolean; message: string }> =>
     apiRequest(`/admin/users/${userId}`, {

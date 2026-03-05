@@ -26,12 +26,12 @@ const createAuditLog = async (performedBy, performedByName, targetId, targetType
 
 /**
  * Service function to get all users
- * @param {Object} filters - { search, role, isActive }
- * @returns {Promise<Object>} - { success: true, users: [...] }
+ * @param {Object} filters - { search, role, isActive, page, limit }
+ * @returns {Promise<Object>} - { success: true, users: [...], pagination: { page, limit, total, pages } }
  * @throws {Error} - Error with statusCode and message properties
  */
 const getAllUsersService = async (filters = {}) => {
-  const { search, role, isActive } = filters;
+  const { search, role, isActive, page = 1, limit = 10 } = filters;
   
   // Build MongoDB query object
   const query = {};
@@ -57,13 +57,28 @@ const getAllUsersService = async (filters = {}) => {
     query.isActive = isActive === 'true' || isActive === true;
   }
   
+  // Get total count for pagination
+  const total = await UserModel.countDocuments(query);
+  
+  // Calculate pagination
+  const skip = (page - 1) * limit;
+  const pages = Math.ceil(total / limit);
+  
   const users = await UserModel.find(query)
     .select("-password")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
   
   return {
     success: true,
     users,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages
+    }
   };
 };
 

@@ -14,3 +14,7 @@ export { default as ScheduleInterviewModal } from './schedules/schedule-intervie
 
 // UI components
 export { LoadingSpinner, EmptyState, StatsCard } from './ui';
+
+// Pagination components
+export { PageSizeSelect, PaginationControls } from './pagination';
+export type { PaginationMeta } from './pagination';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { DashboardLayout, JobCard, JobFilter, LoadingSpinner, EmptyState, ActiveFilters, Footer } from '../../components';
+import { DashboardLayout, JobCard, JobFilter, LoadingSpinner, EmptyState, ActiveFilters, Footer, PageSizeSelect, PaginationControls, type PaginationMeta } from '../../components';
 import { useJobs, useJobMatchScores } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import type { JobFilters } from '../../services';
@@ -160,7 +160,17 @@ const BrowseJobs: React.FC = () => {
   // Handle pagination
   const handlePageChange = (newPage: number) => {
     setAppliedFilters(prev => ({ ...prev, page: newPage }));
-    // Scroll to top smoothly
+    //Scroll to top smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handle limit change
+  const handleLimitChange = (newLimit: number) => {
+    setAppliedFilters(prev => ({
+      ...prev,
+      limit: newLimit,
+      page: 1 // Reset to first page when changing limit
+    }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -267,7 +277,7 @@ const BrowseJobs: React.FC = () => {
           {/* Job Results */}
           <div className="flex-1 min-w-0">
             {/* Results Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
               <h2 className="text-xl font-semibold text-gray-900">
                 {isLoading ? 'Searching...' : `${filteredJobs.length} Job${filteredJobs.length !== 1 ? 's' : ''} Found`}
                 {appliedFilters.aiMatchMin && appliedFilters.aiMatchMin > 0 && (
@@ -276,15 +286,23 @@ const BrowseJobs: React.FC = () => {
                   </span>
                 )}
               </h2>
-              {isFetching && !isLoading && (
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Updating...
-                </div>
-              )}
+              <div className="flex items-center gap-4">
+                {isFetching && !isLoading && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating...
+                  </div>
+                )}
+                <PageSizeSelect
+                  value={appliedFilters.limit || 12}
+                  onChange={handleLimitChange}
+                  options={[6, 12, 18, 24]}
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
             {/* Active Filters Chips */}
@@ -329,53 +347,12 @@ const BrowseJobs: React.FC = () => {
 
                 {/* Pagination */}
                 {pagination && pagination.pages > 1 && (
-                  <div className="flex items-center justify-center gap-2 pb-8">
-                    <button
-                      onClick={() => handlePageChange(pagination.page - 1)}
-                      disabled={pagination.page <= 1}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Previous
-                    </button>
-                    
-                    {Array.from({ length: Math.min(pagination.pages, 7) }, (_, i) => {
-                      let pageNum;
-                      if (pagination.pages <= 7) {
-                        pageNum = i + 1;
-                      } else {
-                        // Smart pagination display
-                        if (pagination.page <= 4) {
-                          pageNum = i + 1;
-                        } else if (pagination.page >= pagination.pages - 3) {
-                          pageNum = pagination.pages - 6 + i;
-                        } else {
-                          pageNum = pagination.page - 3 + i;
-                        }
-                      }
-                      
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`min-w-[2.5rem] h-10 rounded-lg font-medium transition-colors ${
-                            pagination.page === pageNum
-                              ? 'bg-indigo-600 text-white'
-                              : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                    
-                    <button
-                      onClick={() => handlePageChange(pagination.page + 1)}
-                      disabled={pagination.page >= pagination.pages}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Next
-                    </button>
-                  </div>
+                  <PaginationControls
+                    pagination={pagination as PaginationMeta}
+                    onPageChange={handlePageChange}
+                    isLoading={isLoading}
+                    isFetching={isFetching}
+                  />
                 )}
               </>
             )}

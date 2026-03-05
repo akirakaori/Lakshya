@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Footer } from "../components";
+import { Footer, PageSizeSelect, PaginationControls, type PaginationMeta } from "../components";
 import { getLandingData, searchPublicJobs } from "../services/landing-service";
 import { useAuth } from "../context/auth-context";
 
@@ -12,29 +12,37 @@ function Landing() {
   // Search state
   const [searchInput, setSearchInput] = useState("");
   const [appliedSearch, setAppliedSearch] = useState<string | undefined>(undefined);
+  
+  // Pagination state for jobs listing
+  const [jobsPage, setJobsPage] = useState(1);
+  const [jobsLimit, setJobsLimit] = useState(12);
 
-  // Fetch landing data from API (used when no search)
-  const { data: landingData, isLoading: isLoadingLanding, isError: isErrorLanding } = useQuery({
+  // Fetch landing data from API (stats only - no pagination needed)
+  const { data: landingData } = useQuery({
     queryKey: ['public-landing'],
     queryFn: getLandingData,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
   });
 
-  // Fetch search results (used when search is applied)
-  const { data: searchData, isLoading: isLoadingSearch, isError: isErrorSearch } = useQuery({
-    queryKey: ['public-jobs-search', appliedSearch],
-    queryFn: () => searchPublicJobs({ keyword: appliedSearch, limit: 8 }),
-    enabled: appliedSearch !== undefined && appliedSearch.length >= 2,
+  // Fetch public jobs with pagination (always active, search optional)
+  const { data: jobsData, isLoading: isLoadingJobs, isError: isErrorJobs, isFetching: isFetchingJobs } = useQuery({
+    queryKey: ['public-jobs', { page: jobsPage, limit: jobsLimit, search: appliedSearch }],
+    queryFn: () => searchPublicJobs({ keyword: appliedSearch, page: jobsPage, limit: jobsLimit }),
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
   });
 
-  // Determine which data to display
-  const isSearchActive = appliedSearch !== undefined && appliedSearch.length >= 2;
-  const displayJobs = isSearchActive ? searchData?.data.jobs : landingData?.data.jobs;
-  const isLoading = isSearchActive ? isLoadingSearch : isLoadingLanding;
-  const isError = isSearchActive ? isErrorSearch : isErrorLanding;
+  // Extract jobs and pagination
+  const displayJobs = jobsData?.data.jobs || [];
+  const pagination: PaginationMeta | undefined = jobsData?.data.pagination ? {
+    page: jobsData.data.pagination.currentPage,
+    limit: jobsLimit,
+    total: jobsData.data.pagination.totalJobs,
+    pages: jobsData.data.pagination.totalPages
+  } : undefined;
+  const isLoading = isLoadingJobs;
+  const isError = isErrorJobs;
 
   // Handle search - filter jobs on same page (no navigation)
   const handleSearch = (e?: React.FormEvent) => {
@@ -45,12 +53,26 @@ function Landing() {
     } else {
       setAppliedSearch(normalized);
     }
+    setJobsPage(1); // Reset to first page on search
   };
 
   // Handle clear search
   const handleClearSearch = () => {
     setSearchInput("");
     setAppliedSearch(undefined);
+    setJobsPage(1); // Reset to first page
+  };
+
+  // Handle pagination
+  const handleJobsLimitChange = (newLimit: number) => {
+    setJobsLimit(newLimit);
+    setJobsPage(1); // Reset to first page on limit change
+    window.scrollTo({ top: document.getElementById('jobs')?.offsetTop || 0, behavior: 'smooth' });
+  };
+
+  const handleJobsPageChange = (newPage: number) => {
+    setJobsPage(newPage);
+    window.scrollTo({ top: document.getElementById('jobs')?.offsetTop || 0, behavior: 'smooth' });
   };
 
   // Format date for job posting
@@ -175,35 +197,47 @@ function Landing() {
       {/* Browse Jobs Section */}
       <section id="jobs" className="py-16 md:py-20 px-4 md:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 select-none">
-              {isSearchActive ? (
+              {appliedSearch ? (
                 <>
                   Search Results
-                  {searchData?.data.pagination.totalJobs !== undefined && (
-                    <span className="text-lg text-gray-600 ml-2">({searchData.data.pagination.totalJobs} jobs)</span>
+                  {pagination && (
+                    <span className="text-lg text-gray-600 ml-2">({pagination.total} jobs)</span>
                   )}
                 </>
               ) : (
                 'Latest Job Openings'
               )}
             </h2>
-            <div className="flex gap-3">
-              {isSearchActive && (
-                <button 
-                  className="px-5 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none"
-                  onClick={handleClearSearch}
-                >
-                  Clear Search
-                </button>
+            <div className="flex gap-3 items-center">
+              <PageSizeSelect
+                value={jobsLimit}
+                onChange={handleJobsLimitChange}
+                options={[6, 12, 18, 24]}
+                disabled={isLoading}
+              />
+              {isFetchingJobs && (
+                <span className="text-sm text-indigo-600 animate-pulse">Updating...</span>
               )}
-              <button 
-                className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none"
-                onClick={() => navigate("/browse-jobs")}
-              >
-                View All Jobs
-              </button>
             </div>
+          </div>
+
+          <div className="flex gap-3 mb-8">
+            {appliedSearch && (
+              <button 
+                className="px-5 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none"
+                onClick={handleClearSearch}
+              >
+                Clear Search
+              </button>
+            )}
+            <button 
+              className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none"
+              onClick={() => navigate("/browse-jobs")}
+            >
+              Browse All Jobs
+            </button>
           </div>
 
           {/* Loading State */}
@@ -291,11 +325,11 @@ function Landing() {
           {!isLoading && !isError && displayJobs && displayJobs.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500 mb-2">
-                {isSearchActive 
+                {appliedSearch 
                   ? `No jobs found for "${appliedSearch}"`
                   : "No jobs available at the moment."}
               </p>
-              {isSearchActive && (
+              {appliedSearch && (
                 <button 
                   className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors mt-4"
                   onClick={handleClearSearch}
@@ -303,6 +337,18 @@ function Landing() {
                   Clear Search
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {!isLoading && !isError && pagination && pagination.pages > 1 && (
+            <div className="mt-8">
+              <PaginationControls
+                pagination={pagination}
+                onPageChange={handleJobsPageChange}
+                isLoading={isLoading}
+                isFetching={isFetchingJobs}
+              />
             </div>
           )}
         </div>
