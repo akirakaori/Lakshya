@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { handleSuccess, handleError } from '../../utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -32,7 +32,7 @@ interface Post {
 }
 
 function AdminDashboard() {
-  const [loggedInUser, setLoggedInUser] = useState('');
+  const loggedInUser = localStorage.getItem('loggedInUser') || 'Admin';
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,28 +72,28 @@ function AdminDashboard() {
 
   // Update user mutation
   const updateUserMutation = useMutation({
-    mutationFn: ({ userId, userData }: { userId: string; userData: any }) =>
+    mutationFn: ({ userId, userData }: { userId: string; userData: { role?: string; isActive?: boolean; password?: string } }) =>
       adminApi.updateUser(userId, userData),
     onSuccess: () => {
       handleSuccess('User updated successfully');
       setShowEditUserModal(false);
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       handleError(error.message || 'Failed to update user');
     }
   });
 
   // Update post mutation
   const updatePostMutation = useMutation({
-    mutationFn: ({ postId, postData }: { postId: string; postData: any }) =>
+    mutationFn: ({ postId, postData }: { postId: string; postData: { title?: string; description?: string; company?: string; location?: string; salary?: string; jobType?: string } }) =>
       adminApi.updatePost(postId, postData),
     onSuccess: () => {
       handleSuccess('Post updated successfully');
       setShowEditPostModal(false);
       queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       handleError(error.message || 'Failed to update post');
     }
   });
@@ -121,15 +121,11 @@ function AdminDashboard() {
         queryClient.invalidateQueries({ queryKey: ['applications'] });
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
       handleError(error.response?.data?.message || error.message || 'Failed to delete');
       console.error('Delete error:', error);
     }
   });
-
-  useEffect(() => {
-    setLoggedInUser(localStorage.getItem('loggedInUser') || 'Admin');
-  }, []);
 
   const handleEditUser = (user: User) => {
     setEditingUser(user);
@@ -229,7 +225,7 @@ function AdminDashboard() {
 
   return (
     <div className='flex h-screen bg-gray-50'>
-      <aside className={`{${isSidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-indigo-900 via-indigo-800 to-indigo-900 text-white transition-all duration-300 flex flex-col shadow-2xl`}>
+      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-indigo-900 via-indigo-800 to-indigo-900 text-white transition-all duration-300 flex flex-col shadow-2xl`}>
 
         <div className='p-6 flex items-center justify-between border-b border-indigo-700'>
           {isSidebarOpen && (
@@ -244,15 +240,15 @@ function AdminDashboard() {
         </div>
 
         <nav className='flex-1 p-4 space-y-2'>
-          <button onClick={() => setActiveNav('dashboard')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 {${activeNav === 'dashboard' ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'}`}>
+          <button onClick={() => setActiveNav('dashboard')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeNav === 'dashboard' ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'}`}>
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' /></svg>
             {isSidebarOpen && <span className='font-medium'>Dashboard</span>}
           </button>
-          <button onClick={() => setActiveNav('users')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 {${activeNav === 'users' ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'}`}>
+          <button onClick={() => setActiveNav('users')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeNav === 'users' ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'}`}>
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' /></svg>
             {isSidebarOpen && <span className='font-medium'>Users</span>}
           </button>
-          <button onClick={() => setActiveNav('posts')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 {${activeNav === 'posts' ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'}`}>
+          <button onClick={() => setActiveNav('posts')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeNav === 'posts' ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'}`}>
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' /></svg>
             {isSidebarOpen && <span className='font-medium'>Posts</span>}
           </button>
@@ -297,7 +293,7 @@ function AdminDashboard() {
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
                 {stats.map((stat, index) => (
                   <div key={index} className='bg-white rounded-xl shadow-sm p-6 border border-gray-100'>
-                    <div className={`w-12 h-12 {${stat.color} rounded-lg flex items-center justify-center text-2xl mb-4`}>{stat.icon}</div>
+                    <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center text-2xl mb-4`}>{stat.icon}</div>
                     <h3 className='text-3xl font-bold text-gray-800 mb-2'>{stat.value}</h3>
                     <p className='text-sm font-semibold text-gray-600 mb-1'>{stat.title}</p>
                     <p className='text-xs text-gray-500'>{stat.description}</p>
