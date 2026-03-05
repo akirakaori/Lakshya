@@ -37,11 +37,32 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
+    // Only redirect to login if:
+    // 1. It's a 401 error
+    // 2. There WAS a token (meaning user was authenticated but token expired)
+    // 3. Not already on login page
     if (error.response?.status === 401) {
-      // Token expired or invalid - clear storage and redirect
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const hadToken = localStorage.getItem('token');
+      const isOnLoginPage = window.location.pathname === '/login';
+      
+      if (hadToken && !isOnLoginPage) {
+        // Token expired or invalid - clear storage and redirect
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('loggedInUser');
+        localStorage.removeItem('role');
+        
+        // Preserve current location for redirect after login
+        const currentPath = window.location.pathname + window.location.search;
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+      } else if (hadToken) {
+        // Clear storage even on login page
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('loggedInUser');
+        localStorage.removeItem('role');
+      }
+      // If no token, just let the error propagate (guest user trying protected resource)
     }
     return Promise.reject(error);
   }

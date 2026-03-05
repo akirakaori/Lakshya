@@ -1,8 +1,39 @@
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Footer } from "../components";
+import { getLandingData } from "../services/public-service";
+import { useAuth } from "../context/auth-context";
 
 function Landing() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Fetch landing data from API
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['public-landing'],
+    queryFn: getLandingData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
+
+  // Format date for job posting
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  };
+
+  // Handle job click (view details)
+  const handleJobClick = (jobId: string) => {
+    navigate(`/jobs/${jobId}`);
+  };
 
   return (
     <div 
@@ -37,18 +68,33 @@ function Landing() {
           
           {/* Auth Buttons - Right */}
           <div className="flex flex-row items-center gap-3">
-            <button 
-              className="text-sm text-white bg-indigo-400 hover:bg-indigo-500 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm px-4 py-2 rounded-lg transition-all duration-200 ease-in-out select-none"
-              onClick={() => navigate("/login")}
-            >
-              Login
-            </button>
-            <button 
-              className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none whitespace-nowrap"
-              onClick={() => navigate("/signup-choice")}
-            >
-              Sign Up (Free)
-            </button>
+            {user ? (
+              <button 
+                className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none whitespace-nowrap"
+                onClick={() => {
+                  if (user.role === 'admin') navigate('/AdminDashboard');
+                  else if (user.role === 'recruiter') navigate('/recruiter/dashboard');
+                  else navigate('/job-seeker/dashboard');
+                }}
+              >
+                Go to Dashboard
+              </button>
+            ) : (
+              <>
+                <button 
+                  className="text-sm text-white bg-indigo-400 hover:bg-indigo-500 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm px-4 py-2 rounded-lg transition-all duration-200 ease-in-out select-none"
+                  onClick={() => navigate("/login")}
+                >
+                  Login
+                </button>
+                <button 
+                  className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none whitespace-nowrap"
+                  onClick={() => navigate("/signup-choice")}
+                >
+                  Sign Up (Free)
+                </button>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -77,6 +123,111 @@ function Landing() {
               Search Jobs
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* Browse Jobs Section */}
+      <section id="jobs" className="py-16 md:py-20 px-4 md:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 select-none">
+              Latest Job Openings
+            </h2>
+            <button 
+              className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md transition-all duration-200 ease-in-out select-none"
+              onClick={() => navigate("/job-seeker/browse-jobs")}
+            >
+              View All Jobs
+            </button>
+          </div>
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Error State */}
+          {isError && !isLoading && (
+            <div className="text-center py-12">
+              <p className="text-gray-500 mb-4">Unable to load jobs at the moment.</p>
+              <button 
+                className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+                onClick={() => window.location.reload()}
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {/* Jobs Grid */}
+          {!isLoading && !isError && data?.data.jobs && data.data.jobs.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {data.data.jobs.map((job) => (
+                <div
+                  key={job._id}
+                  className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out"
+                >
+                  {/* Job Title */}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 select-none">
+                    {job.title}
+                  </h3>
+                  
+                  {/* Company Name */}
+                  <p className="text-sm text-gray-600 mb-1 flex items-center gap-1 select-none">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    {job.companyName}
+                  </p>
+                  
+                  {/* Location */}
+                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-1 select-none">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {job.location}
+                  </p>
+                  
+                  {/* Job Type */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs rounded-full select-none">
+                      {job.jobType}
+                    </span>
+                  </div>
+                  
+                  {/* Posted Date */}
+                  <p className="text-xs text-gray-500 mb-4 select-none">
+                    Posted {formatDate(job.createdAt)}
+                  </p>
+                  
+                  {/* View Details Button */}
+                  <button
+                    onClick={() => handleJobClick(job._id)}
+                    className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    View Details
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* No Jobs State */}
+          {!isLoading && !isError && data?.data.jobs && data.data.jobs.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No jobs available at the moment.</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -114,15 +265,39 @@ function Landing() {
         </h2>
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-white border border-gray-300 rounded-lg p-8 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out cursor-pointer">
-            <div className="text-4xl md:text-5xl font-bold text-primary mb-2 select-none">500 +</div>
+            <div className="text-4xl md:text-5xl font-bold text-primary mb-2 select-none">
+              {isLoading ? (
+                <div className="animate-pulse bg-gray-200 h-12 rounded mx-auto w-32"></div>
+              ) : isError ? (
+                "—"
+              ) : (
+                `${data?.data.stats.activeJobs || 0}+`
+              )}
+            </div>
             <div className="text-sm text-gray-600 select-none">Active Jobs</div>
           </div>
           <div className="bg-white border border-gray-300 rounded-lg p-8 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out cursor-pointer">
-            <div className="text-4xl md:text-5xl font-bold text-primary mb-2 select-none">1,000+</div>
+            <div className="text-4xl md:text-5xl font-bold text-primary mb-2 select-none">
+              {isLoading ? (
+                <div className="animate-pulse bg-gray-200 h-12 rounded mx-auto w-32"></div>
+              ) : isError ? (
+                "—"
+              ) : (
+                `${data?.data.stats.verifiedStudents || 0}+`
+              )}
+            </div>
             <div className="text-sm text-gray-600 select-none">Verified Students</div>
           </div>
           <div className="bg-white border border-gray-300 rounded-lg p-8 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out cursor-pointer">
-            <div className="text-4xl md:text-5xl font-bold text-primary mb-2 select-none">50 +</div>
+            <div className="text-4xl md:text-5xl font-bold text-primary mb-2 select-none">
+              {isLoading ? (
+                <div className="animate-pulse bg-gray-200 h-12 rounded mx-auto w-32"></div>
+              ) : isError ? (
+                "—"
+              ) : (
+                `${data?.data.stats.topCompanies || 0}+`
+              )}
+            </div>
             <div className="text-sm text-gray-600 select-none">Top Companies</div>
           </div>
         </div>

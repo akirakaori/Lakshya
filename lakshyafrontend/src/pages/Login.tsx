@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom'
-import { handleError } from '../utils';
-import { handleSuccess } from '../utils';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { handleError, handleSuccess } from '../Utils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../api/api-client';
 import { toast } from 'react-toastify';
@@ -15,9 +13,27 @@ type LoginFormData = {
   password: string;
 };
 
+interface LoginResponse {
+  success: boolean;
+  message: string;
+  jwtToken?: string;
+  name?: string;
+  email?: string;
+  role?: 'job_seeker' | 'recruiter' | 'admin';
+  _id?: string;
+  error?: {
+    details: Array<{ message: string }>;
+  };
+}
+
+interface LoginError {
+  message?: string;
+}
+
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login: authLogin } = useAuth();
   const queryClient = useQueryClient();
 
@@ -32,11 +48,11 @@ function Login() {
     },
   });
 
-  const loginMutation = useMutation({
-    mutationFn: authApi.login,
-    onSuccess: async (result: any) => {
+  const loginMutation = useMutation<LoginResponse, LoginError, LoginFormData>({
+    mutationFn: (data) => authApi.login(data) as Promise<LoginResponse>,
+    onSuccess: async (result) => {
       const { success, message, jwtToken, name, email, role, _id, error } = result;
-      if (success) {
+      if (success && jwtToken && name && email && role && _id) {
         // CRITICAL: Clear all stale queries before setting new auth state
         await queryClient.cancelQueries(); // Cancel all in-flight queries
         queryClient.clear(); // Remove all cached data from previous user
@@ -52,6 +68,15 @@ function Login() {
         
         setTimeout(() => {
           toast.dismiss();
+          
+          // Check for redirect parameter
+          const redirect = searchParams.get('redirect');
+          if (redirect) {
+            navigate(decodeURIComponent(redirect), { replace: true });
+            return;
+          }
+          
+          // Default navigation based on role
           if (role === "admin") {
             navigate("/AdminDashboard", { replace: true });
           } else if (role === "recruiter") {
@@ -67,7 +92,7 @@ function Login() {
         handleError(message);
       }
     },
-    onError: (error: any) => {
+    onError: (error: LoginError) => {
       handleError(error.message || 'Login failed');
     }
   });

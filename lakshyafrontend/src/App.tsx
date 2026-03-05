@@ -70,6 +70,9 @@ function App() {
             <Route path="/signup/:role" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            
+            {/* Public Job Details Route */}
+            <Route path="/jobs/:jobId" element={<JobDetails />} />
 
             {/* Protected Home Route */}
             <Route path="/home" element={<PrivateRoute element={<Home />} />} />

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { applicationService } from '../services';
 import type { ApplyJobData, ApplicationFilters, RecruiterApplicationFilters, ScheduleInterviewData } from '../services';
+import { useAuth } from '../context/auth-context';
 
 // Query keys
 export const applicationKeys = {
@@ -12,9 +13,12 @@ export const applicationKeys = {
 
 // Get my applications (job seeker)
 export const useMyApplications = (filters?: ApplicationFilters) => {
+  const { isAuthenticated, isReady } = useAuth();
+  
   return useQuery({
     queryKey: applicationKeys.my(filters),
     queryFn: () => applicationService.getMyApplications(filters),
+    enabled: isReady && isAuthenticated, // Only fetch when authenticated
   });
 };
 

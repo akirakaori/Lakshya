@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { handleSuccess, handleError } from '../../utils';
+import { handleSuccess, handleError } from '../../Utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/api-client';
 import { Footer } from '../../components';
