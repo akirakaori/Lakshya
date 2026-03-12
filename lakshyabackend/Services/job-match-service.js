@@ -15,9 +15,12 @@ const JobModel = require('../models/job-model');
 const PYTHON_SERVICE_URL = process.env.PYTHON_PARSER_URL || 'http://localhost:8000';
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:1b';
-const OLLAMA_TIMEOUT = 8000; // 8 seconds
+const OLLAMA_TIMEOUT = parseInt(process.env.OLLAMA_TIMEOUT || '30000'); // default 30s (configurable)
 const SEMANTIC_TIMEOUT = 7000; // 7 seconds
 const CACHE_DAYS = 7;
+
+// Startup diagnostic — log Ollama config so it's visible in server logs
+console.log(`[job-match] Ollama config → URL=${OLLAMA_URL}  MODEL=${OLLAMA_MODEL}  TIMEOUT=${OLLAMA_TIMEOUT}ms`);
 
 // --------------- Helpers -----------------
 
@@ -144,61 +147,141 @@ function ruleBasedSuggestions(missingSkills, matchScore, jobTitle) {
   return tips.slice(0, 5);
 }
 
+// --------------- Ollama Health Check -----------------
+
+/**
+ * Check if the Ollama server is reachable AND the configured model is available.
+ * Logs a clear warning if the server is up but the model is missing.
+ * @returns {Promise<boolean>} true only if Ollama is running and the model exists
+ */
+async function checkOllamaHealth() {
+  try {
+    const { data } = await axios.get(`${OLLAMA_URL}/api/tags`, { timeout: 5000 });
+    // data.models is an array of { name, ... }
+    const models = Array.isArray(data.models) ? data.models : [];
+    const modelNames = models.map((m) => (m.name || '').toLowerCase());
+    const modelLower = OLLAMA_MODEL.toLowerCase();
+    // match exact name or name without tag (e.g. "llama3.2:1b" matches "llama3.2:1b")
+    const modelFound = modelNames.some(
+      (n) => n === modelLower || n.startsWith(modelLower.split(':')[0] + ':')
+    );
+    if (!modelFound) {
+      console.warn(
+        `⚠ Ollama is running but model "${OLLAMA_MODEL}" is not installed.\n` +
+        `  Available models: ${modelNames.join(', ') || '(none)'}\n` +
+        `  → Fix: run  ollama pull ${OLLAMA_MODEL}`
+      );
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // --------------- Ollama Suggestions (optional, with timeout + fallback) -----------------
 
-async function getOllamaSuggestions(missingSkills, matchScore, jobTitle, resumeSummary) {
+/**
+ * Map an Axios/network error to a human-readable reason for logging.
+ */
+function describeOllamaError(err) {
+  const code = err.code;
+  const status = err.response?.status;
+  if (code === 'ECONNREFUSED') return 'Ollama server is not running (ECONNREFUSED)';
+  if (code === 'ETIMEDOUT' || code === 'ECONNABORTED') return `Request timed out after ${OLLAMA_TIMEOUT}ms — model may be too slow for CPU inference`;
+  if (status === 404) return `Model "${OLLAMA_MODEL}" not found — run: ollama pull ${OLLAMA_MODEL}`;
+  if (err.message && err.message.toLowerCase().includes('json')) return `Ollama returned malformed/invalid JSON: ${err.message}`;
+  return err.message || 'Unknown error';
+}
+
+async function getOllamaSuggestions(missingSkills, matchScore, jobTitle, jobDescription, requiredSkills, matchedSkills, resumeSummary) {
+  // --- fast health check before spending up to OLLAMA_TIMEOUT waiting ---
+  const healthy = await checkOllamaHealth();
+  if (!healthy) {
+    console.warn(`⚠ Ollama health check failed — server unreachable at ${OLLAMA_URL}. Is Ollama installed and running? (run: ollama serve)`);
+    return null;
+  }
+
   try {
-    const prompt = `You are a career advisor AI. Given the following data, produce ONLY valid JSON (no markdown, no extra text) with this exact structure:
-{"suggestions":["tip1","tip2","tip3"],"summaryRewrite":"One or two polished sentences rewriting the candidate summary for the job."}
+    const prompt = `You are a career advisor AI. Analyze this job-resume match and return ONLY a valid JSON object — no markdown, no extra text.
 
-Data:
-- Job title: "${jobTitle}"
-- Match score: ${matchScore}%
+Required JSON structure:
+{"summaryRewrite":"...","improvementSuggestions":["...","..."],"skillAdvice":["..."]}
+
+Job Details:
+- Title: "${jobTitle}"
+- Description: "${(jobDescription || '').slice(0, 400)}"
+- Required skills: ${(requiredSkills || []).join(', ') || 'not specified'}
+
+Candidate Profile:
+- Matched skills: ${matchedSkills.join(', ') || 'none'}
 - Missing skills: ${missingSkills.join(', ') || 'none'}
-- Current summary: "${(resumeSummary || '').slice(0, 300)}"
+- Match score: ${matchScore}%
+- Resume summary: "${(resumeSummary || '').slice(0, 300)}"
 
-Requirements:
-- suggestions: 3-5 actionable, concise tips
-- summaryRewrite: 1-2 sentence polished rewrite of the candidate summary targeted at the job
-- Return ONLY the JSON object, nothing else`;
+Instructions:
+- summaryRewrite: 1-2 sentences rewriting the candidate summary to target this specific job
+- improvementSuggestions: 3-5 concise, actionable tips the candidate can act on
+- skillAdvice: 1-3 tips specifically about the missing skills (courses, projects, certifications)
+- Return ONLY the JSON object, no other text`;
 
     const { data } = await axios.post(
       `${OLLAMA_URL}/api/generate`,
       {
         model: OLLAMA_MODEL,
         prompt,
+        format: 'json',          // instruct Ollama to constrain output to JSON
         stream: false,
+        options: { temperature: 0.2 }, // low temperature = more deterministic / less hallucination
       },
       { timeout: OLLAMA_TIMEOUT }
     );
 
-    // Try to extract JSON from response
     const raw = (data.response || '').trim();
-    // Attempt direct parse first
+    console.log(`[ollama] raw response (first 300 chars): ${raw.slice(0, 300)}`);
+
     let parsed;
     try {
       parsed = JSON.parse(raw);
-    } catch {
-      // Try to extract JSON object from potential surrounding text
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
+    } catch (firstErr) {
+      console.warn(`[ollama] direct JSON.parse failed (${firstErr.message}) — attempting fence-strip + extraction`);
+      // 1. Strip markdown code fences (```json ... ``` or ``` ... ```)
+      const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+      // 2. Extract the first complete {...} block
+      const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.warn(`[ollama] no JSON object found in response. Full output:\n${raw}`);
+        throw new Error(`No JSON object in Ollama response: ${raw.slice(0, 200)}`);
+      }
+      try {
         parsed = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No valid JSON in Ollama response');
+      } catch (parseErr) {
+        console.warn(`[ollama] JSON extraction also failed. Extracted block:\n${jsonMatch[0]}`);
+        throw new Error(`Invalid JSON after extraction: ${parseErr.message}`);
       }
     }
 
-    const suggestions = Array.isArray(parsed.suggestions)
-      ? parsed.suggestions.filter((s) => typeof s === 'string').slice(0, 5)
-      : [];
+    const suggestions = [
+      ...(Array.isArray(parsed.improvementSuggestions) ? parsed.improvementSuggestions : []),
+      ...(Array.isArray(parsed.skillAdvice) ? parsed.skillAdvice : []),
+    ].filter((s) => typeof s === 'string').slice(0, 5);
+
     const summaryRewrite = typeof parsed.summaryRewrite === 'string' ? parsed.summaryRewrite : '';
 
-    if (suggestions.length === 0) throw new Error('Ollama returned empty suggestions');
+    if (suggestions.length === 0) throw new Error('Ollama returned empty suggestions array');
 
     return { suggestions, summaryRewrite, source: 'ollama' };
   } catch (err) {
-    console.warn('⚠ Ollama suggestions failed, falling back to rule-based:', err.message);
-    return null; // caller will fallback
+    const reason = describeOllamaError(err);
+    console.warn(`⚠ Ollama suggestions failed — ${reason}`);
+    if (err.response?.status === 404) {
+      console.warn(`  → Fix: run  ollama pull ${OLLAMA_MODEL}`);
+    } else if (err.code === 'ECONNREFUSED') {
+      console.warn(`  → Fix: start Ollama with  ollama serve  (or install from https://ollama.com)`);
+    } else if (err.code === 'ETIMEDOUT' || err.code === 'ECONNABORTED') {
+      console.warn(`  → Fix: increase OLLAMA_TIMEOUT env var (current: ${OLLAMA_TIMEOUT}ms), or use a smaller model`);
+    }
+    return null; // caller will fallback to rule-based
   }
 }
 
@@ -233,6 +316,9 @@ async function computeJobMatch(user, job) {
       missingSkills,
       matchScore,
       job.title || '',
+      job.description || '',
+      job.skillsRequired || [],
+      matchedSkills,
       user.jobSeeker?.bio || user.jobSeeker?.summary || ''
     );
 
@@ -240,10 +326,12 @@ async function computeJobMatch(user, job) {
       suggestions = ollamaResult.suggestions;
       summaryRewrite = ollamaResult.summaryRewrite;
       suggestionSource = 'ollama';
+      console.log(`✅ Ollama suggestions generated for job="${job.title}"`);
     } else {
       suggestions = ruleBasedSuggestions(missingSkills, matchScore, job.title || '');
       summaryRewrite = '';
       suggestionSource = 'rule';
+      console.log(`ℹ Using rule-based suggestions for job="${job.title}" (Ollama unavailable)`);
     }
 
     // CRITICAL: Ensure all fields have safe defaults (never null/undefined)
@@ -480,4 +568,5 @@ module.exports = {
   computeSkillMatch,
   normalizeSkill,
   ruleBasedSuggestions,
+  checkOllamaHealth,
 };
