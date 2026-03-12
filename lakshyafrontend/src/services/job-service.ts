@@ -255,6 +255,28 @@ export interface BatchMatchScoresResponse {
   [jobId: string]: JobMatchScore;
 }
 
+export interface RecommendedJob {
+  _id: string;
+  title: string;
+  companyName: string;
+  location: string;
+  jobType?: string;
+  remoteType?: string;
+  experienceLevel?: string;
+  category?: string;
+  salary?: {
+    min?: number;
+    max?: number;
+    currency?: string;
+  };
+  salaryVisible?: boolean;
+  createdAt: string;
+  recommendationScore: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  isLowConfidence: boolean;
+}
+
 export const jobService = {
   // Get all jobs with filters (public)
   getJobs: async (filters: JobFilters = {}): Promise<JobsResponse> => {
@@ -375,6 +397,12 @@ export const jobService = {
   // Get cached match scores for multiple jobs (batch - job seeker only)
   getBatchMatchScores: async (jobIds: string[]): Promise<{ success: boolean; data: BatchMatchScoresResponse }> => {
     const response = await axiosInstance.post(`/job-seeker/jobs/match-scores`, { jobIds });
+    return response.data;
+  },
+
+  // Get recommended jobs for the logged-in job seeker
+  getRecommendations: async (): Promise<{ success: boolean; data: RecommendedJob[] }> => {
+    const response = await axiosInstance.get('/job-seeker/recommendations');
     return response.data;
   },
 };

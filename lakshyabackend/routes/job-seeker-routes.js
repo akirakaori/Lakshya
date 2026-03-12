@@ -2,6 +2,7 @@ const router = require("express").Router();
 const authenticate = require("../Middleware/auth-middleware"); // JWT verify
 const authorizeRoles = require("../Middleware/role-middleware");
 const { getJobMatch, analyzeJobMatch, getJobMatchScores } = require("../Controller/job-match-controller");
+const { getRecommendations } = require("../Controller/recommendation-controller");
 
 const ROLES = require("../Library/roles").ROLES;
 
@@ -17,6 +18,18 @@ router.get(
     authenticate,
   authorizeRoles(ROLES.JOB_SEEKER),
   getProfile
+);
+
+/**
+ * @route   GET /api/job-seeker/recommendations
+ * @desc    Get top recommended jobs for the logged-in job seeker
+ * @access  Private (Job Seeker only)
+ */
+router.get(
+  "/recommendations",
+  authenticate,
+  authorizeRoles(ROLES.JOB_SEEKER),
+  getRecommendations
 );
 
 /**

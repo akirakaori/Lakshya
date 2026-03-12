@@ -2,16 +2,18 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout, StatsCard, LoadingSpinner } from '../../components';
 import { useAuth } from '../../context/auth-context';
-import { useMyApplications, useJobMatchScores } from '../../hooks';
+import { useMyApplications, useJobMatchScores, useRecommendedJobs } from '../../hooks';
 import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStatus';
-import type { Job } from '../../services';
+import type { Job, RecommendedJob } from '../../services';
 
 const JobSeekerDashboard: React.FC = () => {
   const { user } = useAuth();
   const { data: applicationsData, isLoading } = useMyApplications();
+  const { data: recommendationsData, isLoading: recommendationsLoading } = useRecommendedJobs();
 
   const applications = applicationsData?.data || [];
   const totalApplications = applications.length;
+  const recommendations: RecommendedJob[] = recommendationsData?.data || [];
 
   // Recent applications (last 3)
   const recentApplications = applications.slice(0, 3);
@@ -104,7 +106,7 @@ const JobSeekerDashboard: React.FC = () => {
               {/* Recommended Jobs */}
               <StatsCard
                 title="Recommended Jobs"
-                value={124}
+                value={recommendations.length}
                 color="green"
                 icon={
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,10 +215,147 @@ const JobSeekerDashboard: React.FC = () => {
                 </Link>
               </div>
             </div>
+
+            {/* ── Recommended Jobs For You ── */}
+            <div className="mt-6 bg-white rounded-xl border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Recommended Jobs For You</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Matched to your skills, location and experience
+                  </p>
+                </div>
+                <Link
+                  to="/job-seeker/browse-jobs"
+                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  Browse All →
+                </Link>
+              </div>
+
+              {recommendationsLoading ? (
+                <div className="flex justify-center py-10">
+                  <LoadingSpinner text="Finding best matches…" />
+                </div>
+              ) : recommendations.length === 0 ? (
+                <div className="text-center py-10">
+                  <svg
+                    className="w-12 h-12 text-gray-300 mx-auto mb-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <p className="text-gray-500 font-medium">No recommendations yet</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Complete your profile and upload your resume to get personalised job suggestions.
+                  </p>
+                  <Link
+                    to="/job-seeker/profile"
+                    className="inline-block mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                  >
+                    Complete Profile →
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {recommendations.map((job) => (
+                    <RecommendationCard key={job._id.toString()} job={job} />
+                  ))}
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>
     </DashboardLayout>
+  );
+};
+
+// ── Recommendation Card ──────────────────────────────────────────────────────
+
+interface RecommendationCardProps {
+  job: RecommendedJob;
+}
+
+const RecommendationCard: React.FC<RecommendationCardProps> = ({ job }) => {
+  const score = job.recommendationScore;
+  const scoreColor =
+    score >= 75 ? 'bg-green-100 text-green-700' :
+    score >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-gray-100 text-gray-500';
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:shadow-sm transition-all flex flex-col gap-3">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h4 className="font-semibold text-gray-900 text-sm truncate">{job.title}</h4>
+          <p className="text-xs text-gray-500 mt-0.5 truncate">{job.companyName}</p>
+        </div>
+        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${scoreColor}`}>
+          {job.isLowConfidence ? '~' : ''}{score}% match
+        </span>
+      </div>
+
+      {/* Meta */}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+        <span className="flex items-center gap-1">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          {job.location}
+        </span>
+        {job.jobType && (
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {job.jobType}
+          </span>
+        )}
+      </div>
+
+      {/* Matched skills */}
+      {job.matchedSkills.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {job.matchedSkills.slice(0, 4).map((skill) => (
+            <span
+              key={skill}
+              className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-medium"
+            >
+              {skill}
+            </span>
+          ))}
+          {job.matchedSkills.length > 4 && (
+            <span className="px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded text-xs">
+              +{job.matchedSkills.length - 4} more
+            </span>
+          )}
+        </div>
+      )}
+
+      {job.isLowConfidence && (
+        <p className="text-xs text-amber-600 bg-amber-50 rounded px-2 py-1">
+          Add skills to your profile for better matches
+        </p>
+      )}
+
+      {/* CTA */}
+      <Link
+        to={`/jobs/${job._id}`}
+        className="mt-auto block text-center text-xs font-medium text-indigo-600 hover:text-indigo-700 border border-indigo-200 hover:border-indigo-400 rounded-md py-1.5 transition-colors"
+      >
+        View Details
+      </Link>
+    </div>
   );
 };
 
