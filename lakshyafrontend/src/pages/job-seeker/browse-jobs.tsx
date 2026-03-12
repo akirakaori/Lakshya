@@ -89,7 +89,7 @@ const BrowseJobs: React.FC = () => {
   console.log('[BrowseJobs] About to call useJobs with:', appliedFilters);
   const { data, isLoading, isFetching } = useJobs(appliedFilters);
 
-  const jobs = data?.data || [];
+  const jobs = useMemo(() => data?.data ?? [], [data]);
   const pagination = data?.pagination;
 
   // Extract job IDs for batch match score fetch
@@ -99,7 +99,7 @@ const BrowseJobs: React.FC = () => {
   const { data: matchScoresResponse } = useJobMatchScores(
     isAuthenticatedJobSeeker && jobIds.length > 0 ? jobIds : undefined
   );
-  const matchScores = matchScoresResponse?.data || {};
+  const matchScores = useMemo(() => matchScoresResponse?.data ?? {}, [matchScoresResponse]);
 
   // Apply AI match filter on frontend (not sent to backend)
   const filteredJobs = useMemo(() => {
@@ -174,8 +174,8 @@ const BrowseJobs: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Public Navbar Component (for non-authenticated users)
-  const PublicNavbar = () => (
+  // Public Navbar render helper (for non-authenticated users)
+  const renderPublicNavbar = () => (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 w-full">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-row justify-between items-center gap-8">
         {/* Logo - Left */}
@@ -207,8 +207,8 @@ const BrowseJobs: React.FC = () => {
     </nav>
   );
 
-  // Main content (shared between authenticated and public views)
-  const JobContent = () => (
+  // Main content render helper (shared between authenticated and public views)
+  const renderJobContent = () => (
     <>
         {/* Blue Gradient Search Header Banner */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700 px-4 sm:px-6 lg:px-10 py-6 sm:py-8 mb-6">
@@ -365,7 +365,7 @@ const BrowseJobs: React.FC = () => {
   if (isAuthenticatedJobSeeker) {
     return (
       <DashboardLayout variant="job-seeker" title="Job Search">
-        <JobContent />
+        {renderJobContent()}
       </DashboardLayout>
     );
   }
@@ -373,9 +373,9 @@ const BrowseJobs: React.FC = () => {
   // Public view
   return (
     <div className="min-h-screen bg-gray-50">
-      <PublicNavbar />
+      {renderPublicNavbar()}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <JobContent />
+        {renderJobContent()}
       </div>
       <Footer variant="public" />
     </div>

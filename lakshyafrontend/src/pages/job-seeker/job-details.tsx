@@ -8,6 +8,31 @@ import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
 import type { Job } from '../../services';
 import { getCategoryMeta } from '../../constants/jobCategories';
+import DOMPurify from 'dompurify';
+import { normalizeRichContent } from '../../utils/rich-text';
+
+import type { Config as DOMPurifyConfig } from 'dompurify';
+
+const DOMPURIFY_CONFIG: DOMPurifyConfig = {
+  ALLOWED_TAGS: [
+    'p', 'b', 'strong', 'i', 'em', 'u', 's',
+    'ul', 'ol', 'li',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'br', 'a', 'blockquote', 'span',
+  ],
+  ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+};
+
+function renderRichContent(content: string | string[] | undefined): React.ReactNode {
+  const html = normalizeRichContent(content as string | string[] | undefined);
+  if (!html || html === '<p><br></p>') return null;
+  return (
+    <div
+      className="prose prose-sm max-w-none prose-ul:list-disc prose-ul:pl-5 prose-ol:list-decimal prose-ol:pl-5 prose-li:my-1 prose-p:my-2 prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-indigo-600"
+      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html, DOMPURIFY_CONFIG) }}
+    />
+  );
+}
 
 const formatSalary = (salary: Job['salary']) => {
   if (!salary) return null;
@@ -319,12 +344,24 @@ const JobDetails: React.FC = () => {
             {/* Job Description */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Job Description</h2>
-              <div className="prose prose-sm max-w-none text-gray-600">
-                {job.description.split('\n').map((paragraph: string, index: number) => (
-                  <p key={index} className="mb-3">{paragraph}</p>
-                ))}
-              </div>
+              {renderRichContent(job.description)}
             </div>
+
+            {/* Requirements */}
+            {renderRichContent(job.requirements as unknown as string | string[] | undefined) && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Requirements</h2>
+                {renderRichContent(job.requirements as unknown as string | string[] | undefined)}
+              </div>
+            )}
+
+            {/* Benefits */}
+            {renderRichContent(job.benefits as unknown as string | string[] | undefined) && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Benefits</h2>
+                {renderRichContent(job.benefits as unknown as string | string[] | undefined)}
+              </div>
+            )}
 
             {/* Required Skills */}
             {job.skillsRequired && job.skillsRequired.length > 0 && (

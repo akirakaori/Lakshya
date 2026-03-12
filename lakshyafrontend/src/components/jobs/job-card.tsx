@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Job } from '../../services/job-service';
 import { getCategoryMeta } from '../../constants/jobCategories';
+import { getPreviewText } from '../../utils/richText';
 
 interface JobCardProps {
   job: Job;
@@ -126,8 +127,8 @@ const JobCard: React.FC<JobCardProps> = ({ job, variant = 'default', showMatchSc
         </div>
 
         {/* Job Description Preview */}
-        <p className="text-sm text-slate-600 mt-3 line-clamp-3">
-          {job.description}
+        <p className="text-sm text-gray-600 line-clamp-3 mt-3">
+          {getPreviewText(job.description, 150)}
         </p>
 
         {/* Bottom Action Row */}

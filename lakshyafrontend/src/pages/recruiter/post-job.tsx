@@ -6,7 +6,9 @@ import { toast } from 'react-toastify';
 import SearchableSelect from '../../components/ui/searchable-select';
 import CategoryDropdown from '../../components/CategoryDropdown';
 import { getCategoryMeta } from '../../constants/jobCategories';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 type JobFormData = {
   title: string;
@@ -29,6 +31,20 @@ type JobFormData = {
   benefits: string;
   interviewRoundsRequired: number;
 };
+
+const quillModules = {
+  toolbar: [
+    ['bold', 'italic', 'underline'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    ['link'],
+    ['clean'],
+  ],
+};
+
+function arrayToHtmlList(items?: string[]): string {
+  if (!items || items.length === 0) return '';
+  return `<ul>${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
+}
 
 const CURRENCY_OPTIONS = [
   { value: 'USD', label: 'USD ($) - US Dollar' },
@@ -57,7 +73,6 @@ const PostJob: React.FC = () => {
     control,
     formState: { errors },
     setValue,
-    watch,
     reset,
     getValues,
   } = useForm<JobFormData>({
@@ -85,7 +100,8 @@ const PostJob: React.FC = () => {
   });
 
   const [newSkill, setNewSkill] = useState('');
-  const skills = watch('skills');
+  const skills = useWatch({ control, name: 'skills' }) ?? [];
+  const interviewRoundsRequired = useWatch({ control, name: 'interviewRoundsRequired' }) ?? 2;
 
   // Prefill form when editing
   useEffect(() => {
@@ -112,8 +128,16 @@ const PostJob: React.FC = () => {
         },
         salaryVisible: job.salaryVisible !== false, // default to true if not set
         skills: job.skills || job.skillsRequired || [],
-        requirements: Array.isArray(job.requirements) ? job.requirements.join('\n') : '',
-        benefits: Array.isArray(job.benefits) ? job.benefits.join('\n') : '',
+        requirements: Array.isArray(job.requirements)
+          ? (job.requirements.length === 1 && job.requirements[0]?.startsWith('<')
+            ? job.requirements[0]
+            : arrayToHtmlList(job.requirements))
+          : (job.requirements || ''),
+        benefits: Array.isArray(job.benefits)
+          ? (job.benefits.length === 1 && job.benefits[0]?.startsWith('<')
+            ? job.benefits[0]
+            : arrayToHtmlList(job.benefits))
+          : (job.benefits || ''),
         interviewRoundsRequired: job.interviewRoundsRequired || 2,
       });
     }
@@ -141,8 +165,8 @@ const PostJob: React.FC = () => {
         currency: data.salary.currency,
       },
       skillsRequired: data.skills,
-      requirements: data.requirements.split('\n').filter(r => r.trim()),
-      benefits: data.benefits.split('\n').filter(b => b.trim()),
+      requirements: data.requirements ? [data.requirements] : [],
+      benefits: data.benefits ? [data.benefits] : [],
       interviewRoundsRequired: parseInt(data.interviewRoundsRequired.toString()) || 2,
     };
 
@@ -339,7 +363,7 @@ const PostJob: React.FC = () => {
                   <option value={4}>4 Rounds</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Candidates must pass all {watch('interviewRoundsRequired')} round{watch('interviewRoundsRequired') > 1 ? 's' : ''} before being eligible for hire
+                  Candidates must pass all {interviewRoundsRequired} round{interviewRoundsRequired > 1 ? 's' : ''} before being eligible for hire
                 </p>
               </div>
             </div>
@@ -415,13 +439,21 @@ const PostJob: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Description <span className="text-red-500">*</span>
               </label>
-              <textarea
-                rows={6}
-                placeholder="Describe the role, responsibilities, and what makes this opportunity exciting..."
-                {...register('description', {
-                  required: 'Job description is required',
-                })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              <Controller
+                name="description"
+                control={control}
+                rules={{ required: 'Job description is required' }}
+                render={({ field }) => (
+                  <div className="rounded-lg border border-gray-300 overflow-hidden [&_.ql-toolbar]:rounded-t-lg [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-300 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[160px] [&_.ql-editor]:text-sm">
+                    <ReactQuill
+                      theme="snow"
+                      value={field.value}
+                      onChange={field.onChange}
+                      modules={quillModules}
+                      placeholder="Describe the role, responsibilities, and what makes this opportunity exciting..."
+                    />
+                  </div>
+                )}
               />
               {errors.description && (
                 <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>
@@ -476,13 +508,22 @@ const PostJob: React.FC = () => {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Requirements</h2>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                List Requirements (one per line)
+                List Requirements
               </label>
-              <textarea
-                rows={5}
-                placeholder="5+ years of experience in software development&#10;Bachelor's degree in Computer Science or related field&#10;Strong problem-solving skills"
-                {...register('requirements')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              <Controller
+                name="requirements"
+                control={control}
+                render={({ field }) => (
+                  <div className="rounded-lg border border-gray-300 overflow-hidden [&_.ql-toolbar]:rounded-t-lg [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-300 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-sm">
+                    <ReactQuill
+                      theme="snow"
+                      value={field.value}
+                      onChange={field.onChange}
+                      modules={quillModules}
+                      placeholder="5+ years of experience in software development&#10;Bachelor's degree in Computer Science or related field"
+                    />
+                  </div>
+                )}
               />
             </div>
           </div>
@@ -492,13 +533,22 @@ const PostJob: React.FC = () => {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Benefits</h2>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                List Benefits (one per line)
+                List Benefits
               </label>
-              <textarea
-                rows={5}
-                placeholder="Competitive salary and equity&#10;Health, dental, and vision insurance&#10;Flexible working hours and remote options&#10;Professional development budget"
-                {...register('benefits')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              <Controller
+                name="benefits"
+                control={control}
+                render={({ field }) => (
+                  <div className="rounded-lg border border-gray-300 overflow-hidden [&_.ql-toolbar]:rounded-t-lg [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-300 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-sm">
+                    <ReactQuill
+                      theme="snow"
+                      value={field.value}
+                      onChange={field.onChange}
+                      modules={quillModules}
+                      placeholder="Competitive salary and equity&#10;Health, dental, and vision insurance&#10;Flexible working hours and remote options"
+                    />
+                  </div>
+                )}
               />
             </div>
           </div>
