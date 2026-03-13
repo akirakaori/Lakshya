@@ -405,6 +405,28 @@ export const jobService = {
     const response = await axiosInstance.get('/job-seeker/recommendations');
     return response.data;
   },
+
+  // ========================
+  // Saved Jobs (Bookmarks)
+  // ========================
+
+  // Get all jobs saved by the logged-in job seeker
+  getSavedJobs: async (): Promise<{ success: boolean; data: Job[] }> => {
+    const response = await axiosInstance.get('/jobs/saved');
+    return response.data;
+  },
+
+  // Save a job (bookmark) for the logged-in job seeker
+  saveJob: async (jobId: string): Promise<{ success: boolean; data: string[] }> => {
+    const response = await axiosInstance.post(`/jobs/${jobId}/save`);
+    return response.data;
+  },
+
+  // Remove a job from saved list for the logged-in job seeker
+  removeSavedJob: async (jobId: string): Promise<{ success: boolean; data: string[] }> => {
+    const response = await axiosInstance.delete(`/jobs/${jobId}/save`);
+    return response.data;
+  },
 };
 
 export default jobService;

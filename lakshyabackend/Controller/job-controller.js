@@ -1,4 +1,5 @@
 const jobService = require('../Services/job-service');
+const userService = require('../Services/user-service');
 
 /**
  * Create a new job (recruiter only)
@@ -226,6 +227,72 @@ const toggleJobStatus = async (req, res) => {
   }
 };
 
+/**
+ * Save a job for the logged-in job seeker
+ */
+const saveJobForUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const jobId = req.params.jobId;
+
+    const savedJobs = await userService.saveJobForUser(userId, jobId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Job saved successfully',
+      data: savedJobs,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Remove a job from the logged-in user's saved list
+ */
+const removeSavedJobForUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const jobId = req.params.jobId;
+
+    const savedJobs = await userService.removeSavedJobForUser(userId, jobId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Job removed from saved jobs',
+      data: savedJobs,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Get all jobs saved by the logged-in user
+ */
+const getSavedJobsForUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const jobs = await userService.getSavedJobsForUser(userId);
+
+    res.status(200).json({
+      success: true,
+      data: jobs,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   createJob,
   updateJob,
@@ -234,5 +301,8 @@ module.exports = {
   getMyJobs,
   getJobById,
   searchJobs,
-  toggleJobStatus
+  toggleJobStatus,
+  saveJobForUser,
+  removeSavedJobForUser,
+  getSavedJobsForUser,
 };

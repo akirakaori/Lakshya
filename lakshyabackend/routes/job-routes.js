@@ -26,6 +26,27 @@ router.get('/', jobController.searchJobs);
 router.get('/my-jobs', authorizeRoles(ROLES.RECRUITER), jobController.getMyJobs);
 
 /**
+ * @route   POST /api/jobs/:jobId/save
+ * @desc    Save a job for the logged-in job seeker
+ * @access  Private (Job Seeker only)
+ */
+router.post('/:jobId/save', authorizeRoles(ROLES.JOB_SEEKER), jobController.saveJobForUser);
+
+/**
+ * @route   DELETE /api/jobs/:jobId/save
+ * @desc    Remove a job from the logged-in user's saved list
+ * @access  Private (Job Seeker only)
+ */
+router.delete('/:jobId/save', authorizeRoles(ROLES.JOB_SEEKER), jobController.removeSavedJobForUser);
+
+/**
+ * @route   GET /api/jobs/saved
+ * @desc    Get all jobs saved by the logged-in user
+ * @access  Private (Job Seeker only)
+ */
+router.get('/saved', authorizeRoles(ROLES.JOB_SEEKER), jobController.getSavedJobsForUser);
+
+/**
  * @route   GET /api/jobs/:id
  * @desc    Get a single job by ID
  * @access  Public

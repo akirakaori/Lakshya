@@ -3,3 +3,4 @@ export { default as BrowseJobs } from './browse-jobs';
 export { default as JobDetails } from './job-details';
 export { default as MyApplications } from './my-applications';
 export { default as JobSeekerProfile } from './profile';
+export { default as SavedJobs } from './saved-jobs';

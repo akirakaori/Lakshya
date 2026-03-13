@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState, ErrorBoundary } from '../../components';
 import { JobCard } from '../../components/jobs';
 import JobMatchPanel from '../../components/jobs/JobMatchPanel';
-import { useJob, useJobs, useApplyForJob, useHasApplied, useJobMatch } from '../../hooks';
+import { useJob, useJobs, useApplyForJob, useHasApplied, useJobMatch, useIsJobSaved, useSaveJob, useRemoveSavedJob } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
 import type { Job } from '../../services';
@@ -53,6 +53,7 @@ const JobDetails: React.FC = () => {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const matchPanelRef = useRef<HTMLDivElement>(null);
 
   const { data: jobData, isLoading, error } = useJob(safeJobId);
@@ -61,6 +62,9 @@ const JobDetails: React.FC = () => {
   const hasApplied = useHasApplied(safeJobId);
   const { user } = useAuth();
   const { data: matchData } = useJobMatch(jobId);
+  const isSaved = useIsJobSaved(safeJobId);
+  const saveJobMutation = useSaveJob();
+  const removeSavedJobMutation = useRemoveSavedJob();
 
   const job = jobData?.data;
   const relatedJobs = relatedJobsData?.data?.filter((j: Job) => j._id !== safeJobId).slice(0, 4) || [];
@@ -216,6 +220,33 @@ const JobDetails: React.FC = () => {
     
     // Open apply modal
     setShowApplyModal(true);
+  };
+
+  const handleToggleSave = async () => {
+    if (!safeJobId) return;
+
+    if (!user) {
+      const redirectUrl = encodeURIComponent(location.pathname + location.search);
+      navigate(`/login?redirect=${redirectUrl}`);
+      return;
+    }
+
+    if (user.role !== 'job_seeker') {
+      toast.error('Only job seekers can save jobs.');
+      return;
+    }
+
+    try {
+      if (isSaved) {
+        await removeSavedJobMutation.mutateAsync(safeJobId);
+        toast.success('Removed from saved jobs');
+      } else {
+        await saveJobMutation.mutateAsync(safeJobId);
+        toast.success('Job saved successfully');
+      }
+    } catch {
+      toast.error('Failed to update saved jobs');
+    }
   };
 
   if (isLoading) {
@@ -410,12 +441,26 @@ const JobDetails: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <button
-                  onClick={handleApplyClick}
-                  className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-lg"
-                >
-                  Apply Now
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleApplyClick}
+                    className="flex-1 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-lg"
+                  >
+                    Apply Now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleToggleSave}
+                    className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-colors ${
+                      isSaved
+                        ? 'border-red-500 text-red-600 bg-red-50 hover:bg-red-100'
+                        : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="mr-1">{isSaved ? '💔' : '❤️'}</span>
+                    {isSaved ? 'Remove Saved Job' : 'Save Job'}
+                  </button>
+                </div>
               )}
             </div>
           </div>

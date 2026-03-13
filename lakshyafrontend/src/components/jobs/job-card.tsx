@@ -1,8 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Job } from '../../services/job-service';
 import { getCategoryMeta } from '../../constants/jobCategories';
 import { getPreviewText } from '../../utils/richText';
+import { useAuth } from '../../context/auth-context';
+import { useIsJobSaved, useSaveJob, useRemoveSavedJob } from '../../hooks';
+import { toast } from 'react-toastify';
 
 interface JobCardProps {
   job: Job;
@@ -25,6 +28,12 @@ const formatSalary = (salary: Job['salary'], salaryVisible?: boolean) => {
 };
 
 const JobCard: React.FC<JobCardProps> = ({ job, variant = 'default', showMatchScore = false, matchScore }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isSaved = useIsJobSaved(job._id);
+  const saveJobMutation = useSaveJob();
+  const removeSavedJobMutation = useRemoveSavedJob();
+
   const getMatchScoreColor = (score: number) => {
     if (score >= 90) return 'bg-green-100 text-green-700';
     if (score >= 75) return 'bg-blue-100 text-blue-700';
@@ -33,6 +42,34 @@ const JobCard: React.FC<JobCardProps> = ({ job, variant = 'default', showMatchSc
   };
   
   const salaryDisplay = formatSalary(job.salary, job.salaryVisible);
+
+  const handleToggleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (!user) {
+      const redirectUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      navigate(`/login?redirect=${redirectUrl}`);
+      return;
+    }
+
+    if (user.role !== 'job_seeker') {
+      toast.error('Only job seekers can save jobs.');
+      return;
+    }
+
+    try {
+      if (isSaved) {
+        await removeSavedJobMutation.mutateAsync(job._id);
+        toast.success('Removed from saved jobs');
+      } else {
+        await saveJobMutation.mutateAsync(job._id);
+        toast.success('Job saved successfully');
+      }
+    } catch (error) {
+      toast.error('Failed to update saved jobs');
+    }
+  };
 
   if (variant === 'compact') {
     return (
@@ -86,11 +123,20 @@ const JobCard: React.FC<JobCardProps> = ({ job, variant = 'default', showMatchSc
             </div>
           </div>
 
-          {/* Optional Bookmark/Save Icon Placeholder */}
-          <button className="text-slate-400 hover:text-blue-600 transition">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
+          {/* Save / Unsave Toggle */}
+          <button
+            type="button"
+            onClick={handleToggleSave}
+            className={`flex items-center justify-center rounded-full border px-3 py-1 text-xs font-medium transition ${
+              isSaved
+                ? 'border-red-500 text-red-600 bg-red-50 hover:bg-red-100'
+                : 'border-slate-300 text-slate-500 bg-white hover:bg-slate-50'
+            }`}
+          >
+            <span className="mr-1">
+              {isSaved ? '💔' : '❤️'}
+            </span>
+            <span>{isSaved ? 'Saved' : 'Save'}</span>
           </button>
         </div>
 

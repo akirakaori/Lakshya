@@ -25,6 +25,7 @@ import {
   JobDetails,
   MyApplications,
   JobSeekerProfile,
+  SavedJobs,
 } from "./pages/job-seeker";
 
 // Recruiter Pages
@@ -121,6 +122,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['job_seeker']}>
                   <MyApplications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/job-seeker/saved-jobs"
+              element={
+                <ProtectedRoute allowedRoles={['job_seeker']}>
+                  <SavedJobs />
                 </ProtectedRoute>
               }
             />

@@ -91,6 +91,12 @@ const userSchema = new Schema({
     department: { type: String, default: '' },
     companyWebsite: { type: String, default: '' }
   },
+  savedJobs: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Job'
+    }
+  ],
   isActive: {
     type: Boolean,
     default: true

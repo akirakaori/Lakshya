@@ -1,6 +1,8 @@
 const UserModel = require('../models/user-model');
+const JobModel = require('../models/job-model');
 const bcrypt = require('bcrypt');
 const cloudinary = require('../config/cloudinary');
+const mongoose = require('mongoose');
 const { mergeProfile } = require('../Utils/profile-autofill');
 
 // Note: URL parsing for resumes removed. Use resumePublicId instead.
@@ -363,6 +365,101 @@ const autofillProfile = async (userId, analysisData) => {
   }
 };
 
+/**
+ * Save a job for the given user (bookmark)
+ * Uses $addToSet to avoid duplicate entries
+ */
+const saveJobForUser = async (userId, jobId) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      const error = new Error('Invalid job ID');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Ensure job exists and is not hard-deleted
+    const job = await JobModel.findById(jobId).select('_id isActive isDeleted status');
+    if (!job || job.isDeleted) {
+      const error = new Error('Job not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const user = await UserModel.findByIdAndUpdate(
+      userId,
+      { $addToSet: { savedJobs: jobId } },
+      { new: true }
+    ).select('savedJobs');
+
+    if (!user) {
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    return user.savedJobs || [];
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Remove a saved job for the given user
+ * Uses $pull to remove jobId from savedJobs array
+ */
+const removeSavedJobForUser = async (userId, jobId) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      const error = new Error('Invalid job ID');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const user = await UserModel.findByIdAndUpdate(
+      userId,
+      { $pull: { savedJobs: jobId } },
+      { new: true }
+    ).select('savedJobs');
+
+    if (!user) {
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    return user.savedJobs || [];
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Get all saved jobs for the given user
+ * Populates job details and filters out deleted/inactive jobs
+ */
+const getSavedJobsForUser = async (userId) => {
+  try {
+    const user = await UserModel.findById(userId)
+      .select('savedJobs')
+      .populate({
+        path: 'savedJobs',
+        match: { isDeleted: false, isActive: true },
+      });
+
+    if (!user) {
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Filter out any nulls that may result from populate match
+    const jobs = (user.savedJobs || []).filter(Boolean);
+    return jobs;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
@@ -371,5 +468,8 @@ module.exports = {
   changePassword,
   getCandidateProfile,
   getMyResumeSignedUrl,
-  autofillProfile
+  autofillProfile,
+  saveJobForUser,
+  removeSavedJobForUser,
+  getSavedJobsForUser
 };

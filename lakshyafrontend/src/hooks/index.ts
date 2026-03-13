@@ -73,3 +73,6 @@ export { useAnalyzeJobMatch } from './use-analyze-job-match';
 
 // Recommendation hooks
 export { useRecommendedJobs, recommendationKeys } from './use-recommended-jobs';
+
+// Saved jobs hooks
+export { useSavedJobs, useSaveJob, useRemoveSavedJob, useIsJobSaved, savedJobKeys } from './use-saved-jobs';
