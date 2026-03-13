@@ -1,12 +1,100 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState } from '../../components';
 import { JobCard } from '../../components/jobs';
-import { useSavedJobs, useRemoveSavedJob } from '../../hooks';
+import { useSavedJobs, useRemoveSavedJob, useApplyForJob } from '../../hooks';
 import type { Job } from '../../services';
 import { toast } from 'react-toastify';
 
+interface EasyApplyModalProps {
+  job: Job | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const EasyApplyModal: React.FC<EasyApplyModalProps> = ({ job, isOpen, onClose }) => {
+  const navigate = useNavigate();
+  const applyMutation = useApplyForJob();
+
+  if (!isOpen || !job) return null;
+
+  const handleAnalyzeFirst = () => {
+    navigate(`/jobs/${job._id}?action=analyze`);
+    onClose();
+  };
+
+  const handleEasyApplyConfirm = async () => {
+    const payload = {
+      jobId: job._id,
+      data: {},
+    };
+
+    // Debug: log payload before sending request
+    console.log('[SavedJobs EasyApply] Submitting application payload:', payload);
+
+    try {
+      const response = await applyMutation.mutateAsync(payload);
+      console.log('[SavedJobs EasyApply] Application submitted successfully:', response);
+      toast.success('Application submitted successfully');
+      onClose();
+    } catch (err: unknown) {
+      console.error('[SavedJobs EasyApply] Failed to submit application:', err);
+
+      const errorMessage =
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : 'Failed to submit application';
+
+      toast.error(errorMessage);
+    }
+  };
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">Easy Apply Confirmation</h3>
+
+        <p className="text-sm text-gray-700">
+          Do you want to apply for this job before confirming your resume analysis?
+        </p>
+        <p className="mt-3 text-sm text-gray-500">
+          You can still apply without analyzing your resume first.
+        </p>
+
+        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={handleAnalyzeFirst}
+            className="flex-1 px-4 py-2 rounded-lg border border-indigo-600 text-indigo-700 hover:bg-indigo-50 text-sm font-medium"
+          >
+            Analyze First
+          </button>
+          <button
+            type="button"
+            onClick={handleEasyApplyConfirm}
+            disabled={applyMutation.isPending}
+            className="flex-1 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:opacity-60 text-sm font-medium"
+          >
+            {applyMutation.isPending ? 'Applying...' : 'Easy Apply'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SavedJobs: React.FC = () => {
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [showApplyModal, setShowApplyModal] = useState(false);
   const { data, isLoading, isFetching, isError } = useSavedJobs();
   const removeSavedJobMutation = useRemoveSavedJob();
   const navigate = useNavigate();
@@ -20,10 +108,6 @@ const SavedJobs: React.FC = () => {
     } catch {
       toast.error('Failed to remove saved job');
     }
-  };
-
-  const handleApply = (jobId: string) => {
-    navigate(`/jobs/${jobId}?action=apply`);
   };
 
   return (
@@ -82,10 +166,13 @@ const SavedJobs: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleApply(job._id)}
+                    onClick={() => {
+                      setSelectedJob(job);
+                      setShowApplyModal(true);
+                    }}
                     className="px-4 py-2 text-sm rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
                   >
-                    Apply Now
+                    Easy Apply
                   </button>
                   <button
                     type="button"
@@ -100,6 +187,14 @@ const SavedJobs: React.FC = () => {
           </div>
         )}
       </div>
+      <EasyApplyModal
+        job={selectedJob}
+        isOpen={showApplyModal}
+        onClose={() => {
+          setShowApplyModal(false);
+          setSelectedJob(null);
+        }}
+      />
     </DashboardLayout>
   );
 };

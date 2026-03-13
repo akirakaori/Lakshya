@@ -1,8 +1,6 @@
 const ApplicationModel = require('../models/application-model');
 const JobModel = require('../models/job-model');
 const UserModel = require('../models/user-model');
-const JobMatchAnalysis = require('../models/job-match-analysis');
-const { getCachedMatchWithOutdatedFlag, computeAndUpsertMatch } = require('./job-match-service');
 
 /**
  * Apply for a job
@@ -50,44 +48,13 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
       resume = user.resume;
     }
 
-    // Ensure match analysis exists and is up-to-date before applying
-    let matchData = {};
-    try {
-      const { analysis, isOutdated } = await getCachedMatchWithOutdatedFlag(applicantId, jobId);
-      
-      let finalAnalysis = analysis;
-      
-      // If no analysis or outdated, compute fresh analysis
-      if (!analysis || isOutdated) {
-        console.log(`⚠ Match analysis ${!analysis ? 'missing' : 'outdated'}. Computing fresh analysis before apply.`);
-        finalAnalysis = await computeAndUpsertMatch(applicantId, jobId);
-      }
-      
-      if (finalAnalysis) {
-        // Snapshot match data at apply time (immutable for recruiter view)
-        matchData = {
-          matchScore: finalAnalysis.matchScore,
-          matchedSkills: finalAnalysis.matchedSkills,
-          missingSkills: finalAnalysis.missingSkills,
-          matchAnalyzedAt: finalAnalysis.analyzedAt,
-          profileUpdatedAtUsed: finalAnalysis.profileUpdatedAtUsed,
-          resumeParsedAtUsed: finalAnalysis.resumeParsedAtUsed,
-          suggestionSource: finalAnalysis.suggestionSource,
-        };
-      }
-    } catch (matchErr) {
-      console.warn('⚠ Could not attach match data to application:', matchErr.message);
-      // Continue with apply even if match analysis fails
-    }
-    
-    // Create application
+    // Create application without triggering any resume analysis
     const application = new ApplicationModel({
       jobId,
       applicant: applicantId,
       resume,
       coverLetter: applicationData.coverLetter || null,
       status: 'applied',
-      ...matchData,
     });
     
     await application.save();
