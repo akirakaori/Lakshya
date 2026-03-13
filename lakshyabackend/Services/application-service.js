@@ -1,6 +1,7 @@
 const ApplicationModel = require('../models/application-model');
 const JobModel = require('../models/job-model');
 const UserModel = require('../models/user-model');
+const JobMatchAnalysis = require('../models/job-match-analysis');
 
 /**
  * Apply for a job
@@ -48,6 +49,19 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
       resume = user.resume;
     }
 
+    // Determine whether a match analysis already exists for this user + job
+    let hasMatchAnalysis = false;
+    let analysisStatus = 'not_analyzed';
+    try {
+      const existingAnalysis = await JobMatchAnalysis.findOne({ userId: applicantId, jobId });
+      hasMatchAnalysis = !!existingAnalysis;
+      if (hasMatchAnalysis) {
+        analysisStatus = 'analyzed';
+      }
+    } catch (analysisErr) {
+      console.warn('⚠ Failed to check existing match analysis for application:', analysisErr.message);
+    }
+
     // Create application without triggering any resume analysis
     const application = new ApplicationModel({
       jobId,
@@ -55,6 +69,8 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
       resume,
       coverLetter: applicationData.coverLetter || null,
       status: 'applied',
+      hasMatchAnalysis,
+      analysisStatus,
     });
     
     await application.save();

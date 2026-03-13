@@ -11,7 +11,7 @@ import {
 } from '../../hooks';
 import axiosInstance from '../../services/axios-instance';
 import { toast } from 'react-toastify';
-import { getFileUrl, getInitials } from '../../utils';
+import { getFileUrl, getInitials } from '../../Utils';
 import type { Interview } from '../../services';
 
 interface CandidateProfile {

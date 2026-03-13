@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { DashboardLayout, LoadingSpinner } from '../../components';
 import { useProfile, useUpdateProfile, useChangePassword, useUploadProfileImage, useEditMode } from '../../hooks';
 import { toast } from 'react-toastify';
-import { getFileUrl, getInitials } from '../../utils';
+import { getFileUrl, getInitials } from '../../Utils';
 
 const RecruiterProfile: React.FC = () => {
   const { data: profileData, isLoading } = useProfile();

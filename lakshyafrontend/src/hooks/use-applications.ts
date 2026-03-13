@@ -806,9 +806,13 @@ export const useRecruiterJobApplications = (
       filters?.search,
       filters?.minScore,
       filters?.mustHave,
-      filters?.missing
+      filters?.missing,
+      filters?.analysisStatus
     ],
-    queryFn: () => applicationService.getRecruiterJobApplications(jobId, filters),
+    queryFn: () => {
+      console.log('[RecruiterJobApplications] Fetch with filters:', filters);
+      return applicationService.getRecruiterJobApplications(jobId, filters);
+    },
     enabled: !!jobId,
   });
 };

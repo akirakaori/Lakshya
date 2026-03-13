@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/auth-context';
 import { useProfile } from '../../hooks';
-import { getFileUrl, getInitials } from '../../utils';
+import { getFileUrl, getInitials } from '../../Utils';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface NavbarProps {

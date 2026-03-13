@@ -19,8 +19,19 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
     search = '', 
     minScore = 0, 
     mustHave = '', 
-    missing = '' 
+    missing = '',
+    analysisStatus = 'all',
   } = filters;
+
+  console.log('📥 [RecruiterApplications] Incoming filters:', {
+    status,
+    sort,
+    search,
+    minScore,
+    mustHave,
+    missing,
+    analysisStatus,
+  });
 
   // Validate job exists and recruiter owns it
   const job = await JobModel.findById(jobId);
@@ -38,7 +49,7 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
   if (status !== 'all') {
     query.status = status;
   }
-  
+
   // Minimum match score filter
   if (minScore > 0) {
     query.matchScore = { $gte: parseInt(minScore) };
@@ -90,6 +101,44 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
       return name.includes(searchLower) || email.includes(searchLower);
     });
   }
+
+  // Normalize analysis status for each application (handles legacy records)
+  applications = applications.map((app) => {
+    let normalizedStatus = app.analysisStatus;
+
+    if (normalizedStatus !== 'analyzed' && normalizedStatus !== 'not_analyzed') {
+      const hasAnyAnalysisSnapshot =
+        app.hasMatchAnalysis === true ||
+        (typeof app.matchScore === 'number' && app.matchScore > 0) ||
+        (Array.isArray(app.matchedSkills) && app.matchedSkills.length > 0) ||
+        !!app.matchAnalyzedAt;
+
+      normalizedStatus = hasAnyAnalysisSnapshot ? 'analyzed' : 'not_analyzed';
+    }
+
+    return {
+      ...app,
+      analysisStatus: normalizedStatus,
+    };
+  });
+
+  // Apply analysis status filter after normalization
+  if (analysisStatus === 'analyzed') {
+    applications = applications.filter((app) => app.analysisStatus === 'analyzed');
+  } else if (analysisStatus === 'not_analyzed') {
+    applications = applications.filter((app) => app.analysisStatus === 'not_analyzed');
+  }
+
+  // Debug logging for analysis-related fields per application
+  applications.forEach((app) => {
+    console.log('📄 [RecruiterApplications] Application analysis snapshot:', {
+      _id: app._id,
+      analysisStatus: app.analysisStatus,
+      matchScore: app.matchScore,
+      matchedSkillsLength: Array.isArray(app.matchedSkills) ? app.matchedSkills.length : 0,
+      matchAnalyzedAt: app.matchAnalyzedAt,
+    });
+  });
 
   // Calculate counts per status
   const counts = await ApplicationModel.aggregate([

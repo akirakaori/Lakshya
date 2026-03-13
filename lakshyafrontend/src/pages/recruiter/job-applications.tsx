@@ -9,7 +9,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '../../services/axios-instance';
 import { toast } from 'react-toastify';
-import { getFileUrl, getInitials } from '../../utils';
+import { getFileUrl, getInitials } from '../../Utils';
 import type { RecruiterApplication } from '../../services';
 
 interface Applicant {
@@ -42,12 +42,14 @@ const JobApplications: React.FC = () => {
   const [mustHaveSkillInput, setMustHaveSkillInput] = useState('');
   const [missingSkillInput, setMissingSkillInput] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [analysisStatusInput, setAnalysisStatusInput] = useState<'all' | 'analyzed' | 'not_analyzed'>('all');
   
   // Applied filters (what triggers API refetch via React Query)
   const [appliedSearch, setAppliedSearch] = useState<string | undefined>(undefined);
   const [appliedMinScore, setAppliedMinScore] = useState<number | undefined>(undefined);
   const [appliedMustHave, setAppliedMustHave] = useState<string | undefined>(undefined);
   const [appliedMissing, setAppliedMissing] = useState<string | undefined>(undefined);
+  const [appliedAnalysisStatus, setAppliedAnalysisStatus] = useState<'analyzed' | 'not_analyzed' | undefined>(undefined);
   
   // Queries and mutations
   const { data, isLoading, isFetching } = useRecruiterJobApplications(jobId || '', {
@@ -56,7 +58,8 @@ const JobApplications: React.FC = () => {
     search: appliedSearch,
     minScore: appliedMinScore,
     mustHave: appliedMustHave,
-    missing: appliedMissing
+    missing: appliedMissing,
+    analysisStatus: appliedAnalysisStatus,
   });
   
   // Fetch application details for drawer (real-time query, not stale snapshot)
@@ -133,6 +136,18 @@ const JobApplications: React.FC = () => {
     setAppliedMinScore(minScoreInput > 0 ? minScoreInput : undefined);
     setAppliedMustHave(safeMustHave.length >= 2 ? safeMustHave : undefined);
     setAppliedMissing(safeMissing.length >= 2 ? safeMissing : undefined);
+
+    let nextAppliedAnalysisStatus: 'analyzed' | 'not_analyzed' | undefined;
+    if (analysisStatusInput === 'all') {
+      nextAppliedAnalysisStatus = undefined;
+    } else if (analysisStatusInput === 'analyzed') {
+      nextAppliedAnalysisStatus = 'analyzed';
+    } else {
+      nextAppliedAnalysisStatus = 'not_analyzed';
+    }
+
+    console.log('[ApplyFilters] Applying analysis status:', nextAppliedAnalysisStatus);
+    setAppliedAnalysisStatus(nextAppliedAnalysisStatus);
   };
 
   const clearFilters = () => {
@@ -141,19 +156,22 @@ const JobApplications: React.FC = () => {
     setMinScoreInput(0);
     setMustHaveSkillInput('');
     setMissingSkillInput('');
+    setAnalysisStatusInput('all');
     
     // Reset applied states (triggers API refetch with no filters)
     setAppliedSearch(undefined);
     setAppliedMinScore(undefined);
     setAppliedMustHave(undefined);
     setAppliedMissing(undefined);
+    setAppliedAnalysisStatus(undefined);
   };
 
   const activeFilterCount = 
     (appliedSearch ? 1 : 0) + 
     (appliedMinScore ? 1 : 0) + 
     (appliedMustHave ? 1 : 0) + 
-    (appliedMissing ? 1 : 0);
+    (appliedMissing ? 1 : 0) +
+    (appliedAnalysisStatus ? 1 : 0);
 
   const handleStatusChange = async (applicationId: string, status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer') => {
     try {
@@ -387,6 +405,24 @@ const JobApplications: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Analysis Status
+                  </label>
+                  <select
+                    value={analysisStatusInput}
+                    onChange={(e) => {
+                      const next = e.target.value as 'all' | 'analyzed' | 'not_analyzed';
+                      console.log('[AnalysisStatusInput] Changed to:', next);
+                      setAnalysisStatusInput(next);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="all">All</option>
+                    <option value="analyzed">Analyzed Only</option>
+                    <option value="not_analyzed">Not Analyzed</option>
+                  </select>
+                </div>
               </div>
               <div className="mt-3 flex justify-end gap-3">
                 {activeFilterCount > 0 && (
@@ -496,6 +532,7 @@ const JobApplications: React.FC = () => {
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Candidate</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Match Score</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Analysis Status</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Matched Skills</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Missing Skills</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Experience</th>
@@ -513,6 +550,14 @@ const JobApplications: React.FC = () => {
                   const avatarUrl = applicant?.profileImageUrl ? getFileUrl(applicant.profileImageUrl) : null;
                   const initials = applicant ? getInitials(applicant.fullName || applicant.name || 'U') : 'U';
                   const isSelected = selectedApplications.has(application._id);
+
+                  console.log('[RecruiterTable] Application row:', {
+                    id: application._id,
+                    analysisStatus: application.analysisStatus,
+                    matchScore: application.matchScore,
+                    matchedSkillsCount: application.matchedSkills?.length || 0,
+                    matchAnalyzedAt: application.matchAnalyzedAt,
+                  });
 
                   return (
                     <React.Fragment key={application._id}>
@@ -555,6 +600,17 @@ const JobApplications: React.FC = () => {
                           }`}>
                             {application.matchScore || 0}%
                           </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          {application.analysisStatus === 'analyzed' ? (
+                            <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                              AI Analyzed
+                            </span>
+                          ) : (
+                            <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                              No Analysis
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex flex-wrap gap-1 max-w-xs">

@@ -47,6 +47,17 @@ const applicationSchema = new Schema({
     type: Date,
     default: null,
   },
+  // Normalized analysis status at apply time
+  analysisStatus: {
+    type: String,
+    enum: ['analyzed', 'not_analyzed'],
+    default: 'not_analyzed',
+  },
+  // Whether a match analysis existed at the time of apply
+  hasMatchAnalysis: {
+    type: Boolean,
+    default: false,
+  },
   // Snapshot of profile version at apply time
   profileUpdatedAtUsed: {
     type: Date,

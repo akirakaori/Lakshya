@@ -11,7 +11,7 @@ import {
 } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
-import { getFileUrl, getInitials } from '../../utils';
+import { getFileUrl, getInitials } from '../../Utils';
 
 const Profile: React.FC = () => {
   const { updateUser } = useAuth();

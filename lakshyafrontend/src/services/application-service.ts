@@ -76,6 +76,7 @@ export interface RecruiterApplicationFilters {
   minScore?: number;
   mustHave?: string;
   missing?: string;
+  analysisStatus?: 'all' | 'analyzed' | 'not_analyzed';
 }
 
 export interface ScheduleInterviewData {
@@ -114,6 +115,8 @@ export interface RecruiterApplication extends Application {
   missingSkills?: string[];
   matchAnalyzedAt?: string;
   experienceYears?: number;
+  hasMatchAnalysis?: boolean;
+  analysisStatus?: 'analyzed' | 'not_analyzed';
 }
 
 export interface ApplicationsResponse {
@@ -194,7 +197,8 @@ export const applicationService = {
         
         // Handle populated jobId object
         if (typeof app.jobId === 'object' && app.jobId !== null) {
-          return (app.jobId as any)?._id === jobId;
+          const populatedJob = app.jobId as Job;
+          return populatedJob._id === jobId;
         }
         
         return false;
@@ -284,11 +288,18 @@ export const applicationService = {
     if (filters?.minScore !== undefined && filters.minScore > 0) params.append('minScore', filters.minScore.toString());
     if (filters?.mustHave && filters.mustHave.trim()) params.append('mustHave', filters.mustHave.trim());
     if (filters?.missing && filters.missing.trim()) params.append('missing', filters.missing.trim());
+    if (filters?.analysisStatus && filters.analysisStatus !== 'all') params.append('analysisStatus', filters.analysisStatus);
     
     const queryString = params.toString();
     const url = queryString 
       ? `/recruiter/jobs/${jobId}/applications?${queryString}` 
       : `/recruiter/jobs/${jobId}/applications`;
+
+    console.log('[RecruiterJobApplications][Service] Request URL and filters:', {
+      url,
+      filters,
+      queryString,
+    });
     
     const response = await axiosInstance.get(url);
     return response.data;
