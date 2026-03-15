@@ -7,6 +7,7 @@ import { useParams } from "react-router-dom";
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api-client';
 import { Footer } from '../components';
+import { AlertModal } from '../components/ui';
 import { useForm } from 'react-hook-form';
 
 type SignupFormData = {
@@ -22,6 +23,12 @@ function Signup() {
   const { role } = useParams();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'error' as 'error' | 'warning' | 'success' | 'info',
+  });
 
   const {
     register,
@@ -48,8 +55,17 @@ function Signup() {
           navigate('/login')
         }, 1000)
       } else if (error) {
-        const details = error?.details[0].message;
-        handleError(details);
+        // Check if it's a duplicate phone number error
+        if (error.toLowerCase().includes('phone') || error.toLowerCase().includes('already registered')) {
+          setAlertModal({
+            isOpen: true,
+            title: 'Phone Number Already Registered',
+            message: error,
+            variant: 'error',
+          });
+        } else {
+          handleError(error);
+        }
       } else if (!success) {
         handleError(message);
       }
@@ -311,6 +327,14 @@ function Signup() {
         </div>
         </div>
       </div>
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        title={alertModal.title}
+        message={alertModal.message}
+        variant={alertModal.variant}
+        closeText="OK"
+      />
       <Footer variant="public" />
     </div>
   );

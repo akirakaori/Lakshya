@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { handleSuccess, handleError } from '../../Utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/api-client';
-import { Footer, PageSizeSelect, PaginationControls, type PaginationMeta } from '../../components';
+import { Footer, PageSizeSelect, PaginationControls, ConfirmModal, type PaginationMeta } from '../../components';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface User {
@@ -71,6 +71,7 @@ function AdminDashboard() {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editUserData, setEditUserData] = useState({ role: '', isActive: true, password: '' });
   const [editPostData, setEditPostData] = useState({ title: '', description: '', company: '', location: '', salary: '', jobType: '' });
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -368,13 +369,7 @@ function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('loggedInUser');
-    localStorage.removeItem('role');
-    handleSuccess('User Logged out successfully');
-    setTimeout(() => {
-      navigate('/login', { replace: true });
-    }, 1000);
+    setShowLogoutModal(true);
   };
 
   return (
@@ -1262,6 +1257,26 @@ function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('loggedInUser');
+          localStorage.removeItem('role');
+          handleSuccess('User Logged out successfully');
+          setTimeout(() => {
+            navigate('/login', { replace: true });
+          }, 1000);
+        }}
+        title="Logout Confirmation"
+        message="Are you sure you want to logout? You will need to login again to access your account."
+        confirmText="Logout"
+        cancelText="Cancel"
+        confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
+      />
     </div>
   );
 }

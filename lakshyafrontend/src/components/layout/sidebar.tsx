@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/auth-context';
 import { useQueryClient } from '@tanstack/react-query';
+import { ConfirmModal } from '../ui';
 
 interface SidebarProps {
   variant: 'job-seeker' | 'recruiter';
@@ -12,6 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
   const { logout } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const jobSeekerLinks = [
     { path: '/job-seeker/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -84,13 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
         </Link>
         
         <button
-          onClick={async () => {
-            // Clear all queries before logout to prevent stale data
-            await queryClient.cancelQueries();
-            queryClient.clear();
-            logout();
-            navigate('/login', { replace: true });
-          }}
+          onClick={() => setShowLogoutModal(true)}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,6 +95,24 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
           <span>Logout</span>
         </button>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={async () => {
+          // Clear all queries before logout to prevent stale data
+          await queryClient.cancelQueries();
+          queryClient.clear();
+          logout();
+          navigate('/login', { replace: true });
+        }}
+        title="Logout Confirmation"
+        message="Are you sure you want to logout? You will need to login again to access your account."
+        confirmText="Logout"
+        cancelText="Cancel"
+        confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
+      />
     </aside>
   );
 };

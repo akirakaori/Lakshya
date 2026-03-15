@@ -13,7 +13,7 @@ export { ApplicationCard } from './applications';
 export { default as ScheduleInterviewModal } from './schedules/schedule-interview-modal';
 
 // UI components
-export { LoadingSpinner, EmptyState, StatsCard } from './ui';
+export { LoadingSpinner, EmptyState, StatsCard, ConfirmModal, AlertModal } from './ui';
 
 // Pagination components
 export { PageSizeSelect, PaginationControls } from './pagination';

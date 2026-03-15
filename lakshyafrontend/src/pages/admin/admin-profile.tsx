@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/auth-context';
 import { profileService } from '../../services';
 import { toast } from 'react-toastify';
-import { Footer } from '../../components';
+import { Footer, ConfirmModal } from '../../components';
 
 const AdminProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ const AdminProfile: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -99,9 +100,7 @@ const AdminProfile: React.FC = () => {
   };
 
   const handleLogout = () => {
-    logout();
-    toast.success('Logged out successfully');
-    navigate('/login');
+    setShowLogoutModal(true);
   };
 
   if (isLoading) {
@@ -307,6 +306,22 @@ const AdminProfile: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={() => {
+          logout();
+          toast.success('Logged out successfully');
+          navigate('/login');
+        }}
+        title="Logout Confirmation"
+        message="Are you sure you want to logout? You will need to login again to access your account."
+        confirmText="Logout"
+        cancelText="Cancel"
+        confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
+      />
     </div>
   );
 };

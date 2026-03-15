@@ -8,13 +8,13 @@ const path = require('path');
 dotenv.config();
 
 // Import routes
-const authRoutes = require('./Routes/auth-routes');
-const profileRoutes = require('./Routes/profile-routes');
-const jobRoutes = require('./Routes/job-routes');
-const applicationRoutes = require('./Routes/application-routes');
-const adminRoutes = require('./Routes/admin-routes');
-const recruiterRoutes = require('./Routes/recruiter-routes');
-const jobSeekerRoutes = require('./Routes/job-seeker-routes');
+const authRoutes = require('./routes/auth-routes');
+const profileRoutes = require('./routes/profile-routes');
+const jobRoutes = require('./routes/job-routes');
+const applicationRoutes = require('./routes/application-routes');
+const adminRoutes = require('./routes/admin-routes');
+const recruiterRoutes = require('./routes/recruiter-routes');
+const jobSeekerRoutes = require('./routes/job-seeker-routes');
 const landingRoutes = require('./routes/landing-routes');
 
 // Import middleware

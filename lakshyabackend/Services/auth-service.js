@@ -62,10 +62,20 @@ const signupService = async (data) => {
     throw error;
   }
 
-  // Check if user already exists
+  // Check if user already exists by email
   const userExists = await UserModel.findOne({ email });
   if (userExists) {
     const error = new Error("User already exists");
+    error.statusCode = 400;
+    error.success = false;
+    error.errorField = "error";
+    throw error;
+  }
+
+  // Check if phone number is already registered
+  const phoneExists = await UserModel.findOne({ number });
+  if (phoneExists) {
+    const error = new Error("This phone number is already registered");
     error.statusCode = 400;
     error.success = false;
     error.errorField = "error";
