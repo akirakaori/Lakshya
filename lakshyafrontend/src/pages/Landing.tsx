@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Footer, PageSizeSelect, PaginationControls, type PaginationMeta } from "../components";
 import { getLandingData, searchPublicJobs } from "../services/landing-service";
 import { useAuth } from "../context/auth-context";
+import { toast } from "react-toastify";
 
 function Landing() {
   const navigate = useNavigate();
@@ -16,6 +17,9 @@ function Landing() {
   // Pagination state for jobs listing
   const [jobsPage, setJobsPage] = useState(1);
   const [jobsLimit, setJobsLimit] = useState(12);
+  
+  // Saved jobs state (local, for demo purposes)
+  const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
 
   // Fetch landing data from API (stats only - no pagination needed)
   const { data: landingData } = useQuery({
@@ -92,6 +96,34 @@ function Landing() {
   // Handle job click (view details)
   const handleJobClick = (jobId: string) => {
     navigate(`/jobs/${jobId}`);
+  };
+
+  // Handle save job toggle
+  const handleToggleSaveJob = (e: React.MouseEvent, jobId: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (!user) {
+      const redirectUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      navigate(`/login?redirect=${redirectUrl}`);
+      return;
+    }
+
+    if (user.role !== 'job_seeker') {
+      toast.error('Only job seekers can save jobs.');
+      return;
+    }
+
+    // Toggle saved state
+    const newSavedJobs = new Set(savedJobs);
+    if (newSavedJobs.has(jobId)) {
+      newSavedJobs.delete(jobId);
+      toast.success('Removed from saved jobs', { autoClose: 2000 });
+    } else {
+      newSavedJobs.add(jobId);
+      toast.success('Job saved successfully', { autoClose: 2000 });
+    }
+    setSavedJobs(newSavedJobs);
   };
 
   return (
@@ -270,54 +302,84 @@ function Landing() {
           {/* Jobs Grid */}
           {!isLoading && !isError && displayJobs && displayJobs.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {displayJobs.map((job) => (
-                <div
-                  key={job._id}
-                  className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out"
-                >
-                  {/* Job Title */}
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 select-none">
-                    {job.title}
-                  </h3>
-                  
-                  {/* Company Name */}
-                  <p className="text-sm text-gray-600 mb-1 flex items-center gap-1 select-none">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    {job.companyName}
-                  </p>
-                  
-                  {/* Location */}
-                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-1 select-none">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    {job.location}
-                  </p>
-                  
-                  {/* Job Type */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs rounded-full select-none">
-                      {job.jobType}
-                    </span>
-                  </div>
-                  
-                  {/* Posted Date */}
-                  <p className="text-xs text-gray-500 mb-4 select-none">
-                    Posted {formatDate(job.createdAt)}
-                  </p>
-                  
-                  {/* View Details Button */}
-                  <button
-                    onClick={() => handleJobClick(job._id)}
-                    className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+              {displayJobs.map((job) => {
+                const isSaved = savedJobs.has(job._id);
+                return (
+                  <div
+                    key={job._id}
+                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out"
                   >
-                    View Details
-                  </button>
-                </div>
-              ))}
+                    {/* Header with Save Button */}
+                    <div className="flex items-start justify-between mb-2 gap-3">
+                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 select-none flex-1">
+                        {job.title}
+                      </h3>
+                      {/* Save Job Button with Bookmark Icon */}
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleSaveJob(e, job._id)}
+                        title={isSaved ? 'Saved' : 'Save Job'}
+                        className={`flex-shrink-0 flex items-center justify-center p-2 rounded-lg transition ${
+                          isSaved
+                            ? 'text-yellow-600'
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                        }`}
+                        aria-label={isSaved ? 'Remove from saved jobs' : 'Save this job'}
+                      >
+                        {/* Outlined Bookmark Icon (not saved) */}
+                        {!isSaved && (
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                          </svg>
+                        )}
+                        {/* Filled Bookmark Icon (saved) */}
+                        {isSaved && (
+                          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    
+                    {/* Company Name */}
+                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1 select-none">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      {job.companyName}
+                    </p>
+                    
+                    {/* Location */}
+                    <p className="text-sm text-gray-600 mb-2 flex items-center gap-1 select-none">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {job.location}
+                    </p>
+                    
+                    {/* Job Type */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs rounded-full select-none">
+                        {job.jobType}
+                      </span>
+                    </div>
+                    
+                    {/* Posted Date */}
+                    <p className="text-xs text-gray-500 mb-4 select-none">
+                      Posted {formatDate(job.createdAt)}
+                    </p>
+                    
+                    {/* View Details Button */}
+                    <button
+                      onClick={() => handleJobClick(job._id)}
+                      className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
 

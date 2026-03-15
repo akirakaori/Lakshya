@@ -451,13 +451,21 @@ const JobDetails: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleToggleSave}
-                    className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-colors ${
+                    className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                       isSaved
-                        ? 'border-red-500 text-red-600 bg-red-50 hover:bg-red-100'
+                        ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
                         : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
                     }`}
                   >
-                    <span className="mr-1">{isSaved ? '💔' : '❤️'}</span>
+                    {isSaved ? (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                      </svg>
+                    )}
                     {isSaved ? 'Remove Saved Job' : 'Save Job'}
                   </button>
                 </div>

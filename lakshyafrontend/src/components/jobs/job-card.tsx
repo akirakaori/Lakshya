@@ -127,15 +127,25 @@ const JobCard: React.FC<JobCardProps> = ({ job, variant = 'default', showMatchSc
           <button
             type="button"
             onClick={handleToggleSave}
-            className={`flex items-center justify-center rounded-full border px-3 py-1 text-xs font-medium transition ${
+            title={isSaved ? 'Saved' : 'Save Job'}
+            className={`flex items-center justify-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition ${
               isSaved
-                ? 'border-red-500 text-red-600 bg-red-50 hover:bg-red-100'
+                ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
                 : 'border-slate-300 text-slate-500 bg-white hover:bg-slate-50'
             }`}
           >
-            <span className="mr-1">
-              {isSaved ? '💔' : '❤️'}
-            </span>
+            {/* Outlined Bookmark Icon (not saved) */}
+            {!isSaved && (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            )}
+            {/* Filled Bookmark Icon (saved) */}
+            {isSaved && (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            )}
             <span>{isSaved ? 'Saved' : 'Save'}</span>
           </button>
         </div>
