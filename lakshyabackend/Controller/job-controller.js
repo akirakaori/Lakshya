@@ -279,7 +279,12 @@ const removeSavedJobForUser = async (req, res) => {
 const getSavedJobsForUser = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { page, limit } = req.query;
+    const rawPage = parseInt(req.query.page, 10);
+    const rawLimit = parseInt(req.query.limit, 10);
+
+    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 6;
+
     const result = await userService.getSavedJobsForUser(userId, { page, limit });
 
     res.status(200).json({

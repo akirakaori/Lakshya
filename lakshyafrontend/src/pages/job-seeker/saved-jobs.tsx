@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { DashboardLayout, LoadingSpinner, EmptyState, PaginationControls, type PaginationMeta } from '../../components';
+import { DashboardLayout, LoadingSpinner, EmptyState, PaginationControls, PageSizeSelect, type PaginationMeta } from '../../components';
 import { JobCard } from '../../components/jobs';
 import { useSavedJobs, useRemoveSavedJob, useApplyForJob, useMyApplications, useJobMatchScores } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
@@ -97,14 +97,15 @@ const SavedJobs: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const [page, setPage] = useState(() => {
+  const page = useMemo(() => {
     const parsedPage = Number(searchParams.get('page'));
     return Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
-  });
-  const [limit] = useState(() => {
+  }, [searchParams]);
+
+  const limit = useMemo(() => {
     const parsedLimit = Number(searchParams.get('limit'));
     return Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.floor(parsedLimit) : 6;
-  });
+  }, [searchParams]);
   const { user } = useAuth();
   const isAuthenticatedJobSeeker = user?.role === 'job_seeker';
 
@@ -118,6 +119,59 @@ const SavedJobs: React.FC = () => {
 
   const savedJobs = useMemo<Job[]>(() => data?.data ?? [], [data]);
   const pagination = data?.pagination;
+
+  const normalizedPagination = useMemo<PaginationMeta | null>(() => {
+    if (!pagination) {
+      return null;
+    }
+
+    const total = Number.isFinite(pagination.total) ? pagination.total : savedJobs.length;
+    const resolvedLimit = Number.isFinite(pagination.limit) && pagination.limit > 0
+      ? pagination.limit
+      : limit;
+    const resolvedPagesFromTotal = Math.max(1, Math.ceil(total / resolvedLimit));
+    const resolvedPages = Number.isFinite(pagination.pages) && pagination.pages > 0
+      ? pagination.pages
+      : resolvedPagesFromTotal;
+    const resolvedPage = Number.isFinite(pagination.page) && pagination.page > 0
+      ? Math.min(pagination.page, resolvedPages)
+      : 1;
+
+    return {
+      total,
+      page: resolvedPage,
+      limit: resolvedLimit,
+      pages: resolvedPages,
+    };
+  }, [pagination, savedJobs.length, limit]);
+
+  // Debug: verify backend pagination payload and current paging inputs.
+  console.log('[SavedJobs] Response payload:', data);
+  console.log('[SavedJobs] Pagination:', pagination);
+  console.log('[SavedJobs] Pagination metrics:', {
+    totalSavedJobs: normalizedPagination?.total ?? 0,
+    currentPage: normalizedPagination?.page ?? page,
+    currentLimit: normalizedPagination?.limit ?? limit,
+    totalPages: normalizedPagination?.pages ?? 0,
+  });
+
+  useEffect(() => {
+    const hasPage = searchParams.has('page');
+    const hasLimit = searchParams.has('limit');
+
+    if (hasPage && hasLimit) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams);
+    if (!hasPage) {
+      params.set('page', '1');
+    }
+    if (!hasLimit) {
+      params.set('limit', '6');
+    }
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const appliedJobLookup = useMemo(() => {
     const lookup = new Map<string, Application['status']>();
@@ -150,12 +204,17 @@ const SavedJobs: React.FC = () => {
   );
   const matchScores = useMemo(() => matchScoresResponse?.data ?? {}, [matchScoresResponse]);
 
-  useEffect(() => {
-    const params = new URLSearchParams();
-    params.set('page', page.toString());
-    params.set('limit', limit.toString());
+  const updatePaginationParams = (nextPage: number, nextLimit: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', nextPage.toString());
+    params.set('limit', nextLimit.toString());
     setSearchParams(params, { replace: true });
-  }, [page, limit, setSearchParams]);
+  };
+
+  const handleLimitChange = (nextLimit: number) => {
+    updatePaginationParams(1, nextLimit);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleRemove = async (jobId: string) => {
     try {
@@ -163,7 +222,7 @@ const SavedJobs: React.FC = () => {
 
       // If current page had only one item, step back to previous valid page.
       if (savedJobs.length === 1 && page > 1) {
-        setPage((prev) => Math.max(1, prev - 1));
+        updatePaginationParams(Math.max(1, page - 1), limit);
       }
 
       toast.success('Removed from saved jobs');
@@ -181,7 +240,20 @@ const SavedJobs: React.FC = () => {
             <p className="text-sm text-gray-500 mt-1">
               Jobs you have bookmarked to review or apply later.
             </p>
+            {!isLoading && !isError && (
+              <p className="text-sm text-gray-600 mt-2">
+                {normalizedPagination?.total ?? savedJobs.length} Saved Jobs • Showing {normalizedPagination?.limit ?? limit} per page
+              </p>
+            )}
           </div>
+          {!isLoading && !isError && (
+            <PageSizeSelect
+              value={normalizedPagination?.limit ?? limit}
+              onChange={handleLimitChange}
+              options={[6, 12, 18]}
+              disabled={isFetching}
+            />
+          )}
         </div>
 
         {isLoading || isFetching ? (
@@ -271,12 +343,12 @@ const SavedJobs: React.FC = () => {
               })}
             </div>
 
-            {pagination && pagination.pages > 1 && (
+            {normalizedPagination && normalizedPagination.pages > 1 && (
               <div className="mt-8 bg-white border border-gray-200 rounded-xl overflow-hidden">
                 <PaginationControls
-                  pagination={pagination as PaginationMeta}
+                  pagination={normalizedPagination}
                   onPageChange={(nextPage) => {
-                    setPage(nextPage);
+                    updatePaginationParams(nextPage, limit);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   isLoading={isLoading}
