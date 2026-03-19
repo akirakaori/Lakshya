@@ -93,6 +93,11 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
 const getMyApplications = async (applicantId, filters = {}) => {
   try {
     const { q, status, page = 1, limit = 10 } = filters;
+
+    const parsedPage = Number(page);
+    const parsedLimit = Number(limit);
+    const safePage = Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
+    const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.floor(parsedLimit) : 10;
     
     // Base filter - applications by this user
     const query = { applicant: applicantId };
@@ -102,45 +107,52 @@ const getMyApplications = async (applicantId, filters = {}) => {
       query.status = status;
     }
     
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-    
-    // Execute query with population
-    // Note: Populate job even if it's soft-deleted (isDeleted=true)
-    // This allows job seekers to see their application history
-    let applicationsQuery = ApplicationModel.find(query)
-      .populate({
-        path: 'jobId',
-        select: 'title companyName location salary jobType status isActive isDeleted deletedAt deletedBy deletedByRole'
-      })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-    
-    const applications = await applicationsQuery;
-    
-    // If search query provided, filter populated its results 
-    let filteredApplications = applications;
+    const populateConfig = {
+      path: 'jobId',
+      select: 'title companyName location salary jobType status isActive isDeleted deletedAt deletedBy deletedByRole'
+    };
+
+    let filteredApplications = [];
+    let total = 0;
+
+    // If search query is present, filter first then paginate to keep totals/pages accurate.
     if (q && q.trim()) {
-      const searchTerm = q.toLowerCase();
-      filteredApplications = applications.filter(app => {
+      const searchTerm = q.trim().toLowerCase();
+      const allApplications = await ApplicationModel.find(query)
+        .populate(populateConfig)
+        .sort({ createdAt: -1 });
+
+      const matchedApplications = allApplications.filter((app) => {
         if (!app.jobId) return false;
         const title = app.jobId.title?.toLowerCase() || '';
         const company = app.jobId.companyName?.toLowerCase() || '';
         return title.includes(searchTerm) || company.includes(searchTerm);
       });
+
+      total = matchedApplications.length;
+      const skip = (safePage - 1) * safeLimit;
+      filteredApplications = matchedApplications.slice(skip, skip + safeLimit);
+    } else {
+      const skip = (safePage - 1) * safeLimit;
+      filteredApplications = await ApplicationModel.find(query)
+        .populate(populateConfig)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(safeLimit);
+
+      total = await ApplicationModel.countDocuments(query);
     }
-    
-    // Get total count for pagination (before filtering by search)
-    const total = await ApplicationModel.countDocuments(query);
+
+    const totalPages = total === 0 ? 1 : Math.ceil(total / safeLimit);
     
     return {
       applications: filteredApplications,
       pagination: {
         total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(total / limit)
+        page: safePage,
+        limit: safeLimit,
+        totalPages,
+        pages: totalPages,
       }
     };
   } catch (error) {

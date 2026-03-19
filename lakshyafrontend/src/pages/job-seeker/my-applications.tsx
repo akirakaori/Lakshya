@@ -1,15 +1,33 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { DashboardLayout, LoadingSpinner, EmptyState } from '../../components';
+import { Link, useSearchParams } from 'react-router-dom';
+import { DashboardLayout, LoadingSpinner, EmptyState, PaginationControls, PageSizeSelect, type PaginationMeta } from '../../components';
 import { useMyApplications, useJobMatchScores } from '../../hooks';
 import type { Job, Interview } from '../../services';
 import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStatus';
 
 const MyApplications: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected'>('all');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedAppId, setExpandedAppId] = useState<string | null>(null);
+
+  const page = useMemo(() => {
+    const parsedPage = Number(searchParams.get('page'));
+    return Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
+  }, [searchParams]);
+
+  const limit = useMemo(() => {
+    const parsedLimit = Number(searchParams.get('limit'));
+    return Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.floor(parsedLimit) : 10;
+  }, [searchParams]);
+
+  const updatePaginationParams = (nextPage: number, nextLimit: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', nextPage.toString());
+    params.set('limit', nextLimit.toString());
+    setSearchParams(params, { replace: true });
+  };
 
   // Debounce search input
   React.useEffect(() => {
@@ -23,16 +41,36 @@ const MyApplications: React.FC = () => {
   const { data: response, isLoading } = useMyApplications({
     q: debouncedSearch,
     status: statusFilter,
-    page: 1,
-    limit: 100,
+    page,
+    limit,
   });
 
   const applications = response?.data || [];
+  const pagination = response?.pagination;
+
+  const paginationMeta = useMemo<PaginationMeta | null>(() => {
+    if (!pagination) {
+      return null;
+    }
+
+    const resolvedPages = pagination.pages ?? pagination.totalPages ?? 1;
+    return {
+      total: pagination.total,
+      page: pagination.page,
+      limit: pagination.limit,
+      pages: resolvedPages,
+    };
+  }, [pagination]);
 
   // Debug: Log when applications data updates
   React.useEffect(() => {
     console.log('📊 My Applications data updated - Count:', applications.length);
   }, [applications.length]);
+
+  React.useEffect(() => {
+    updatePaginationParams(1, limit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, statusFilter]);
 
   // Extract all job IDs for batch match score fetch
   const jobIds = useMemo(() => {
@@ -52,14 +90,14 @@ const MyApplications: React.FC = () => {
   const stats = useMemo(() => {
     const allApps = applications;
     return {
-      total: allApps.length,
+      total: paginationMeta?.total ?? allApps.length,
       pending: allApps.filter(a => a.status === 'applied').length,
       shortlisted: allApps.filter(a => a.status === 'shortlisted').length,
       interview: allApps.filter(a => a.status === 'interview').length,
       rejected: allApps.filter(a => a.status === 'rejected').length,
       hired: allApps.filter(a => a.status === 'hired' || a.status === 'offer').length,
     };
-  }, [applications]);
+  }, [applications, paginationMeta]);
 
   // Check if any application is hired (for congratulations banner)
   const hiredApplications = useMemo(() => {
@@ -137,9 +175,20 @@ const MyApplications: React.FC = () => {
         )}
 
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <h1 className="text-2xl font-bold text-gray-900">My Applications</h1>
-          <p className="text-gray-600 mt-1">Track the status of all your job applications in one place.</p>
+          <div className="flex items-center gap-4">
+            <p className="text-gray-600">Track the status of all your job applications in one place.</p>
+            <PageSizeSelect
+              value={limit}
+              onChange={(nextLimit) => {
+                updatePaginationParams(1, nextLimit);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              options={[5, 10, 20]}
+              disabled={isLoading}
+            />
+          </div>
         </div>
 
         {/* Search and Filter */}
@@ -163,13 +212,17 @@ const MyApplications: React.FC = () => {
                 type="text"
                 placeholder="Search by job title or company..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as typeof statusFilter);
+              }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="all">All Statuses</option>
@@ -397,6 +450,17 @@ const MyApplications: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {paginationMeta && paginationMeta.pages > 1 && (
+              <PaginationControls
+                pagination={paginationMeta}
+                onPageChange={(nextPage) => {
+                  updatePaginationParams(nextPage, limit);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                isLoading={isLoading}
+              />
+            )}
           </div>
         )}
 

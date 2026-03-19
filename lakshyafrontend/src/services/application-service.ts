@@ -127,6 +127,7 @@ export interface ApplicationsResponse {
     page: number;
     limit: number;
     totalPages: number;
+    pages?: number;
   };
 }
 
