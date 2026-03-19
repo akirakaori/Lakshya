@@ -70,6 +70,22 @@ export interface JobsResponse {
   };
 }
 
+export interface SavedJobsFilters {
+  page?: number;
+  limit?: number;
+}
+
+export interface SavedJobsResponse {
+  success: boolean;
+  data: Job[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+}
+
 export interface CreateJobData {
   title: string;
   description: string;
@@ -101,11 +117,11 @@ const buildQueryParams = (filters: JobFilters): URLSearchParams => {
   console.log('[buildQueryParams] Input filters:', JSON.stringify(filters, null, 2));
   
   // Helper to check if value is valid and not empty
-  const isValidString = (val: any): val is string => {
+  const isValidString = (val: unknown): val is string => {
     return typeof val === 'string' && val.trim().length > 0;
   };
   
-  const isValidNumber = (val: any): val is number => {
+  const isValidNumber = (val: unknown): val is number => {
     return typeof val === 'number' && !isNaN(val) && val >= 0;
   };
   
@@ -411,8 +427,15 @@ export const jobService = {
   // ========================
 
   // Get all jobs saved by the logged-in job seeker
-  getSavedJobs: async (): Promise<{ success: boolean; data: Job[] }> => {
-    const response = await axiosInstance.get('/jobs/saved');
+  getSavedJobs: async (filters?: SavedJobsFilters): Promise<SavedJobsResponse> => {
+    const params = new URLSearchParams();
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+
+    const queryString = params.toString();
+    const url = queryString ? `/jobs/saved?${queryString}` : '/jobs/saved';
+
+    const response = await axiosInstance.get(url);
     return response.data;
   },
 

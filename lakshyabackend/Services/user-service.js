@@ -435,10 +435,16 @@ const removeSavedJobForUser = async (userId, jobId) => {
 
 /**
  * Get all saved jobs for the given user
- * Populates job details and filters out deleted/inactive jobs
+ * Populates job details, filters out deleted/inactive jobs, and paginates
  */
-const getSavedJobsForUser = async (userId) => {
+const getSavedJobsForUser = async (userId, options = {}) => {
   try {
+    const parsedPage = Number(options.page);
+    const parsedLimit = Number(options.limit);
+
+    const page = Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
+    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.floor(parsedLimit) : 6;
+
     const user = await UserModel.findById(userId)
       .select('savedJobs')
       .populate({
@@ -454,7 +460,22 @@ const getSavedJobsForUser = async (userId) => {
 
     // Filter out any nulls that may result from populate match
     const jobs = (user.savedJobs || []).filter(Boolean);
-    return jobs;
+
+    const total = jobs.length;
+    const pages = total === 0 ? 1 : Math.ceil(total / limit);
+    const safePage = Math.min(page, pages);
+    const startIndex = (safePage - 1) * limit;
+    const paginatedJobs = jobs.slice(startIndex, startIndex + limit);
+
+    return {
+      data: paginatedJobs,
+      pagination: {
+        total,
+        page: safePage,
+        limit,
+        pages,
+      },
+    };
   } catch (error) {
     throw error;
   }

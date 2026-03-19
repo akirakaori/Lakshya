@@ -12,13 +12,16 @@ export const applicationKeys = {
 };
 
 // Get my applications (job seeker)
-export const useMyApplications = (filters?: ApplicationFilters) => {
+export const useMyApplications = (
+  filters?: ApplicationFilters,
+  options?: { enabled?: boolean }
+) => {
   const { isAuthenticated, isReady } = useAuth();
   
   return useQuery({
     queryKey: applicationKeys.my(filters),
     queryFn: () => applicationService.getMyApplications(filters),
-    enabled: isReady && isAuthenticated, // Only fetch when authenticated
+    enabled: isReady && isAuthenticated && (options?.enabled ?? true),
   });
 };
 

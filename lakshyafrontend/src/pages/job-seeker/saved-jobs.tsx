@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { DashboardLayout, LoadingSpinner, EmptyState } from '../../components';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { DashboardLayout, LoadingSpinner, EmptyState, PaginationControls, type PaginationMeta } from '../../components';
 import { JobCard } from '../../components/jobs';
-import { useSavedJobs, useRemoveSavedJob, useApplyForJob } from '../../hooks';
-import type { Job } from '../../services';
+import { useSavedJobs, useRemoveSavedJob, useApplyForJob, useMyApplications, useJobMatchScores } from '../../hooks';
+import { useAuth } from '../../context/auth-context';
+import type { Application, Job } from '../../services';
 import { toast } from 'react-toastify';
 
 interface EasyApplyModalProps {
@@ -93,17 +94,78 @@ const EasyApplyModal: React.FC<EasyApplyModalProps> = ({ job, isOpen, onClose })
 };
 
 const SavedJobs: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const { data, isLoading, isFetching, isError } = useSavedJobs();
+  const [page, setPage] = useState(() => {
+    const parsedPage = Number(searchParams.get('page'));
+    return Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
+  });
+  const [limit] = useState(() => {
+    const parsedLimit = Number(searchParams.get('limit'));
+    return Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.floor(parsedLimit) : 6;
+  });
+  const { user } = useAuth();
+  const isAuthenticatedJobSeeker = user?.role === 'job_seeker';
+
+  const { data, isLoading, isFetching, isError } = useSavedJobs({ page, limit });
+  const { data: applicationsResponse } = useMyApplications(
+    undefined,
+    { enabled: isAuthenticatedJobSeeker }
+  );
   const removeSavedJobMutation = useRemoveSavedJob();
   const navigate = useNavigate();
 
-  const savedJobs: Job[] = data?.data ?? [];
+  const savedJobs = useMemo<Job[]>(() => data?.data ?? [], [data]);
+  const pagination = data?.pagination;
+
+  const appliedJobLookup = useMemo(() => {
+    const lookup = new Map<string, Application['status']>();
+    const applications = applicationsResponse?.data ?? [];
+
+    applications.forEach((application) => {
+      if (!application || !application.jobId) {
+        return;
+      }
+
+      const normalizedJobId =
+        typeof application.jobId === 'string'
+          ? application.jobId
+          : application.jobId?._id;
+
+      if (!normalizedJobId) {
+        return;
+      }
+
+      lookup.set(normalizedJobId, application.status);
+    });
+
+    return lookup;
+  }, [applicationsResponse]);
+
+  const savedJobIds = useMemo(() => savedJobs.map((job) => job._id), [savedJobs]);
+
+  const { data: matchScoresResponse } = useJobMatchScores(
+    isAuthenticatedJobSeeker && savedJobIds.length > 0 ? savedJobIds : undefined
+  );
+  const matchScores = useMemo(() => matchScoresResponse?.data ?? {}, [matchScoresResponse]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    params.set('limit', limit.toString());
+    setSearchParams(params, { replace: true });
+  }, [page, limit, setSearchParams]);
 
   const handleRemove = async (jobId: string) => {
     try {
       await removeSavedJobMutation.mutateAsync(jobId);
+
+      // If current page had only one item, step back to previous valid page.
+      if (savedJobs.length === 1 && page > 1) {
+        setPage((prev) => Math.max(1, prev - 1));
+      }
+
       toast.success('Removed from saved jobs');
     } catch {
       toast.error('Failed to remove saved job');
@@ -152,39 +214,77 @@ const SavedJobs: React.FC = () => {
             }
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {savedJobs.map((job) => (
-              <div key={job._id} className="flex flex-col gap-3">
-                <JobCard job={job} />
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/jobs/${job._id}`)}
-                    className="px-4 py-2 text-sm rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    View Details
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedJob(job);
-                      setShowApplyModal(true);
-                    }}
-                    className="px-4 py-2 text-sm rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
-                  >
-                    Easy Apply
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(job._id)}
-                    className="px-4 py-2 text-sm rounded-full border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Remove
-                  </button>
-                </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+              {savedJobs.map((job) => {
+                const applicationStatus = appliedJobLookup.get(job._id);
+                const isApplied = !!applicationStatus;
+                const matchData = matchScores[job._id];
+                const matchScore = matchData?.matchScore ?? undefined;
+
+                return (
+                  <div key={job._id} className="flex flex-col gap-3">
+                    <JobCard
+                      job={job}
+                      showMatchScore
+                      matchScore={matchScore}
+                      isApplied={isApplied}
+                      applicationStatus={applicationStatus}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/jobs/${job._id}`)}
+                        className="px-4 py-2 text-sm rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        View Details
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isApplied) {
+                            navigate('/job-seeker/my-applications');
+                            return;
+                          }
+
+                          setSelectedJob(job);
+                          setShowApplyModal(true);
+                        }}
+                        className={`px-4 py-2 text-sm rounded-full transition-colors ${
+                          isApplied
+                            ? 'border border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
+                            : 'bg-green-500 text-white hover:bg-green-600'
+                        }`}
+                      >
+                        {isApplied ? 'Track Application' : 'Easy Apply'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(job._id)}
+                        className="px-4 py-2 text-sm rounded-full border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {pagination && pagination.pages > 1 && (
+              <div className="mt-8 bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <PaginationControls
+                  pagination={pagination as PaginationMeta}
+                  onPageChange={(nextPage) => {
+                    setPage(nextPage);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  isLoading={isLoading}
+                  isFetching={isFetching}
+                />
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
       <EasyApplyModal

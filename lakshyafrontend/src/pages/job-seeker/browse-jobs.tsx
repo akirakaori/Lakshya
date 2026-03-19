@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout, JobCard, JobFilter, LoadingSpinner, EmptyState, ActiveFilters, Footer, PageSizeSelect, PaginationControls, type PaginationMeta } from '../../components';
-import { useJobs, useJobMatchScores } from '../../hooks';
+import { useJobs, useJobMatchScores, useMyApplications } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
-import type { JobFilters } from '../../services';
+import type { Application, JobFilters } from '../../services';
 
 // Default filters
 const DEFAULT_FILTERS: JobFilters = {
@@ -89,8 +89,39 @@ const BrowseJobs: React.FC = () => {
   console.log('[BrowseJobs] About to call useJobs with:', appliedFilters);
   const { data, isLoading, isFetching } = useJobs(appliedFilters);
 
+  // Fetch my applications only for authenticated job seekers.
+  const { data: applicationsResponse } = useMyApplications(
+    undefined,
+    { enabled: isAuthenticatedJobSeeker }
+  );
+
   const jobs = useMemo(() => data?.data ?? [], [data]);
   const pagination = data?.pagination;
+
+  // Build a fast lookup map of jobId -> application status for visible card state.
+  const appliedJobLookup = useMemo(() => {
+    const lookup = new Map<string, Application['status']>();
+    const applications = applicationsResponse?.data ?? [];
+
+    applications.forEach((application) => {
+      if (!application || !application.jobId) {
+        return;
+      }
+
+      const normalizedJobId =
+        typeof application.jobId === 'string'
+          ? application.jobId
+          : application.jobId?._id;
+
+      if (!normalizedJobId) {
+        return;
+      }
+
+      lookup.set(normalizedJobId, application.status);
+    });
+
+    return lookup;
+  }, [applicationsResponse]);
 
   // Extract job IDs for batch match score fetch
   const jobIds = useMemo(() => jobs.map(job => job._id), [jobs]);
@@ -330,16 +361,21 @@ const BrowseJobs: React.FC = () => {
             ) : (
               <>
                 {/* Job Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 mb-8">
                   {filteredJobs.map((job) => {
                     const matchData = matchScores[job._id];
                     const matchScore = matchData?.matchScore ?? undefined;
+                    const applicationStatus = appliedJobLookup.get(job._id);
+                    const isApplied = !!applicationStatus;
+
                     return (
                       <JobCard 
                         key={job._id} 
                         job={job} 
                         showMatchScore 
                         matchScore={matchScore}
+                        isApplied={isApplied}
+                        applicationStatus={applicationStatus}
                       />
                     );
                   })}

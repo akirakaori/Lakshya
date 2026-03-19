@@ -6,7 +6,18 @@ export { profileService } from './profile-service';
 export { getLandingData } from './landing-service';
 
 export type { LoginCredentials, RegisterData, AuthResponse } from './auth-service';
-export type { Job, JobFilters, JobsResponse, CreateJobData, JobMatchAnalysis, JobMatchScore, BatchMatchScoresResponse, RecommendedJob } from './job-service';
+export type {
+  Job,
+  JobFilters,
+  JobsResponse,
+  CreateJobData,
+  JobMatchAnalysis,
+  JobMatchScore,
+  BatchMatchScoresResponse,
+  RecommendedJob,
+  SavedJobsFilters,
+  SavedJobsResponse
+} from './job-service';
 export type { 
   Application, 
   ApplyJobData, 

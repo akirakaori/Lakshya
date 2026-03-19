@@ -279,11 +279,13 @@ const removeSavedJobForUser = async (req, res) => {
 const getSavedJobsForUser = async (req, res) => {
   try {
     const userId = req.user.id;
-    const jobs = await userService.getSavedJobsForUser(userId);
+    const { page, limit } = req.query;
+    const result = await userService.getSavedJobsForUser(userId, { page, limit });
 
     res.status(200).json({
       success: true,
-      data: jobs,
+      data: result.data,
+      pagination: result.pagination,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
