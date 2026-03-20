@@ -5,6 +5,17 @@ const cloudinary = require('../config/cloudinary');
 const mongoose = require('mongoose');
 const { mergeProfile } = require('../Utils/profile-autofill');
 
+const INTERNAL_TEST_JOB_EXCLUSION = {
+  isTestData: { $ne: true },
+  $nor: [
+    {
+      title: /^Withdraw Flow QA$/i,
+      companyName: /^TestCo$/i,
+      description: /withdraw lifecycle/i,
+    },
+  ],
+};
+
 // Note: URL parsing for resumes removed. Use resumePublicId instead.
 // Avatar logic remains untouched.
 
@@ -449,7 +460,7 @@ const getSavedJobsForUser = async (userId, options = {}) => {
       .select('savedJobs')
       .populate({
         path: 'savedJobs',
-        match: { isDeleted: false, isActive: true, isTestData: { $ne: true } },
+        match: { isDeleted: false, isActive: true, ...INTERNAL_TEST_JOB_EXCLUSION },
       });
 
     if (!user) {

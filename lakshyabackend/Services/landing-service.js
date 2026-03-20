@@ -2,6 +2,17 @@ const JobModel = require('../models/job-model');
 const UserModel = require('../models/user-model');
 const { ROLES } = require('../Library/roles');
 
+const INTERNAL_TEST_JOB_EXCLUSION = {
+  isTestData: { $ne: true },
+  $nor: [
+    {
+      title: /^Withdraw Flow QA$/i,
+      companyName: /^TestCo$/i,
+      description: /withdraw lifecycle/i,
+    },
+  ],
+};
+
 /**
  * Get landing page data (stats + recent jobs)
  * Public endpoint - no authentication required
@@ -13,7 +24,7 @@ const getLandingData = async () => {
       status: 'open',
       isActive: true,
       isDeleted: { $ne: true },
-      isTestData: { $ne: true }
+      ...INTERNAL_TEST_JOB_EXCLUSION,
     };
 
     // Parallel execution of all queries for better performance
@@ -61,7 +72,7 @@ const searchPublicJobs = async (keyword = '', page = 1, limit = 8) => {
       status: 'open',
       isActive: true,
       isDeleted: { $ne: true },
-      isTestData: { $ne: true }
+      ...INTERNAL_TEST_JOB_EXCLUSION,
     };
 
     // If keyword is provided, add search conditions

@@ -3,6 +3,13 @@ const mongoose = require('mongoose');
 
 const PUBLIC_JOB_FILTER = {
   isTestData: { $ne: true },
+  $nor: [
+    {
+      title: /^Withdraw Flow QA$/i,
+      companyName: /^TestCo$/i,
+      description: /withdraw lifecycle/i,
+    },
+  ],
 };
 
 /**

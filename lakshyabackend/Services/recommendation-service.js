@@ -16,6 +16,16 @@ const ApplicationModel = require('../models/application-model');
 const { computeSkillMatch } = require('./job-match-service');
 
 const TOP_N = 6;
+const INTERNAL_TEST_JOB_EXCLUSION = {
+  isTestData: { $ne: true },
+  $nor: [
+    {
+      title: /^Withdraw Flow QA$/i,
+      companyName: /^TestCo$/i,
+      description: /withdraw lifecycle/i,
+    },
+  ],
+};
 
 // --------------- Experience helpers -----------------
 
@@ -140,7 +150,7 @@ async function getRecommendedJobsForUser(userId) {
     status: 'open',
     isActive: true,
     isDeleted: { $ne: true },
-    isTestData: { $ne: true },
+    ...INTERNAL_TEST_JOB_EXCLUSION,
   }).lean();
 
   const userHasSkills = (user.jobSeeker?.skills || []).length > 0;
