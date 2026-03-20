@@ -11,11 +11,18 @@ interface EasyApplyModalProps {
   job: Job | null;
   isOpen: boolean;
   onClose: () => void;
+  onConfirm: (jobId: string) => Promise<void>;
+  isSubmitting: boolean;
 }
 
-const EasyApplyModal: React.FC<EasyApplyModalProps> = ({ job, isOpen, onClose }) => {
+const EasyApplyModal: React.FC<EasyApplyModalProps> = ({
+  job,
+  isOpen,
+  onClose,
+  onConfirm,
+  isSubmitting,
+}) => {
   const navigate = useNavigate();
-  const applyMutation = useApplyForJob();
 
   if (!isOpen || !job) return null;
 
@@ -25,31 +32,11 @@ const EasyApplyModal: React.FC<EasyApplyModalProps> = ({ job, isOpen, onClose })
   };
 
   const handleEasyApplyConfirm = async () => {
-    const payload = {
-      jobId: job._id,
-      data: {},
-    };
-
-    // Debug: log payload before sending request
-    console.log('[SavedJobs EasyApply] Submitting application payload:', payload);
-
     try {
-      const response = await applyMutation.mutateAsync(payload);
-      console.log('[SavedJobs EasyApply] Application submitted successfully:', response);
-      toast.success('Application submitted successfully');
+      await onConfirm(job._id);
       onClose();
-    } catch (err: unknown) {
-      console.error('[SavedJobs EasyApply] Failed to submit application:', err);
-
-      const errorMessage =
-        typeof err === 'object' &&
-        err !== null &&
-        'response' in err &&
-        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : 'Failed to submit application';
-
-      toast.error(errorMessage);
+    } catch (error) {
+      console.debug('[SavedJobs EasyApply] Confirmation handled error:', error);
     }
   };
   return (
@@ -75,10 +62,10 @@ const EasyApplyModal: React.FC<EasyApplyModalProps> = ({ job, isOpen, onClose })
           <button
             type="button"
             onClick={handleEasyApplyConfirm}
-            disabled={applyMutation.isPending}
+            disabled={isSubmitting}
             className="flex-1 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:opacity-60 text-sm font-medium"
           >
-            {applyMutation.isPending ? 'Applying...' : 'Easy Apply'}
+            {isSubmitting ? 'Applying...' : 'Easy Apply'}
           </button>
           <button
             type="button"
@@ -111,9 +98,10 @@ const SavedJobs: React.FC = () => {
 
   const { data, isLoading, isFetching, isError } = useSavedJobs({ page, limit });
   const { data: applicationsResponse } = useMyApplications(
-    undefined,
+    { page: 1, limit: 200 },
     { enabled: isAuthenticatedJobSeeker }
   );
+  const applyMutation = useApplyForJob();
   const removeSavedJobMutation = useRemoveSavedJob();
   const navigate = useNavigate();
 
@@ -173,8 +161,12 @@ const SavedJobs: React.FC = () => {
     setSearchParams(params, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  const appliedJobLookup = useMemo(() => {
-    const lookup = new Map<string, Application['status']>();
+  const applicationLookup = useMemo(() => {
+    const lookup = new Map<string, {
+      status: Application['status'];
+      isWithdrawn: boolean;
+      withdrawnAt: string | null;
+    }>();
     const applications = applicationsResponse?.data ?? [];
 
     applications.forEach((application) => {
@@ -191,7 +183,11 @@ const SavedJobs: React.FC = () => {
         return;
       }
 
-      lookup.set(normalizedJobId, application.status);
+      lookup.set(normalizedJobId, {
+        status: application.status,
+        isWithdrawn: application.status === 'withdrawn' || !!application.isWithdrawn,
+        withdrawnAt: application.withdrawnAt || null,
+      });
     });
 
     return lookup;
@@ -228,6 +224,30 @@ const SavedJobs: React.FC = () => {
       toast.success('Removed from saved jobs');
     } catch {
       toast.error('Failed to remove saved job');
+    }
+  };
+
+  const handleApplyOrReapply = async (jobId: string, successMessage: string) => {
+    const payload = { jobId, data: {} };
+
+    console.log('[SavedJobs Apply/Reapply] Submitting application payload:', payload);
+
+    try {
+      await applyMutation.mutateAsync(payload);
+      toast.success(successMessage);
+    } catch (err: unknown) {
+      console.error('[SavedJobs Apply/Reapply] Failed to submit application:', err);
+
+      const errorMessage =
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : 'Failed to submit application';
+
+      toast.error(errorMessage);
+      throw err;
     }
   };
 
@@ -289,8 +309,15 @@ const SavedJobs: React.FC = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
               {savedJobs.map((job) => {
-                const applicationStatus = appliedJobLookup.get(job._id);
+                const applicationMeta = applicationLookup.get(job._id);
+                const applicationStatus = applicationMeta?.status;
                 const isApplied = !!applicationStatus;
+                const isWithdrawn = !!applicationMeta?.isWithdrawn;
+                const isJobOpenForApply = !job.isDeleted && job.isActive && job.status === 'open';
+                const canReapply = isWithdrawn && isJobOpenForApply;
+                const withdrawnDateText = applicationMeta?.withdrawnAt
+                  ? new Date(applicationMeta.withdrawnAt).toLocaleDateString()
+                  : null;
                 const matchData = matchScores[job._id];
                 const matchScore = matchData?.matchScore ?? undefined;
 
@@ -314,6 +341,11 @@ const SavedJobs: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => {
+                          if (isWithdrawn && canReapply) {
+                            handleApplyOrReapply(job._id, 'Reapplied successfully');
+                            return;
+                          }
+
                           if (isApplied) {
                             navigate('/job-seeker/my-applications');
                             return;
@@ -322,13 +354,24 @@ const SavedJobs: React.FC = () => {
                           setSelectedJob(job);
                           setShowApplyModal(true);
                         }}
-                        className={`px-4 py-2 text-sm rounded-full transition-colors ${
-                          isApplied
+                        disabled={applyMutation.isPending || (isWithdrawn && !canReapply)}
+                        className={`px-4 py-2 text-sm rounded-full transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                          isApplied && !isWithdrawn
                             ? 'border border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
+                            : isWithdrawn && canReapply
+                            ? 'bg-amber-500 text-white hover:bg-amber-600'
+                            : isWithdrawn && !canReapply
+                            ? 'border border-gray-300 bg-gray-100 text-gray-500'
                             : 'bg-green-500 text-white hover:bg-green-600'
                         }`}
                       >
-                        {isApplied ? 'Track Application' : 'Easy Apply'}
+                        {isWithdrawn && canReapply
+                          ? 'Reapply'
+                          : isWithdrawn && !canReapply
+                          ? 'Closed / Unavailable'
+                          : isApplied
+                          ? 'Track Application'
+                          : 'Easy Apply'}
                       </button>
                       <button
                         type="button"
@@ -338,6 +381,17 @@ const SavedJobs: React.FC = () => {
                         Remove
                       </button>
                     </div>
+                    {isWithdrawn && (
+                      <div className="text-sm text-amber-700 px-1">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 mr-2">
+                          Withdrawn
+                        </span>
+                        {withdrawnDateText ? `Withdrawn on ${withdrawnDateText}` : 'Application was withdrawn'}
+                        {!canReapply && (
+                          <p className="text-xs text-gray-500 mt-1">This job is no longer open for reapplication.</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -362,6 +416,8 @@ const SavedJobs: React.FC = () => {
       <EasyApplyModal
         job={selectedJob}
         isOpen={showApplyModal}
+        onConfirm={(jobId) => handleApplyOrReapply(jobId, 'Application submitted successfully')}
+        isSubmitting={applyMutation.isPending}
         onClose={() => {
           setShowApplyModal(false);
           setSelectedJob(null);

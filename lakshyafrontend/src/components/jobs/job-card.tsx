@@ -24,6 +24,7 @@ const statusBadgeStyles: Record<string, string> = {
   rejected: 'bg-red-100 text-red-700',
   offer: 'bg-teal-100 text-teal-700',
   hired: 'bg-emerald-100 text-emerald-700',
+  withdrawn: 'bg-amber-100 text-amber-800',
 };
 
 const statusLabels: Record<string, string> = {
@@ -33,6 +34,7 @@ const statusLabels: Record<string, string> = {
   rejected: 'Rejected',
   offer: 'Offer',
   hired: 'Hired',
+  withdrawn: 'Withdrawn',
 };
 
 const formatSalary = (salary: Job['salary'], salaryVisible?: boolean) => {
@@ -71,6 +73,9 @@ const JobCard: React.FC<JobCardProps> = ({
   
   const salaryDisplay = formatSalary(job.salary, job.salaryVisible);
   const normalizedStatus = (applicationStatus || 'applied').toLowerCase();
+  const hasApplicationHistory = !!applicationStatus || isApplied;
+  const isWithdrawnApplication = normalizedStatus === 'withdrawn';
+  const hasActiveApplication = hasApplicationHistory && !isWithdrawnApplication;
   const appliedBadgeClass = statusBadgeStyles[normalizedStatus] || 'bg-green-100 text-green-700';
   const appliedStatusLabel = statusLabels[normalizedStatus] || 'Applied';
   const skillsToShow = (job.skillsRequired?.length ? job.skillsRequired : job.skills) || [];
@@ -127,8 +132,10 @@ const JobCard: React.FC<JobCardProps> = ({
       <Link
         to={`/job-seeker/jobs/${job._id}`}
         className={`block rounded-lg border p-4 hover:shadow-md transition-all ${
-          isApplied
+          hasActiveApplication
             ? 'bg-gradient-to-br from-green-50/50 via-white to-white border-green-300 ring-1 ring-green-200'
+            : isWithdrawnApplication
+            ? 'bg-gradient-to-br from-amber-50/50 via-white to-white border-amber-300 ring-1 ring-amber-200'
             : 'bg-white border-gray-200 hover:border-blue-200'
         }`}
       >
@@ -144,7 +151,7 @@ const JobCard: React.FC<JobCardProps> = ({
           )}
         </div>
         <p className="text-sm text-gray-500 mt-2">{job.location}</p>
-        {isApplied && (
+        {hasApplicationHistory && (
           <span className={`inline-flex items-center gap-1.5 mt-3 rounded-full px-2.5 py-1 text-xs font-medium ${appliedBadgeClass}`}>
             <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" aria-hidden="true"></span>
             {appliedStatusLabel}
@@ -157,13 +164,15 @@ const JobCard: React.FC<JobCardProps> = ({
   return (
     <div
       className={`group bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all overflow-hidden ${
-        isApplied
+        hasActiveApplication
           ? 'border-green-300 ring-1 ring-green-200 bg-gradient-to-br from-green-50/40 via-white to-white'
+          : isWithdrawnApplication
+          ? 'border-amber-300 ring-1 ring-amber-200 bg-gradient-to-br from-amber-50/40 via-white to-white'
           : 'border-slate-200 hover:border-blue-200'
       }`}
     >
       {/* Decorative Top Accent Strip */}
-      <div className={`h-1 w-full ${isApplied ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`}></div>
+      <div className={`h-1 w-full ${hasActiveApplication ? 'bg-gradient-to-r from-green-500 to-emerald-500' : isWithdrawnApplication ? 'bg-gradient-to-r from-amber-500 to-yellow-500' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`}></div>
       
       <div className="p-6">
         {/* Header */}
@@ -223,7 +232,7 @@ const JobCard: React.FC<JobCardProps> = ({
 
         {/* Status and Meta Badges */}
         <div className="mt-4 flex flex-wrap gap-2">
-          {isApplied && (
+          {hasApplicationHistory && (
             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${appliedBadgeClass}`}>
               <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" aria-hidden="true"></span>
               {appliedStatusLabel}
@@ -298,7 +307,7 @@ const JobCard: React.FC<JobCardProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {isApplied ? (
+            {hasActiveApplication ? (
               <Link
                 to="/job-seeker/my-applications"
                 className="w-full text-center rounded-xl border border-green-300 bg-green-50 text-green-700 px-4 py-2.5 text-sm font-semibold hover:bg-green-100 transition"
@@ -310,7 +319,7 @@ const JobCard: React.FC<JobCardProps> = ({
                 to={`/job-seeker/jobs/${job._id}`}
                 className="w-full text-center rounded-xl border border-green-500 text-green-700 px-4 py-2.5 text-sm font-semibold hover:bg-green-50 transition"
               >
-                Apply Now
+                {isWithdrawnApplication ? 'Reapply' : 'Apply Now'}
               </Link>
             )}
 

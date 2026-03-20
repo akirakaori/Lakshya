@@ -43,7 +43,9 @@ export interface Application {
   } | string;
   resume?: string;
   coverLetter?: string;
-  status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired';
+  status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired' | 'withdrawn';
+  isWithdrawn?: boolean;
+  withdrawnAt?: string | null;
   notes?: string;
   // Legacy single interview field (deprecated - use interviews array)
   interview?: {
@@ -64,13 +66,13 @@ export interface ApplyJobData {
 
 export interface ApplicationFilters {
   q?: string;
-  status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired';
+  status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired' | 'withdrawn';
   page?: number;
   limit?: number;
 }
 
 export interface RecruiterApplicationFilters {
-  status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired';
+  status?: 'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired' | 'withdrawn';
   sort?: 'newest' | 'match' | 'experience';
   search?: string;
   minScore?: number;
@@ -103,6 +105,7 @@ export interface RecruiterApplicationsResponse {
       shortlisted: number;
       interview: number;
       rejected: number;
+      withdrawn: number;
       total: number;
     };
     applications: RecruiterApplication[];
@@ -177,7 +180,7 @@ export const applicationService = {
 
   // Withdraw application (job seeker only)
   withdrawApplication: async (applicationId: string): Promise<{ success: boolean; message: string }> => {
-    const response = await axiosInstance.delete(`/applications/${applicationId}`);
+    const response = await axiosInstance.delete(`/applications/${applicationId}/withdraw`);
     return response.data;
   },
 
@@ -188,6 +191,10 @@ export const applicationService = {
       return response.data.some((app) => {
         // Guard: skip invalid applications
         if (!app || !app.jobId) {
+          return false;
+        }
+
+        if (app.status === 'withdrawn' || app.isWithdrawn) {
           return false;
         }
         

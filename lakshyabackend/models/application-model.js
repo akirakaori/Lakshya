@@ -22,8 +22,21 @@ const applicationSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['applied', 'shortlisted', 'interview', 'rejected', 'hired'],
+    enum: ['applied', 'shortlisted', 'interview', 'rejected', 'hired', 'withdrawn'],
     default: 'applied'
+  },
+  isWithdrawn: {
+    type: Boolean,
+    default: false,
+  },
+  withdrawnAt: {
+    type: Date,
+    default: null,
+  },
+  withdrawnBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
   },
   notes: {
     type: String,

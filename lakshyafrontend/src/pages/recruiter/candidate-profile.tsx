@@ -37,6 +37,8 @@ interface ApplicationSnapshot {
   _id: string;
   jobId: string | { _id: string; title: string; interviewRoundsRequired?: number };
   status: string;
+  isWithdrawn?: boolean;
+  withdrawnAt?: string;
   notes: string;
   coverLetter?: string;
   createdAt: string;
@@ -81,6 +83,7 @@ const CandidateProfile: React.FC = () => {
   const candidate: CandidateProfile | null = data?.data?.candidate || null;
   const application: ApplicationSnapshot | null = data?.data?.application || null;
   const signedResumeUrl = data?.signedResumeUrl; // If backend provides signed URLs
+  const isWithdrawnApplication = application?.status === 'withdrawn' || application?.isWithdrawn;
   
   // Extract jobId for modal
   const jobId = typeof application?.jobId === 'string' 
@@ -371,10 +374,17 @@ const CandidateProfile: React.FC = () => {
                           ? 'bg-blue-100 text-blue-700'
                           : application.status === 'rejected'
                           ? 'bg-red-100 text-red-700'
+                          : application.status === 'withdrawn'
+                          ? 'bg-amber-100 text-amber-800'
                           : 'bg-gray-100 text-gray-700'
                       }`}>
                         {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
                       </span>
+                    )}
+                    {isWithdrawnApplication && (
+                      <p className="text-xs text-amber-700 mt-2">
+                        Withdrawn {application?.withdrawnAt ? new Date(application.withdrawnAt).toLocaleDateString() : 'by candidate'}
+                      </p>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -600,8 +610,15 @@ const CandidateProfile: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
               {application ? (
                 <div className="space-y-3">
+                  {isWithdrawnApplication && (
+                    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm text-amber-800 font-medium">Candidate withdrew this application.</p>
+                      <p className="text-xs text-amber-700 mt-1">Recruiter actions are disabled for withdrawn applications.</p>
+                    </div>
+                  )}
+
                   {/* Interview Progress Indicator */}
-                  {application.status === 'interview' && (
+                  {application.status === 'interview' && !isWithdrawnApplication && (
                     <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-indigo-900">Interview Progress</span>
@@ -628,7 +645,7 @@ const CandidateProfile: React.FC = () => {
                   )}
 
                   {/* APPLIED status actions */}
-                  {application.status === 'applied' && (
+                  {application.status === 'applied' && !isWithdrawnApplication && (
                     <>
                       <button
                         onClick={handleShortlist}
@@ -651,7 +668,7 @@ const CandidateProfile: React.FC = () => {
                   )}
 
                   {/* SHORTLISTED status actions */}
-                  {application.status === 'shortlisted' && (
+                  {application.status === 'shortlisted' && !isWithdrawnApplication && (
                     <>
                       <button
                         onClick={() => {
@@ -676,7 +693,7 @@ const CandidateProfile: React.FC = () => {
                   )}
 
                   {/* INTERVIEW status actions */}
-                  {application.status === 'interview' && (
+                  {application.status === 'interview' && !isWithdrawnApplication && (
                     <>
                       {/* Interview Progress Indicator */}
                       <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
@@ -757,7 +774,7 @@ const CandidateProfile: React.FC = () => {
                   )}
 
                   {/* REJECTED/HIRED status (read-only) */}
-                  {(application.status === 'rejected' || application.status === 'hired') && (
+                  {(application.status === 'rejected' || application.status === 'hired' || application.status === 'withdrawn') && (
                     <div className="text-center py-4">
                       <p className="text-sm text-gray-500">
                         Status: <span className="font-medium capitalize">{application.status}</span>

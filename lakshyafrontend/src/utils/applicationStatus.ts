@@ -24,6 +24,8 @@ export function getStatusLabel(status?: string): string {
       return 'Selected';
     case 'offer':
       return 'Offer Extended';
+    case 'withdrawn':
+      return 'Withdrawn';
     default:
       return 'Pending';
   }
@@ -50,6 +52,8 @@ export function getStatusBadgeClass(status?: string): string {
       return 'bg-emerald-100 text-emerald-700';
     case 'offer':
       return 'bg-teal-100 text-teal-700';
+    case 'withdrawn':
+      return 'bg-gray-200 text-gray-700';
     default:
       return 'bg-gray-100 text-gray-700';
   }

@@ -43,6 +43,14 @@ const createApplicantStatusNotification = async (application, status) => {
   }
 };
 
+const ensureApplicationIsActionable = (application) => {
+  if (application.isWithdrawn || application.status === 'withdrawn') {
+    const error = new Error('This application was withdrawn by the candidate and cannot be updated');
+    error.statusCode = 400;
+    throw error;
+  }
+};
+
 /**
  * Apply for a job
  */
@@ -76,12 +84,6 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
       applicant: applicantId
     });
     
-    if (existingApplication) {
-      const error = new Error('You have already applied for this job');
-      error.statusCode = 400;
-      throw error;
-    }
-    
     // Get user's default resume if not provided
     let resume = applicationData.resume;
     if (!resume) {
@@ -102,17 +104,37 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
       console.warn('⚠ Failed to check existing match analysis for application:', analysisErr.message);
     }
 
-    // Create application without triggering any resume analysis
-    const application = new ApplicationModel({
-      jobId,
-      applicant: applicantId,
-      resume,
-      coverLetter: applicationData.coverLetter || null,
-      status: 'applied',
-      hasMatchAnalysis,
-      analysisStatus,
-    });
-    
+    let application;
+
+    if (existingApplication) {
+      if (!(existingApplication.isWithdrawn || existingApplication.status === 'withdrawn')) {
+        const error = new Error('You have already applied for this job');
+        error.statusCode = 400;
+        throw error;
+      }
+
+      existingApplication.resume = resume;
+      existingApplication.coverLetter = applicationData.coverLetter || null;
+      existingApplication.status = 'applied';
+      existingApplication.isWithdrawn = false;
+      existingApplication.withdrawnAt = null;
+      existingApplication.withdrawnBy = null;
+      existingApplication.hasMatchAnalysis = hasMatchAnalysis;
+      existingApplication.analysisStatus = analysisStatus;
+      application = existingApplication;
+    } else {
+      // Create application without triggering any resume analysis
+      application = new ApplicationModel({
+        jobId,
+        applicant: applicantId,
+        resume,
+        coverLetter: applicationData.coverLetter || null,
+        status: 'applied',
+        hasMatchAnalysis,
+        analysisStatus,
+      });
+    }
+
     await application.save();
 
     try {
@@ -278,6 +300,8 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
       error.statusCode = 400;
       throw error;
     }
+
+    ensureApplicationIsActionable(application);
     
     application.status = newStatus;
     await application.save();
@@ -330,9 +354,26 @@ const withdrawApplication = async (applicationId, applicantId) => {
       throw error;
     }
 
+    if (application.isWithdrawn || application.status === 'withdrawn') {
+      const error = new Error('Application is already withdrawn');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const allowedStatuses = ['applied', 'shortlisted'];
+    if (!allowedStatuses.includes(application.status)) {
+      const error = new Error('You can only withdraw applications in applied or shortlisted status');
+      error.statusCode = 400;
+      throw error;
+    }
+
     const job = await JobModel.findById(application.jobId).select('title createdBy');
-    
-    await application.deleteOne();
+
+    application.isWithdrawn = true;
+    application.withdrawnAt = new Date();
+    application.withdrawnBy = applicantId;
+    application.status = 'withdrawn';
+    await application.save();
 
     if (job?.createdBy) {
       try {
@@ -375,6 +416,8 @@ const shortlistCandidate = async (applicationId, recruiterId) => {
       error.statusCode = 403;
       throw error;
     }
+
+    ensureApplicationIsActionable(application);
     
     application.status = 'shortlisted';
     await application.save();
@@ -409,6 +452,8 @@ const scheduleInterview = async (applicationId, recruiterId, interviewData) => {
       error.statusCode = 403;
       throw error;
     }
+
+    ensureApplicationIsActionable(application);
     
     application.status = 'interview';
     application.interview = {
@@ -448,6 +493,8 @@ const scheduleInterviewRound = async (applicationId, recruiterId, interviewData)
       error.statusCode = 403;
       throw error;
     }
+
+    ensureApplicationIsActionable(application);
     
     // Initialize interviews array if it doesn't exist
     if (!application.interviews) {
@@ -513,6 +560,8 @@ const updateInterviewFeedback = async (applicationId, interviewId, recruiterId, 
       error.statusCode = 403;
       throw error;
     }
+
+    ensureApplicationIsActionable(application);
     
     // Find the interview by ID
     const interview = application.interviews.id(interviewId);
@@ -561,6 +610,8 @@ const updateInterviewRound = async (applicationId, interviewId, recruiterId, int
       error.statusCode = 403;
       throw error;
     }
+
+    ensureApplicationIsActionable(application);
     
     // Find the interview by ID
     const interview = application.interviews.id(interviewId);

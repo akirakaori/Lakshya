@@ -1,16 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { DashboardLayout, LoadingSpinner, EmptyState, PaginationControls, PageSizeSelect, type PaginationMeta } from '../../components';
-import { useMyApplications, useJobMatchScores } from '../../hooks';
+import { DashboardLayout, LoadingSpinner, EmptyState, PaginationControls, PageSizeSelect, ConfirmModal, type PaginationMeta } from '../../components';
+import { useMyApplications, useJobMatchScores, useWithdrawApplication } from '../../hooks';
 import type { Job, Interview } from '../../services';
 import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStatus';
+import { handleError, handleSuccess } from '../../Utils';
 
 const MyApplications: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'withdrawn'>('all');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedAppId, setExpandedAppId] = useState<string | null>(null);
+  const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null);
 
   const page = useMemo(() => {
     const parsedPage = Number(searchParams.get('page'));
@@ -47,6 +49,7 @@ const MyApplications: React.FC = () => {
 
   const applications = response?.data || [];
   const pagination = response?.pagination;
+  const withdrawMutation = useWithdrawApplication();
 
   const paginationMeta = useMemo<PaginationMeta | null>(() => {
     if (!pagination) {
@@ -230,6 +233,7 @@ const MyApplications: React.FC = () => {
               <option value="shortlisted">Shortlisted</option>
               <option value="interview">Interview</option>
               <option value="rejected">Rejected</option>
+              <option value="withdrawn">Withdrawn</option>
             </select>
           </div>
         </div>
@@ -296,6 +300,7 @@ const MyApplications: React.FC = () => {
                     const interviews = (appWithInterviews.interviews || []) as Interview[];
                     const hasInterviews = interviews.length > 0;
                     const isExpanded = expandedAppId === application._id;
+                    const canWithdraw = application.status === 'applied' || application.status === 'shortlisted';
                     
                     return (
                       <React.Fragment key={application._id}>
@@ -348,17 +353,32 @@ const MyApplications: React.FC = () => {
                             )}
                           </td>
                           <td className="px-6 py-4">
-                            {job && jobId && (
-                              <Link
-                                to={`/job-seeker/jobs/${jobId}`}
-                                className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+                            <div className="flex items-center gap-3">
+                              {job && jobId ? (
+                                <Link
+                                  to={`/job-seeker/jobs/${jobId}`}
+                                  className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+                                >
+                                  View Job
+                                </Link>
+                              ) : (
+                                <span className="text-gray-400 text-sm">N/A</span>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => setWithdrawTargetId(application._id)}
+                                disabled={!canWithdraw || withdrawMutation.isPending}
+                                title={canWithdraw ? 'Withdraw Application' : 'Withdrawal is only allowed for applied or shortlisted applications'}
+                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                                  canWithdraw
+                                    ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                                    : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                                }`}
                               >
-                                View Job
-                              </Link>
-                            )}
-                            {!job && (
-                              <span className="text-gray-400 text-sm">N/A</span>
-                            )}
+                                Withdraw Application
+                              </button>
+                            </div>
                           </td>
                         </tr>
                         
@@ -485,6 +505,28 @@ const MyApplications: React.FC = () => {
             </div>
           </div>
         )}
+
+        <ConfirmModal
+          isOpen={!!withdrawTargetId}
+          onClose={() => setWithdrawTargetId(null)}
+          onConfirm={async () => {
+            if (!withdrawTargetId) return;
+
+            try {
+              const result = await withdrawMutation.mutateAsync(withdrawTargetId);
+              handleSuccess(result.message || 'Application withdrawn successfully');
+              setWithdrawTargetId(null);
+            } catch (error: any) {
+              handleError(error?.response?.data?.message || 'Failed to withdraw application');
+            }
+          }}
+          title="Withdraw Application"
+          message="Are you sure you want to withdraw this application? This action cannot be undone."
+          cancelText="Cancel"
+          confirmText="Confirm Withdraw"
+          confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
+          isLoading={withdrawMutation.isPending}
+        />
       </div>
     </DashboardLayout>
   );

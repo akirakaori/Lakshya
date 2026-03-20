@@ -31,7 +31,7 @@ const JobApplications: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
   
   // State
-  const [activeTab, setActiveTab] = useState<'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' >('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'withdrawn'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'match' | 'experience'>('newest');
   const [selectedApplications, setSelectedApplications] = useState<Set<string>>(new Set());
   const [viewingDetailsId, setViewingDetailsId] = useState<string | null>(null);
@@ -85,20 +85,28 @@ const JobApplications: React.FC = () => {
     rejected: 0, 
     hired: 0, 
     offer: 0, 
+    withdrawn: 0,
     total: 0 
   };
   const applications = data?.data?.applications || [];
 
   // Handlers
   const handleSelectAll = () => {
-    if (selectedApplications.size === applications.length) {
+    const selectableApplications = applications.filter((app: RecruiterApplication) => app.status !== 'withdrawn' && !app.isWithdrawn);
+
+    if (selectedApplications.size === selectableApplications.length) {
       setSelectedApplications(new Set());
     } else {
-      setSelectedApplications(new Set(applications.map((app: RecruiterApplication) => app._id)));
+      setSelectedApplications(new Set(selectableApplications.map((app: RecruiterApplication) => app._id)));
     }
   };
 
   const handleSelectOne = (id: string) => {
+    const target = applications.find((app: RecruiterApplication) => app._id === id);
+    if (!target || target.status === 'withdrawn' || target.isWithdrawn) {
+      return;
+    }
+
     const newSet = new Set(selectedApplications);
     if (newSet.has(id)) {
       newSet.delete(id);
@@ -115,8 +123,18 @@ const JobApplications: React.FC = () => {
     }
 
     try {
+      const actionableIds = Array.from(selectedApplications).filter((id) => {
+        const app = applications.find((item: RecruiterApplication) => item._id === id);
+        return !!app && app.status !== 'withdrawn' && !app.isWithdrawn;
+      });
+
+      if (actionableIds.length === 0) {
+        toast.error('Selected applications are withdrawn and cannot be updated');
+        return;
+      }
+
       const result = await bulkUpdateMutation.mutateAsync({
-        applicationIds: Array.from(selectedApplications),
+        applicationIds: actionableIds,
         status
       });
       toast.success(`${result.data.modifiedCount} application(s) updated to ${result.data.status}`);
@@ -198,6 +216,8 @@ const JobApplications: React.FC = () => {
         return 'bg-emerald-100 text-emerald-700';
       case 'offer':
         return 'bg-teal-100 text-teal-700';
+      case 'withdrawn':
+        return 'bg-amber-100 text-amber-800';
       default:
         return 'bg-gray-100 text-gray-700';
     }
@@ -249,9 +269,7 @@ const JobApplications: React.FC = () => {
         </div>
 
         {/* Tabs with Counts */}
-        <div className="hired', label: 'Hired', count: counts.hired || 0 },
-                { key: 'offer', label: 'Offer', count: counts.offer || 0 },
-                { key: 'bg-white rounded-xl border border-gray-200 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 mb-6">
           <div className="border-b border-gray-200">
             <nav className="flex -mb-px overflow-x-auto">
               {[
@@ -260,6 +278,7 @@ const JobApplications: React.FC = () => {
                 { key: 'shortlisted', label: 'Shortlisted', count: counts.shortlisted },
                 { key: 'interview', label: 'Interview', count: counts.interview },
                 { key: 'rejected', label: 'Rejected', count: counts.rejected },
+                { key: 'withdrawn', label: 'Withdrawn', count: counts.withdrawn || 0 },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -525,8 +544,9 @@ const JobApplications: React.FC = () => {
                   <th className="px-4 py-3 text-left">
                     <input
                       type="checkbox"
-                      checked={selectedApplications.size === applications.length && applications.length > 0}
+                      checked={selectedApplications.size === applications.filter((app: RecruiterApplication) => app.status !== 'withdrawn' && !app.isWithdrawn).length && applications.some((app: RecruiterApplication) => app.status !== 'withdrawn' && !app.isWithdrawn)}
                       onChange={handleSelectAll}
+                      disabled={!applications.some((app: RecruiterApplication) => app.status !== 'withdrawn' && !app.isWithdrawn)}
                       className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                     />
                   </th>
@@ -550,6 +570,7 @@ const JobApplications: React.FC = () => {
                   const avatarUrl = applicant?.profileImageUrl ? getFileUrl(applicant.profileImageUrl) : null;
                   const initials = applicant ? getInitials(applicant.fullName || applicant.name || 'U') : 'U';
                   const isSelected = selectedApplications.has(application._id);
+                  const isWithdrawn = application.status === 'withdrawn' || application.isWithdrawn;
 
                   console.log('[RecruiterTable] Application row:', {
                     id: application._id,
@@ -567,6 +588,7 @@ const JobApplications: React.FC = () => {
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleSelectOne(application._id)}
+                            disabled={isWithdrawn}
                             className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                           />
                         </td>
@@ -665,7 +687,7 @@ const JobApplications: React.FC = () => {
                               application._id, 
                               e.target.value as 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer'
                             )}
-                            disabled={updateStatusMutation.isPending}
+                            disabled={updateStatusMutation.isPending || isWithdrawn}
                             className={`px-3 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${getStatusColor(application.status)} disabled:opacity-50`}
                           >
                             <option value="applied">Applied</option>
@@ -673,6 +695,7 @@ const JobApplications: React.FC = () => {
                             <option value="interview">Interview</option>
                             <option value="rejected">Rejected</option>
                             <option value="hired">Hired</option>
+                            {isWithdrawn && <option value="withdrawn">Withdrawn</option>}
                             
                           </select>
                         </td>
@@ -856,30 +879,36 @@ const JobApplications: React.FC = () => {
                   {/* Status Update */}
                   <div className="pt-4 border-t border-gray-200">
                     <h4 className="text-sm font-semibold text-gray-900 mb-3">Update Status</h4>
-                    <div className="flex gap-2">
-                      {['shortlisted', 'interview', 'rejected'].map((status) => (
-                        <button
-                          key={status}
-                          onClick={() => {
-                            handleStatusChange(
-                              viewingDetails._id, 
-                              status as 'shortlisted' | 'interview' | 'rejected'
-                            );
-                            setViewingDetailsId(null);
-                          }}
-                          disabled={viewingDetails.status === status}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            viewingDetails.status === status
-                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                              : status === 'rejected'
-                              ? 'bg-red-600 text-white hover:bg-red-700'
-                              : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                          }`}
-                        >
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </button>
-                      ))}
-                    </div>
+                    {(viewingDetails.status === 'withdrawn' || viewingDetails.isWithdrawn) ? (
+                      <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        This candidate withdrew the application. Status updates are disabled.
+                      </p>
+                    ) : (
+                      <div className="flex gap-2">
+                        {['shortlisted', 'interview', 'rejected'].map((status) => (
+                          <button
+                            key={status}
+                            onClick={() => {
+                              handleStatusChange(
+                                viewingDetails._id, 
+                                status as 'shortlisted' | 'interview' | 'rejected'
+                              );
+                              setViewingDetailsId(null);
+                            }}
+                            disabled={viewingDetails.status === status}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              viewingDetails.status === status
+                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                : status === 'rejected'
+                                ? 'bg-red-600 text-white hover:bg-red-700'
+                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                            }`}
+                          >
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="px-6 py-4 border-t border-gray-200 flex justify-between bg-gray-50">

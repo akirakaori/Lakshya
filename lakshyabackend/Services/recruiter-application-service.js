@@ -41,6 +41,12 @@ const notifyApplicantOnStatusUpdate = async ({ application, status, jobTitle }) 
   }
 };
 
+const ensureApplicationIsActionable = (application) => {
+  if (application.isWithdrawn || application.status === 'withdrawn') {
+    throw { statusCode: 400, message: 'This application was withdrawn by the candidate and cannot be updated' };
+  }
+};
+
 /**
  * Normalize skill for matching (lowercase, trim)
  */
@@ -192,6 +198,7 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
     rejected: 0,
     hired: 0,
     offer: 0,
+    withdrawn: 0,
     total: 0
   };
 
@@ -231,6 +238,8 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
   if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
     throw { statusCode: 403, message: 'You are not authorized to update this application' };
   }
+
+  ensureApplicationIsActionable(application);
 
   // Update status
   application.status = newStatus;
@@ -277,8 +286,19 @@ const bulkUpdateApplicationStatus = async (jobId, recruiterId, applicationIds, n
       _id: { $in: applicationIds },
       jobId: jobId,
     },
-    '_id applicant jobId'
+    '_id applicant jobId status isWithdrawn'
   ).lean();
+
+  const withdrawnApplications = applicationsToNotify.filter(
+    (application) => application.isWithdrawn || application.status === 'withdrawn'
+  );
+
+  if (withdrawnApplications.length > 0) {
+    throw {
+      statusCode: 400,
+      message: 'One or more selected applications were withdrawn and cannot be updated',
+    };
+  }
 
   // Bulk update
   const result = await ApplicationModel.updateMany(
@@ -341,6 +361,8 @@ const getApplicationDetails = async (applicationId, recruiterId) => {
       notes: application.notes,
       coverLetter: application.coverLetter,
       createdAt: application.createdAt,
+      withdrawnAt: application.withdrawnAt,
+      isWithdrawn: application.isWithdrawn,
       // Match snapshot (frozen at apply time)
       matchScore: application.matchScore || 0,
       matchedSkills: application.matchedSkills || [],

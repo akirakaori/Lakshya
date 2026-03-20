@@ -3,13 +3,14 @@ import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'reac
 import { DashboardLayout, LoadingSpinner, EmptyState, ErrorBoundary } from '../../components';
 import { JobCard } from '../../components/jobs';
 import JobMatchPanel from '../../components/jobs/JobMatchPanel';
-import { useJob, useJobs, useApplyForJob, useHasApplied, useJobMatch, useIsJobSaved, useSaveJob, useRemoveSavedJob } from '../../hooks';
+import { useJob, useJobs, useApplyForJob, useJobMatch, useIsJobSaved, useSaveJob, useRemoveSavedJob, useMyApplications } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
 import type { Job } from '../../services';
 import { getCategoryMeta } from '../../constants/jobCategories';
 import DOMPurify from 'dompurify';
 import { normalizeRichContent } from '../../utils/rich-text';
+import { getStatusBadgeClass, getStatusLabel } from '../../utils/applicationStatus';
 
 import type { Config as DOMPurifyConfig } from 'dompurify';
 
@@ -59,8 +60,11 @@ const JobDetails: React.FC = () => {
   const { data: jobData, isLoading, error } = useJob(safeJobId);
   const { data: relatedJobsData } = useJobs({ limit: 4 });
   const applyMutation = useApplyForJob();
-  const hasApplied = useHasApplied(safeJobId);
   const { user } = useAuth();
+  const { data: myApplicationsData } = useMyApplications(
+    { page: 1, limit: 200 },
+    { enabled: !!user && user.role === 'job_seeker' }
+  );
   const { data: matchData } = useJobMatch(jobId);
   const isSaved = useIsJobSaved(safeJobId);
   const saveJobMutation = useSaveJob();
@@ -68,6 +72,22 @@ const JobDetails: React.FC = () => {
 
   const job = jobData?.data;
   const relatedJobs = relatedJobsData?.data?.filter((j: Job) => j._id !== safeJobId).slice(0, 4) || [];
+  const currentApplication = myApplicationsData?.data?.find((app) => {
+    if (!app?.jobId) {
+      return false;
+    }
+
+    if (typeof app.jobId === 'string') {
+      return app.jobId === safeJobId;
+    }
+
+    return app.jobId?._id === safeJobId;
+  });
+  const isWithdrawnApplication = currentApplication?.status === 'withdrawn' || currentApplication?.isWithdrawn;
+  const withdrawnDateText = currentApplication?.withdrawnAt
+    ? new Date(currentApplication.withdrawnAt).toLocaleDateString()
+    : null;
+  const activeApplicationStatus = !isWithdrawnApplication ? currentApplication?.status : null;
 
   const isJobSeeker = user?.role === 'job_seeker';
   const hasAnalysis = !!matchData?.data;
@@ -95,6 +115,22 @@ const JobDetails: React.FC = () => {
       return;
     }
 
+    if (action === 'apply') {
+      if (activeApplicationStatus) {
+        toast.info(`You already have an active ${getStatusLabel(activeApplicationStatus).toLowerCase()} application for this job.`);
+        searchParams.delete('action');
+        setSearchParams(searchParams, { replace: true });
+        return;
+      }
+
+      if (isWithdrawnApplication && (job.isDeleted || !job.isActive || job.status !== 'open')) {
+        toast.info('This job is no longer open for reapplication.');
+        searchParams.delete('action');
+        setSearchParams(searchParams, { replace: true });
+        return;
+      }
+    }
+
     // Handle the action - use setTimeout to avoid cascading renders
     if (action === 'apply') {
       // Delay to avoid cascading render warning
@@ -115,7 +151,7 @@ const JobDetails: React.FC = () => {
         setSearchParams(searchParams, { replace: true });
       }, 1000);
     }
-  }, [searchParams, job, user, jobId, navigate, setSearchParams]);
+  }, [searchParams, job, user, jobId, navigate, setSearchParams, activeApplicationStatus, isWithdrawnApplication]);
 
   // Guard: Invalid jobId parameter
   if (!jobId) {
@@ -217,6 +253,16 @@ const JobDetails: React.FC = () => {
       toast.error('Only job seekers can apply for jobs.');
       return;
     }
+
+    if (activeApplicationStatus) {
+      toast.info(`You already have an active ${getStatusLabel(activeApplicationStatus).toLowerCase()} application for this job.`);
+      return;
+    }
+
+    if (isWithdrawnApplication && (job?.isDeleted || !job?.isActive || job?.status !== 'open')) {
+      toast.info('This job is no longer open for reapplication.');
+      return;
+    }
     
     // Open apply modal
     setShowApplyModal(true);
@@ -286,6 +332,8 @@ const JobDetails: React.FC = () => {
 
   // Check if job is deleted or inactive
   const isJobInactive = job.isDeleted || !job.isActive;
+  const isJobOpenForApply = !isJobInactive && job.status === 'open';
+  const canReapply = isWithdrawnApplication && isJobOpenForApply;
 
   // Main content (used in both authenticated and public views)
   const jobDetailsContent = (
@@ -424,15 +472,46 @@ const JobDetails: React.FC = () => {
                     This job is no longer available
                   </div>
                 </div>
-              ) : hasApplied || applyMutation.isSuccess ? (
+              ) : isWithdrawnApplication ? (
                 <div className="text-center">
-                  <div className="inline-flex items-center px-4 py-2 bg-green-100 text-green-700 rounded-lg">
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Already Applied
+                  <div className="inline-flex items-center px-4 py-2 bg-amber-100 text-amber-800 rounded-lg font-medium">
+                    Withdrawn
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">You have already submitted your application for this job.</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {withdrawnDateText
+                      ? `You withdrew your application on ${withdrawnDateText}.`
+                      : 'You withdrew your application for this job.'}
+                  </p>
+                  {canReapply ? (
+                    <>
+                      <p className="text-sm text-emerald-700 mt-1 font-medium">You can reapply because this job is still open.</p>
+                      <div className="mt-3 flex justify-center">
+                        <button
+                          onClick={handleApplyClick}
+                          className="px-6 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium"
+                        >
+                          Reapply
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-1">This job is no longer open for reapplication.</p>
+                  )}
+                </div>
+              ) : activeApplicationStatus || applyMutation.isSuccess ? (
+                <div className="text-center">
+                  <div className={`inline-flex items-center px-4 py-2 rounded-lg ${getStatusBadgeClass(activeApplicationStatus || 'applied')}`}>
+                    {getStatusLabel(activeApplicationStatus || 'applied')}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">You already have an active application for this job.</p>
+                  <div className="mt-3">
+                    <Link
+                      to="/job-seeker/my-applications"
+                      className="inline-flex items-center px-4 py-2 border border-green-300 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+                    >
+                      Track Application
+                    </Link>
+                  </div>
                 </div>
               ) : job.status === 'closed' ? (
                 <div className="text-center">

@@ -60,6 +60,9 @@ export const useApplyForJob = () => {
       
       // Also invalidate the general applications cache
       queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['saved-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       
       // Refetch active queries immediately for instant UI update
       queryClient.refetchQueries({ 
@@ -98,6 +101,9 @@ export const useWithdrawApplication = () => {
       console.log('🔄 Invalidating all myApplications queries...');
       queryClient.invalidateQueries({ queryKey: ['applications', 'my'] });
       queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['saved-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       
       // Refetch active queries immediately
       queryClient.refetchQueries({ 
@@ -120,6 +126,10 @@ export const useHasApplied = (jobId: string) => {
   return applications.data.some((app) => {
     // Guard: skip invalid applications
     if (!app || !app.jobId) {
+      return false;
+    }
+
+    if (app.status === 'withdrawn' || app.isWithdrawn) {
       return false;
     }
     

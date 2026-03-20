@@ -40,6 +40,13 @@ router.patch('/:id/status', authorizeRoles(ROLES.RECRUITER), applicationControll
 router.get('/:id', authorizeRoles(ROLES.JOB_SEEKER, ROLES.RECRUITER), applicationController.getApplicationById);
 
 /**
+ * @route   DELETE /api/applications/:id/withdraw
+ * @desc    Withdraw application
+ * @access  Private (Job Seeker only - must be the applicant)
+ */
+router.delete('/:id/withdraw', authorizeRoles(ROLES.JOB_SEEKER), applicationController.withdrawApplication);
+
+/**
  * @route   DELETE /api/applications/:id
  * @desc    Withdraw application
  * @access  Private (Job Seeker only - must be the applicant)
