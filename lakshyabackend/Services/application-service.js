@@ -2,6 +2,46 @@ const ApplicationModel = require('../models/application-model');
 const JobModel = require('../models/job-model');
 const UserModel = require('../models/user-model');
 const JobMatchAnalysis = require('../models/job-match-analysis');
+const notificationService = require('./notification-service');
+
+const statusNotificationMap = {
+  shortlisted: {
+    type: 'shortlisted',
+    title: 'You were shortlisted',
+    messageBuilder: (jobTitle) => `You were shortlisted for ${jobTitle}`,
+  },
+  interview: {
+    type: 'interview_scheduled',
+    title: 'Interview Scheduled',
+    messageBuilder: (jobTitle) => `Your interview has been scheduled for ${jobTitle}`,
+  },
+  rejected: {
+    type: 'rejected',
+    title: 'Application Update',
+    messageBuilder: (jobTitle) => `Your application for ${jobTitle} was not selected`,
+  },
+};
+
+const createApplicantStatusNotification = async (application, status) => {
+  const config = statusNotificationMap[status];
+  if (!config) {
+    return;
+  }
+
+  try {
+    const jobTitle = application.jobId?.title || 'this job';
+    await notificationService.createNotification({
+      recipientId: application.applicant,
+      type: config.type,
+      title: config.title,
+      message: config.messageBuilder(jobTitle),
+      relatedJobId: application.jobId?._id || application.jobId,
+      relatedApplicationId: application._id,
+    });
+  } catch (notificationError) {
+    console.warn('⚠ Failed to create applicant status notification:', notificationError.message);
+  }
+};
 
 /**
  * Apply for a job
@@ -74,6 +114,32 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
     });
     
     await application.save();
+
+    try {
+      const jobTitle = job.title || 'this job';
+
+      await notificationService.createNotification({
+        recipientId: applicantId,
+        type: 'application_submitted',
+        title: 'Application Submitted',
+        message: `You successfully applied for ${jobTitle}`,
+        relatedJobId: job._id,
+        relatedApplicationId: application._id,
+      });
+
+      if (job.createdBy) {
+        await notificationService.createNotification({
+          recipientId: job.createdBy,
+          type: 'new_applicant',
+          title: 'New Applicant',
+          message: `A new applicant applied for ${jobTitle}`,
+          relatedJobId: job._id,
+          relatedApplicationId: application._id,
+        });
+      }
+    } catch (notificationError) {
+      console.warn('⚠ Failed to create application notifications:', notificationError.message);
+    }
     
     return application;
   } catch (error) {
@@ -215,6 +281,8 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
     
     application.status = newStatus;
     await application.save();
+
+    await createApplicantStatusNotification(application, newStatus);
     
     // Populate before returning
     await application.populate('applicant', 'name email number');
@@ -261,8 +329,25 @@ const withdrawApplication = async (applicationId, applicantId) => {
       error.statusCode = 404;
       throw error;
     }
+
+    const job = await JobModel.findById(application.jobId).select('title createdBy');
     
     await application.deleteOne();
+
+    if (job?.createdBy) {
+      try {
+        await notificationService.createNotification({
+          recipientId: job.createdBy,
+          type: 'application_withdrawn',
+          title: 'Application Withdrawn',
+          message: `A candidate withdrew their application for ${job.title || 'this job'}`,
+          relatedJobId: job._id,
+          relatedApplicationId: application._id,
+        });
+      } catch (notificationError) {
+        console.warn('⚠ Failed to create withdraw notification:', notificationError.message);
+      }
+    }
     
     return { message: 'Application withdrawn successfully' };
   } catch (error) {
@@ -293,6 +378,8 @@ const shortlistCandidate = async (applicationId, recruiterId) => {
     
     application.status = 'shortlisted';
     await application.save();
+
+    await createApplicantStatusNotification(application, 'shortlisted');
     
     await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
     
@@ -330,6 +417,8 @@ const scheduleInterview = async (applicationId, recruiterId, interviewData) => {
       link: interviewData.link || ''
     };
     await application.save();
+
+    await createApplicantStatusNotification(application, 'interview');
     
     await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
     
@@ -392,6 +481,8 @@ const scheduleInterviewRound = async (applicationId, recruiterId, interviewData)
     }
     
     await application.save();
+
+    await createApplicantStatusNotification(application, 'interview');
     
     // Populate before returning
     await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');

@@ -18,10 +18,10 @@ export {
 } from './recruiter';
 
 // Auth Pages (existing)
-export { default as Login } from './login';
-export { default as Signup } from './signup';
+export { default as Login } from './Login';
+export { default as Signup } from './Signup';
 export { default as SignupChoice } from './signup-choice';
 export { default as ForgetPassword } from './forget-password';
 export { default as ResetPassword } from './reset-password';
-export { default as Landing } from './landing';
-export { default as Home } from './home';
+export { default as Landing } from './Landing';
+export { default as Home } from './Home';

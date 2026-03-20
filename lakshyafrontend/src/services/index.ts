@@ -4,6 +4,7 @@ export { jobService } from './job-service';
 export { applicationService } from './application-service';
 export { profileService } from './profile-service';
 export { getLandingData } from './landing-service';
+export { notificationService } from './notification-service';
 
 export type { LoginCredentials, RegisterData, AuthResponse } from './auth-service';
 export type {
@@ -31,3 +32,12 @@ export type {
 } from './application-service';
 export type { UserProfile, UpdateProfileData } from './profile-service';
 export type { LandingStats, LandingJob, LandingData, LandingResponse } from './landing-service';
+export type {
+  NotificationType,
+  NotificationItem,
+  NotificationPagination,
+  NotificationsResponse,
+  UnreadCountResponse,
+  MarkNotificationResponse,
+  MarkAllNotificationsResponse,
+} from './notification-service';

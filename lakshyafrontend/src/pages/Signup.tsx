@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom'
-import { handleError } from '../utils';
-import { handleSuccess } from '../utils';
+import { handleError } from '../Utils';
+import { handleSuccess } from '../Utils';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from "react-router-dom";
 import { useMutation } from '@tanstack/react-query';

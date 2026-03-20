@@ -1,6 +1,45 @@
 const ApplicationModel = require('../models/application-model');
 const JobModel = require('../models/job-model');
 const UserModel = require('../models/user-model');
+const notificationService = require('./notification-service');
+
+const statusNotificationMap = {
+  shortlisted: {
+    type: 'shortlisted',
+    title: 'You were shortlisted',
+    messageBuilder: (jobTitle) => `You were shortlisted for ${jobTitle}`,
+  },
+  interview: {
+    type: 'interview_scheduled',
+    title: 'Interview Scheduled',
+    messageBuilder: (jobTitle) => `Your interview has been scheduled for ${jobTitle}`,
+  },
+  rejected: {
+    type: 'rejected',
+    title: 'Application Update',
+    messageBuilder: (jobTitle) => `Your application for ${jobTitle} was not selected`,
+  },
+};
+
+const notifyApplicantOnStatusUpdate = async ({ application, status, jobTitle }) => {
+  const config = statusNotificationMap[status];
+  if (!config || !application?.applicant) {
+    return;
+  }
+
+  try {
+    await notificationService.createNotification({
+      recipientId: application.applicant,
+      type: config.type,
+      title: config.title,
+      message: config.messageBuilder(jobTitle || 'this job'),
+      relatedJobId: application.jobId?._id || application.jobId,
+      relatedApplicationId: application._id,
+    });
+  } catch (notificationError) {
+    console.warn('⚠ Failed to create recruiter status notification:', notificationError.message);
+  }
+};
 
 /**
  * Normalize skill for matching (lowercase, trim)
@@ -197,6 +236,12 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
   application.status = newStatus;
   await application.save();
 
+  await notifyApplicantOnStatusUpdate({
+    application,
+    status: newStatus,
+    jobTitle: application.jobId?.title,
+  });
+
   // Return updated application with applicant details
   const updatedApplication = await ApplicationModel.findById(applicationId)
     .populate({
@@ -227,6 +272,14 @@ const bulkUpdateApplicationStatus = async (jobId, recruiterId, applicationIds, n
     throw { statusCode: 403, message: 'You are not authorized to update applications for this job' };
   }
 
+  const applicationsToNotify = await ApplicationModel.find(
+    {
+      _id: { $in: applicationIds },
+      jobId: jobId,
+    },
+    '_id applicant jobId'
+  ).lean();
+
   // Bulk update
   const result = await ApplicationModel.updateMany(
     {
@@ -237,6 +290,18 @@ const bulkUpdateApplicationStatus = async (jobId, recruiterId, applicationIds, n
       $set: { status: newStatus }
     }
   );
+
+  if (statusNotificationMap[newStatus]) {
+    await Promise.allSettled(
+      applicationsToNotify.map((application) =>
+        notifyApplicantOnStatusUpdate({
+          application,
+          status: newStatus,
+          jobTitle: job.title,
+        })
+      )
+    );
+  }
 
   return {
     modifiedCount: result.modifiedCount,

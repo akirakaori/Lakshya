@@ -20,9 +20,9 @@ export const useEditMode = () => {
    * Guard function to prevent actions when not in edit mode
    * Returns true if action should proceed, false otherwise
    */
-  const guardAction = (actionName: string = 'action'): boolean => {
+  const guardAction = (actionName = 'action'): boolean => {
     if (!isEditing) {
-      toast.info('Please click "Edit Profile" to make changes', {
+      toast.info(`Please click "Edit Profile" before ${actionName}`, {
         position: 'top-center',
         autoClose: 3000,
       });

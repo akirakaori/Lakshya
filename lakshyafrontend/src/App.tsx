@@ -9,13 +9,14 @@ import { AuthProvider } from "./context/auth-context";
 import ProtectedRoute from "./routes/protected-route";
 
 // Auth Pages
-import Login from "./pages/login";
-import Signup from "./pages/signup";
-import Home from "./pages/home";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Home from "./pages/Home";
 import SignupChoice from "./pages/signup-choice";
-import Landing from "./pages/landing";
+import Landing from "./pages/Landing";
 import ForgotPassword from "./pages/forget-password";  
 import ResetPassword from "./pages/reset-password";
+import NotificationsPage from "./pages/notifications";
 import PrivateRoute from "./components/private-route";
 
 // Job Seeker Pages
@@ -141,6 +142,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute allowedRoles={['job_seeker', 'recruiter']}>
+                  <NotificationsPage />
+                </ProtectedRoute>
+              }
+            />
             {/* Legacy Job Seeker Dashboard Route */}
             <Route
               path="/JobSeekerDashboard"
@@ -208,7 +217,7 @@ function App() {
               path="/recruiter/profile"
               element={
                 <ProtectedRoute allowedRoles={['recruiter']}>
-```                  <RecruiterProfile />
+                  <RecruiterProfile />
                 </ProtectedRoute>
               }
             />
