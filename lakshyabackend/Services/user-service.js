@@ -449,7 +449,7 @@ const getSavedJobsForUser = async (userId, options = {}) => {
       .select('savedJobs')
       .populate({
         path: 'savedJobs',
-        match: { isDeleted: false, isActive: true },
+        match: { isDeleted: false, isActive: true, isTestData: { $ne: true } },
       });
 
     if (!user) {

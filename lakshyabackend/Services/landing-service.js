@@ -12,7 +12,8 @@ const getLandingData = async () => {
     const activeJobFilter = {
       status: 'open',
       isActive: true,
-      isDeleted: { $ne: true }
+      isDeleted: { $ne: true },
+      isTestData: { $ne: true }
     };
 
     // Parallel execution of all queries for better performance
@@ -59,7 +60,8 @@ const searchPublicJobs = async (keyword = '', page = 1, limit = 8) => {
     const baseFilter = {
       status: 'open',
       isActive: true,
-      isDeleted: { $ne: true }
+      isDeleted: { $ne: true },
+      isTestData: { $ne: true }
     };
 
     // If keyword is provided, add search conditions

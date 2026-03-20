@@ -140,6 +140,7 @@ async function getRecommendedJobsForUser(userId) {
     status: 'open',
     isActive: true,
     isDeleted: { $ne: true },
+    isTestData: { $ne: true },
   }).lean();
 
   const userHasSkills = (user.jobSeeker?.skills || []).length > 0;

@@ -1,6 +1,10 @@
 const JobModel = require('../models/job-model');
 const mongoose = require('mongoose');
 
+const PUBLIC_JOB_FILTER = {
+  isTestData: { $ne: true },
+};
+
 /**
  * Create a new job posting (recruiter only)
  */
@@ -231,7 +235,7 @@ const getRecruiterJobs = async (recruiterId, options = {}) => {
  */
 const getJobById = async (jobId) => {
   try {
-    const job = await JobModel.findById(jobId)
+    const job = await JobModel.findOne({ _id: jobId, ...PUBLIC_JOB_FILTER })
       .populate('createdBy', 'name email companyName location');
     
     if (!job) {
@@ -286,7 +290,8 @@ const searchJobs = async (filters) => {
     const query = { 
       status: 'open',
       isActive: true,
-      isDeleted: false
+      isDeleted: false,
+      ...PUBLIC_JOB_FILTER,
     };
     
     // Keyword search across multiple fields: title, description, skillsRequired, companyName, location

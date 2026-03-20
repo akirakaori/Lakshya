@@ -97,6 +97,11 @@ const jobSchema = new Schema({
     type: Boolean,
     default: false
   },
+  isTestData: {
+    type: Boolean,
+    default: false,
+    select: false
+  },
   deletedAt: {
     type: Date,
     default: null
@@ -133,6 +138,7 @@ jobSchema.index({ category: 1 });
 jobSchema.index({ createdAt: -1 });
 jobSchema.index({ createdBy: 1 });
 jobSchema.index({ status: 1 });
+jobSchema.index({ isTestData: 1 });
 
 const JobModel = mongoose.model('Job', jobSchema);
 module.exports = JobModel;
