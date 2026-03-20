@@ -43,7 +43,7 @@ import {
 import { AdminProfile, AdminDashboard } from "./pages/admin";
 
 function App() {
-  const [_, setIsAuthenticated] = useState(false);
+  const [, setIsAuthenticated] = useState(false);
 
   return (
     <AuthProvider>

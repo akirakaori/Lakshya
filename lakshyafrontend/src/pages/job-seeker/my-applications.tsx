@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState, PaginationControls, PageSizeSelect, ConfirmModal, type PaginationMeta } from '../../components';
 import { useMyApplications, useJobMatchScores, useWithdrawApplication } from '../../hooks';
-import type { Job, Interview } from '../../services';
+import type { Application, Job, Interview } from '../../services';
 import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStatus';
 import { handleError, handleSuccess } from '../../Utils';
 
@@ -47,7 +47,7 @@ const MyApplications: React.FC = () => {
     limit,
   });
 
-  const applications = response?.data || [];
+  const applications = useMemo<Application[]>(() => response?.data ?? [], [response?.data]);
   const pagination = response?.pagination;
   const withdrawMutation = useWithdrawApplication();
 
@@ -296,7 +296,7 @@ const MyApplications: React.FC = () => {
                     const isJobInactive = job?.isDeleted || (job && !job.isActive);
 
                     // Get interview info (safely cast)
-                    const appWithInterviews = application as any;
+                    const appWithInterviews = application as Application;
                     const interviews = (appWithInterviews.interviews || []) as Interview[];
                     const hasInterviews = interviews.length > 0;
                     const isExpanded = expandedAppId === application._id;
@@ -516,8 +516,15 @@ const MyApplications: React.FC = () => {
               const result = await withdrawMutation.mutateAsync(withdrawTargetId);
               handleSuccess(result.message || 'Application withdrawn successfully');
               setWithdrawTargetId(null);
-            } catch (error: any) {
-              handleError(error?.response?.data?.message || 'Failed to withdraw application');
+            } catch (error: unknown) {
+              const errorMessage =
+                typeof error === 'object' &&
+                error !== null &&
+                'response' in error &&
+                typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+                  ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+                  : 'Failed to withdraw application';
+              handleError(errorMessage ?? 'Failed to withdraw application');
             }
           }}
           title="Withdraw Application"
