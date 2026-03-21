@@ -7,7 +7,8 @@ import type { TimeValue } from 'react-aria-components';
 import { Time } from '@internationalized/date';
 import { DatePicker } from '../ui/DatePicker';
 import { TimeField, formatTimeToString } from '../ui/TimeField';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
+import { getInterviewEndTime, getInterviewStartTime } from '../../utils/interview-status';
 
 interface ScheduleInterviewModalProps {
   applicationId: string;
@@ -22,7 +23,8 @@ interface ScheduleInterviewModalProps {
 type ScheduleInterviewFormData = {
   roundNumber: number;
   date: DateValue | null;
-  time: TimeValue | null;
+  startTime: TimeValue | null;
+  endTime: TimeValue | null;
   timezone: string;
   mode: 'online' | 'onsite' | 'phone';
   linkOrLocation: string;
@@ -57,21 +59,36 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
         }
       }
 
-      // Parse time string (HH:mm) to TimeValue
-      let parsedTime: TimeValue | null = null;
-      if (interviewToEdit.time) {
+      const interviewStartTime = getInterviewStartTime(interviewToEdit);
+      const interviewEndTime = getInterviewEndTime(interviewToEdit);
+
+      // Parse start time string (HH:mm) to TimeValue
+      let parsedStartTime: TimeValue | null = null;
+      if (interviewStartTime) {
         try {
-          const [hours, minutes] = interviewToEdit.time.split(':').map(Number);
-          parsedTime = new Time(hours, minutes);
+          const [hours, minutes] = interviewStartTime.split(':').map(Number);
+          parsedStartTime = new Time(hours, minutes);
         } catch (e) {
-          console.error('Failed to parse time:', e);
+          console.error('Failed to parse interview start time:', e);
+        }
+      }
+
+      // Parse end time string (HH:mm) to TimeValue
+      let parsedEndTime: TimeValue | null = null;
+      if (interviewEndTime) {
+        try {
+          const [hours, minutes] = interviewEndTime.split(':').map(Number);
+          parsedEndTime = new Time(hours, minutes);
+        } catch (e) {
+          console.error('Failed to parse interview end time:', e);
         }
       }
 
       return {
         roundNumber: interviewToEdit.roundNumber,
         date: parsedDate,
-        time: parsedTime,
+        startTime: parsedStartTime,
+        endTime: parsedEndTime,
         timezone: interviewToEdit.timezone || 'IST',
         mode: interviewToEdit.mode || 'online',
         linkOrLocation: interviewToEdit.linkOrLocation || '',
@@ -84,7 +101,8 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
     return {
       roundNumber: nextRoundNumber,
       date: null,
-      time: null,
+      startTime: null,
+      endTime: null,
       timezone: 'IST',
       mode: 'online',
       linkOrLocation: '',
@@ -97,14 +115,18 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
     register,
     handleSubmit,
     control,
-    formState: { errors },
-    watch,
+    formState: { errors, isValid },
+    getValues,
   } = useForm<ScheduleInterviewFormData>({
     defaultValues: getDefaultValues(),
+    mode: 'onChange',
   });
 
-  const interviewDate = watch('date');
-  const interviewTime = watch('time');
+  const roundNumberValue = useWatch({ control, name: 'roundNumber' });
+  const modeValue = useWatch({ control, name: 'mode' });
+  const interviewDate = useWatch({ control, name: 'date' });
+  const interviewStartTime = useWatch({ control, name: 'startTime' });
+  const interviewEndTime = useWatch({ control, name: 'endTime' });
 
   const onSubmit = async (data: ScheduleInterviewFormData) => {
     if (!data.date) {
@@ -112,8 +134,13 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
       return;
     }
 
-    if (!data.time) {
-      toast.error('Please select interview time');
+    if (!data.startTime) {
+      toast.error('Please select interview start time');
+      return;
+    }
+
+    if (!data.endTime) {
+      toast.error('Please select interview end time');
       return;
     }
 
@@ -121,12 +148,19 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
     const dateString = `${data.date.year}-${String(data.date.month).padStart(2, '0')}-${String(data.date.day).padStart(2, '0')}`;
     
     // Convert TimeValue to HH:mm string (24-hour format for backend)
-    const timeString = formatTimeToString(data.time);
+    const startTimeString = formatTimeToString(data.startTime);
+    const endTimeString = formatTimeToString(data.endTime);
+
+    if (endTimeString <= startTimeString) {
+      toast.error('End time must be later than start time');
+      return;
+    }
 
     const interviewData = {
       roundNumber: data.roundNumber,
       date: dateString,
-      time: timeString,
+      startTime: startTimeString,
+      endTime: endTimeString,
       timezone: data.timezone,
       mode: data.mode,
       linkOrLocation: data.linkOrLocation,
@@ -169,7 +203,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
               {isEditMode ? 'Edit Interview' : 'Schedule Interview'}
             </h3>
             <p className="text-sm text-indigo-100 mt-0.5">
-              {candidateName} - Round {watch('roundNumber')}
+              {candidateName} - Round {roundNumberValue}
             </p>
           </div>
           <button
@@ -190,7 +224,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
               Interview Round
             </label>
             <div className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 font-medium">
-              Round {watch('roundNumber')}
+              Round {roundNumberValue}
               {isEditMode ? (
                 <span className="text-xs text-blue-600 ml-2">
                   (Editing existing round)
@@ -204,7 +238,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
           </div>
 
           {/* Date and Time */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Controller
                 name="date"
@@ -226,12 +260,12 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
             </div>
             <div>
               <Controller
-                name="time"
+                name="startTime"
                 control={control}
-                rules={{ required: 'Time is required' }}
+                rules={{ required: 'Start time is required' }}
                 render={({ field }) => (
                   <TimeField
-                    label="Time"
+                    label="Start Time"
                     value={field.value}
                     onChange={field.onChange}
                     isRequired={true}
@@ -239,8 +273,37 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
                   />
                 )}
               />
-              {errors.time && (
-                <p className="text-sm text-red-600 mt-1">{errors.time.message}</p>
+              {errors.startTime && (
+                <p className="text-sm text-red-600 mt-1">{errors.startTime.message}</p>
+              )}
+            </div>
+            <div>
+              <Controller
+                name="endTime"
+                control={control}
+                rules={{
+                  required: 'End time is required',
+                  validate: (value) => {
+                    if (!value) return 'End time is required';
+                    const startTime = getValues('startTime');
+                    if (!startTime) return true;
+                    const start = formatTimeToString(startTime);
+                    const end = formatTimeToString(value);
+                    return end > start || 'End time must be later than start time';
+                  },
+                }}
+                render={({ field }) => (
+                  <TimeField
+                    label="End Time"
+                    value={field.value}
+                    onChange={field.onChange}
+                    isRequired={true}
+                    hourCycle={12}
+                  />
+                )}
+              />
+              {errors.endTime && (
+                <p className="text-sm text-red-600 mt-1">{errors.endTime.message}</p>
               )}
             </div>
           </div>
@@ -309,15 +372,15 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
           {/* Link or Location */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {watch('mode') === 'online' ? 'Meeting Link' : watch('mode') === 'onsite' ? 'Office Address' : 'Phone Number'}
+              {modeValue === 'online' ? 'Meeting Link' : modeValue === 'onsite' ? 'Office Address' : 'Phone Number'}
             </label>
             <input
               type="text"
               {...register('linkOrLocation')}
               placeholder={
-                watch('mode') === 'online'
+                modeValue === 'online'
                   ? 'https://meet.google.com/xyz or Zoom link'
-                  : watch('mode') === 'onsite'
+                  : modeValue === 'onsite'
                   ? 'Office address or room number'
                   : 'Contact number for the interview'
               }
@@ -365,12 +428,12 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={(isEditMode ? updateInterviewMutation.isPending : scheduleInterviewMutation.isPending) || !interviewDate || !interviewTime}
+              disabled={(isEditMode ? updateInterviewMutation.isPending : scheduleInterviewMutation.isPending) || !interviewDate || !interviewStartTime || !interviewEndTime || !isValid}
               className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 font-medium"
             >
               {isEditMode 
-                ? (updateInterviewMutation.isPending ? 'Updating...' : `Update Round ${watch('roundNumber')}`)
-                : (scheduleInterviewMutation.isPending ? 'Scheduling...' : `Schedule Round ${watch('roundNumber')}`)}
+                ? (updateInterviewMutation.isPending ? 'Updating...' : `Update Round ${roundNumberValue}`)
+                : (scheduleInterviewMutation.isPending ? 'Scheduling...' : `Schedule Round ${roundNumberValue}`)}
             </button>
           </div>
         </form>

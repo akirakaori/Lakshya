@@ -13,6 +13,7 @@ import axiosInstance from '../../services/axios-instance';
 import { toast } from 'react-toastify';
 import { getFileUrl, getInitials } from '../../Utils';
 import type { Interview } from '../../services';
+import { formatInterviewTimeRange, getInterviewDisplayStatusMeta, getInterviewOutcomeMeta, getInterviewOutcomeValue } from '../../utils/interview-status';
 
 interface CandidateProfile {
   _id: string;
@@ -60,7 +61,7 @@ const CandidateProfile: React.FC = () => {
   const [interviewToEdit, setInterviewToEdit] = useState<Interview | undefined>(undefined);
 
   // Fetch application with candidate profile and match snapshot
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['recruiterApplication', applicationId],
     queryFn: async () => {
       console.log('🔄 [QUERY] Fetching application details for:', applicationId);
@@ -91,39 +92,90 @@ const CandidateProfile: React.FC = () => {
     : application?.jobId?._id || '';
   
   // Normalize interviews array (handle backend field name variations)
+  const rawInterviews = application?.interviews;
   const normalizedInterviews = React.useMemo(() => {
-    if (!application?.interviews || !Array.isArray(application.interviews)) {
+    if (!rawInterviews || !Array.isArray(rawInterviews)) {
       return [];
     }
-    
+
     // Debug log to verify data structure
-    console.log('🔍 [INTERVIEW DEBUG] Raw interviews from backend:', application.interviews);
-    
-    return application.interviews.map((interview: any, idx: number) => {
-      // Normalize field names in case backend uses different keys
-      const normalized = {
-        _id: interview._id,
-        roundNumber: interview.roundNumber || idx + 1,
-        date: interview.date || interview.scheduledAt,
-        time: interview.time,
-        timezone: interview.timezone,
-        mode: interview.mode,
-        linkOrLocation: interview.linkOrLocation || interview.locationOrLink || interview.link,
-        messageToCandidate: interview.messageToCandidate || interview.message,
-        internalNotes: interview.internalNotes || interview.internalNote,
-        outcome: interview.outcome || 'pending',
-        feedback: interview.feedback
+    console.log('🔍 [INTERVIEW DEBUG] Raw interviews from backend:', rawInterviews);
+
+    return rawInterviews.map((interview, idx) => {
+      const source = interview as {
+        _id?: string | { toString?: () => string };
+        id?: string | { toString?: () => string };
+        roundNumber?: number;
+        date?: string;
+        scheduledAt?: string;
+        startTime?: string;
+        endTime?: string;
+        time?: string;
+        timezone?: string;
+        mode?: 'online' | 'onsite' | 'phone';
+        linkOrLocation?: string;
+        locationOrLink?: string;
+        link?: string;
+        messageToCandidate?: string;
+        message?: string;
+        internalNotes?: string;
+        internalNote?: string;
+        outcome?: string;
+        feedback?: string;
       };
-      
+
+      let normalizedId = '';
+      if (source._id != null && typeof source._id === 'object' && typeof source._id.toString === 'function') {
+        normalizedId = source._id.toString();
+      } else if (source._id != null) {
+        normalizedId = String(source._id);
+      } else if (source.id != null && typeof source.id === 'object' && typeof source.id.toString === 'function') {
+        normalizedId = source.id.toString();
+      } else if (source.id != null) {
+        normalizedId = String(source.id);
+      }
+      normalizedId = normalizedId.trim();
+
+      // Normalize field names in case backend uses different keys
+      const normalized: Interview = {
+        _id: normalizedId || undefined,
+        roundNumber: source.roundNumber || idx + 1,
+        date: source.date || source.scheduledAt || '',
+        startTime: source.startTime || source.time,
+        endTime: source.endTime,
+        time: source.time,
+        timezone: source.timezone,
+        mode: source.mode || 'online',
+        linkOrLocation: source.linkOrLocation || source.locationOrLink || source.link,
+        messageToCandidate: source.messageToCandidate || source.message,
+        internalNotes: source.internalNotes || source.internalNote,
+        outcome:
+          source.outcome === 'pass' || source.outcome === 'passed'
+            ? 'pass'
+            : source.outcome === 'fail' || source.outcome === 'failed' || source.outcome === 'rejected'
+              ? 'fail'
+              : 'pending',
+        feedback: source.feedback,
+      };
+
+      // Extra debug for _id and time fields
+      if (!normalized._id) {
+        console.warn(`❗ [INTERVIEW NORMALIZATION] Missing _id for round ${normalized.roundNumber}:`, source);
+      }
       console.log(`🔍 [INTERVIEW DEBUG] Round ${normalized.roundNumber}:`, {
+        _id: normalized._id,
+        date: normalized.date,
+        startTime: normalized.startTime,
+        endTime: normalized.endTime,
+        outcome: normalized.outcome,
         hasInternalNotes: !!normalized.internalNotes,
         internalNotesLength: normalized.internalNotes?.length || 0,
         hasMessage: !!normalized.messageToCandidate
       });
-      
+
       return normalized;
     });
-  }, [application?.interviews]);
+  }, [rawInterviews]);
 
   // Compute interview rounds progress
   const interviewProgress = React.useMemo(() => {
@@ -142,7 +194,7 @@ const CandidateProfile: React.FC = () => {
     
     // Count scheduled and passed rounds
     const scheduledRounds = normalizedInterviews.length;
-    const passedRounds = normalizedInterviews.filter(i => i.outcome === 'pass').length;
+    const passedRounds = normalizedInterviews.filter(i => getInterviewOutcomeValue(i) === 'pass').length;
     
     // Get last interview round
     const lastRound = normalizedInterviews.length > 0 
@@ -156,7 +208,7 @@ const CandidateProfile: React.FC = () => {
     // 1. Last round outcome is "pass" (strict gating)
     // 2. Not all required rounds are scheduled yet
     const canScheduleNext = 
-      (!lastRound || lastRound.outcome === 'pass') && 
+      (!lastRound || getInterviewOutcomeValue(lastRound) === 'pass') && 
       scheduledRounds < requiredRounds;
     
     console.log('🎯 [INTERVIEW PROGRESS]', {
@@ -187,7 +239,10 @@ const CandidateProfile: React.FC = () => {
   useEffect(() => {
     if (!isDirty && application?.notes !== undefined) {
       console.log('📝 [SYNC] Syncing notes from server:', application.notes?.substring(0, 50) + (application.notes?.length > 50 ? '...' : ''));
-      setNotes(application.notes || '');
+      const timer = setTimeout(() => {
+        setNotes(application.notes || '');
+      }, 0);
+      return () => clearTimeout(timer);
     } else if (isDirty) {
       console.log('✏️ [SYNC] Skipping sync - user is editing (dirty=true)');
     }
@@ -808,23 +863,72 @@ const CandidateProfile: React.FC = () => {
                   <span className="ml-2 text-sm text-gray-500 font-normal">({normalizedInterviews.length} round{normalizedInterviews.length > 1 ? 's' : ''})</span>
                 </h2>
                 <div className="space-y-3">
-                  {normalizedInterviews.map((interview, idx) => (
-                    <div key={idx} className="border border-gray-200 rounded-lg p-4">
+                  {(() => {
+                    // Find the latest actionable round: highest roundNumber where 
+                    // displayStatus === 'completed' && outcome === 'pending'
+                    let latestActionableRound: Interview | null = null;
+                    let latestRoundNumber = -1;
+
+                    normalizedInterviews.forEach((interview: Interview) => {
+                      const displayStatus = getInterviewDisplayStatusMeta(interview);
+                      const outcomeMeta = getInterviewOutcomeMeta(interview);
+                      
+                      if (displayStatus.value === 'completed' && outcomeMeta.value === 'pending') {
+                        const roundNum = interview.roundNumber ?? 0;
+                        if (roundNum > latestRoundNumber) {
+                          latestRoundNumber = roundNum;
+                          latestActionableRound = interview;
+                        }
+                      }
+                    });
+
+                    const actionableRound = latestActionableRound as Interview | null;
+                    console.log('[INTERVIEW ACTIONABLE ROUND]', {
+                      latestActionableRoundNumber: actionableRound?.roundNumber ?? null,
+                      latestActionableRoundId: actionableRound?._id ?? null,
+                      totalRounds: normalizedInterviews.length
+                    });
+
+                    return normalizedInterviews.map((interview: Interview) => {
+                      // Raw interview snapshot for debugging
+                      console.log('[INTERVIEW RAW]', { roundNumber: interview.roundNumber, raw: interview });
+
+                      const displayStatus = getInterviewDisplayStatusMeta(interview);
+                      const outcomeMeta = getInterviewOutcomeMeta(interview);
+                      const timeRange = formatInterviewTimeRange(interview);
+                      const interviewId = (interview._id ?? '').toString().trim();
+                      const canEditOrReschedule =
+                        displayStatus.value !== 'completed' && outcomeMeta.value === 'pending';
+                      
+                      // Decision buttons only for the latest actionable round (safety + UX)
+                      const isLatestActionable = latestActionableRound && 
+                        interview._id === latestActionableRound._id;
+                      const canMarkOutcome = isLatestActionable && !!interview._id;
+
+                      console.log('[INTERVIEW CARD DEBUG]', {
+                        roundNumber: interview.roundNumber,
+                        interviewId,
+                        displayStatusValue: displayStatus.value,
+                        displayStatusLabel: displayStatus.label,
+                        outcomeValue: outcomeMeta.value,
+                        outcomeLabel: outcomeMeta.label,
+                        canEditOrReschedule,
+                        isLatestActionable,
+                        canMarkOutcome,
+                      });
+
+                    return (
+                    <div key={interview._id || `round-${interview.roundNumber}`} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
                             Round {interview.roundNumber}
                           </span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            interview.outcome === 'pass' ? 'bg-green-100 text-green-700' :
-                            interview.outcome === 'fail' ? 'bg-red-100 text-red-700' :
-                            interview.outcome === 'hold' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-100 text-gray-600'
-                          }`}>
-                            {interview.outcome === 'pass' ? '✓ Pass' :
-                             interview.outcome === 'fail' ? '✗ Fail' :
-                             interview.outcome === 'hold' ? '⏸ Hold' :
-                             'Pending'}
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${outcomeMeta.colorClass}`}>
+                            {outcomeMeta.label}
+                          </span>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${displayStatus.colorClass}`}>
+                            {displayStatus.label}
                           </span>
                         </div>
                         <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize">
@@ -842,7 +946,7 @@ const CandidateProfile: React.FC = () => {
                               month: 'short', 
                               day: 'numeric' 
                             })}
-                            {interview.time && ` at ${interview.time}`}
+                            {timeRange && ` at ${timeRange}`}
                             {interview.timezone && ` (${interview.timezone})`}
                           </span>
                         </div>
@@ -869,7 +973,7 @@ const CandidateProfile: React.FC = () => {
                         
                         {/* Action buttons based on interview status */}
                         <div className="mt-3 pt-3 border-t border-gray-200">
-                          {(!interview.outcome || interview.outcome === 'pending') && interview._id && (
+                          {canEditOrReschedule && interview._id && (
                             <div className="space-y-2">
                               {/* Edit/Reschedule Button - Only for scheduled interviews */}
                               <button
@@ -884,21 +988,42 @@ const CandidateProfile: React.FC = () => {
                                 </svg>
                                 Edit / Reschedule
                               </button>
-                              
-                              {/* Mark Pass/Fail Buttons */}
+                            </div>
+                          )}
+
+                          {canMarkOutcome && (
+                            <div className="space-y-2">
+                              <p className="text-xs text-gray-500">Interview session completed. Record result to continue workflow.</p>
                               <div className="flex gap-2">
                                 <button
                                   onClick={async () => {
                                     if (!applicationId) return;
                                     try {
+                                      let idToUse = interviewId;
+                                      if (!idToUse) {
+                                        console.log('[INTERVIEW ACTION] Missing interviewId - refetching application before action');
+                                        const res = await refetch();
+                                        idToUse = (res?.data?.data?.application?.interviews || [])
+                                          .find((it: any) => it.roundNumber === interview.roundNumber)?._id;
+                                      }
+
+                                      if (!idToUse) {
+                                        toast.error('Interview identifier not yet available. Please refresh the page.');
+                                        return;
+                                      }
+
                                       await updateInterviewOutcomeMutation.mutateAsync({
                                         applicationId,
-                                        interviewId: interview._id!,
+                                        interviewId: idToUse,
                                         outcome: 'pass'
                                       });
                                       toast.success(`Round ${interview.roundNumber} marked as PASS`);
                                     } catch (error) {
-                                      toast.error('Failed to update interview outcome');
+                                      const backendMessage = (error as {
+                                        response?: { data?: { message?: string } };
+                                        message?: string;
+                                      })?.response?.data?.message;
+                                      toast.error(backendMessage || 'Failed to update interview outcome');
                                     }
                                   }}
                                   disabled={updateInterviewOutcomeMutation.isPending}
@@ -907,20 +1032,37 @@ const CandidateProfile: React.FC = () => {
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                   </svg>
-                                  Mark Pass
+                                  Mark as Passed
                                 </button>
                                 <button
                                   onClick={async () => {
                                     if (!applicationId) return;
                                     try {
+                                      let idToUse = interviewId;
+                                      if (!idToUse) {
+                                        console.log('[INTERVIEW ACTION] Missing interviewId - refetching application before action');
+                                        const res = await refetch();
+                                        idToUse = (res?.data?.data?.application?.interviews || [])
+                                          .find((it: any) => it.roundNumber === interview.roundNumber)?._id;
+                                      }
+
+                                      if (!idToUse) {
+                                        toast.error('Interview identifier not yet available. Please refresh the page.');
+                                        return;
+                                      }
+
                                       await updateInterviewOutcomeMutation.mutateAsync({
                                         applicationId,
-                                        interviewId: interview._id!,
+                                        interviewId: idToUse,
                                         outcome: 'fail'
                                       });
                                       toast.success(`Round ${interview.roundNumber} marked as FAIL`);
                                     } catch (error) {
-                                      toast.error('Failed to update interview outcome');
+                                      const backendMessage = (error as {
+                                        response?: { data?: { message?: string } };
+                                        message?: string;
+                                      })?.response?.data?.message;
+                                      toast.error(backendMessage || 'Failed to update interview outcome');
                                     }
                                   }}
                                   disabled={updateInterviewOutcomeMutation.isPending}
@@ -929,7 +1071,7 @@ const CandidateProfile: React.FC = () => {
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                   </svg>
-                                  Mark Fail
+                                  Mark as Rejected
                                 </button>
                               </div>
                             </div>
@@ -937,8 +1079,9 @@ const CandidateProfile: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    );
+                    });
+                  })()}</div>
               </div>
             )}
 

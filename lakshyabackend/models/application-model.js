@@ -1,6 +1,18 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const HH_MM_REGEX = /^([01]?\d|2[0-3]):([0-5]\d)$/;
+
+const parseTimeToMinutes = (value) => {
+  if (!value || typeof value !== 'string') return null;
+  const match = value.match(HH_MM_REGEX);
+  if (!match) return null;
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  return (hour * 60) + minute;
+};
+
 const applicationSchema = new Schema({
   jobId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -100,6 +112,57 @@ const applicationSchema = new Schema({
     {
       roundNumber: { type: Number, required: true },
       date: { type: Date, required: true },
+      startTime: {
+        type: String,
+        validate: [
+          {
+            validator: function (value) {
+              // Backward compatibility: allow legacy records that only have `time`.
+              return !!value || !!this.time;
+            },
+            message: 'Interview startTime is required',
+          },
+          {
+            validator: function (value) {
+              if (!value) return true;
+              return HH_MM_REGEX.test(value);
+            },
+            message: 'Interview startTime must be in HH:mm format',
+          },
+        ],
+      },
+      endTime: {
+        type: String,
+        validate: [
+          {
+            validator: function (value) {
+              // Allow old records that have only legacy `time`; enforce endTime for new startTime-based slots.
+              if (!!this.time && !this.startTime) return true;
+              return !!value;
+            },
+            message: 'Interview endTime is required',
+          },
+          {
+            validator: function (value) {
+              if (!value) return true;
+              return HH_MM_REGEX.test(value);
+            },
+            message: 'Interview endTime must be in HH:mm format',
+          },
+          {
+            validator: function (value) {
+              if (!value) return true;
+              const startValue = this.startTime || this.time;
+              const startMinutes = parseTimeToMinutes(startValue);
+              const endMinutes = parseTimeToMinutes(value);
+
+              if (startMinutes === null || endMinutes === null) return true;
+              return endMinutes > startMinutes;
+            },
+            message: 'Interview endTime must be later than startTime',
+          },
+        ],
+      },
       time: { type: String },
       timezone: { type: String },
       mode: { 
@@ -112,7 +175,7 @@ const applicationSchema = new Schema({
       internalNotes: { type: String }, // Recruiter-only
       outcome: { 
         type: String, 
-        enum: ['pass', 'fail', 'hold', 'pending'],
+        enum: ['pass', 'fail', 'pending'],
         default: 'pending'
       },
       feedback: { type: String }, // Recruiter feedback
@@ -122,6 +185,30 @@ const applicationSchema = new Schema({
   ]
 }, { 
   timestamps: true 
+});
+
+applicationSchema.pre('validate', function normalizeLegacyInterviewOutcomes() {
+  if (Array.isArray(this.interviews)) {
+    this.interviews.forEach((interview) => {
+      if (!interview) return;
+
+      if (interview.outcome === 'passed') {
+        interview.outcome = 'pass';
+      } else if (interview.outcome === 'failed' || interview.outcome === 'rejected') {
+        interview.outcome = 'fail';
+      } else if (interview.outcome === 'hold' || interview.outcome === 'shortlisted') {
+        interview.outcome = 'pending';
+      }
+
+      if (interview.mode === 'virtual') {
+        interview.mode = 'online';
+      } else if (interview.mode === 'in-person' || interview.mode === 'in_person') {
+        interview.mode = 'onsite';
+      } else if (interview.mode === 'telephone') {
+        interview.mode = 'phone';
+      }
+    });
+  }
 });
 
 // Compound index to prevent duplicate applications

@@ -20,6 +20,11 @@ const statusNotificationMap = {
     title: 'Application Update',
     messageBuilder: (jobTitle) => `Your application for ${jobTitle} was not selected`,
   },
+  hired: {
+    type: 'hired',
+    title: 'Congratulations! You are hired',
+    messageBuilder: (jobTitle) => `Congratulations! You have been selected for ${jobTitle}`,
+  },
 };
 
 const createApplicantStatusNotification = async (application, status) => {
@@ -49,6 +54,155 @@ const ensureApplicationIsActionable = (application) => {
     error.statusCode = 400;
     throw error;
   }
+};
+
+const parseTimeMinutes = (timeValue) => {
+  if (!timeValue || typeof timeValue !== 'string') return null;
+  const match = timeValue.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+
+  return hour * 60 + minute;
+};
+
+const minutesToTimeString = (minutes) => {
+  const clamped = Math.max(0, Math.min(23 * 60 + 59, minutes));
+  const hour = Math.floor(clamped / 60);
+  const minute = clamped % 60;
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+};
+
+const normalizeInterviewSlot = (payload = {}, existingInterview = null) => {
+  const existingStart = existingInterview?.startTime || existingInterview?.time;
+  const incomingStart = payload.startTime || payload.time;
+  const startTime = incomingStart || existingStart;
+
+  const existingEnd = existingInterview?.endTime;
+  const incomingEnd = payload.endTime;
+  let endTime = incomingEnd || existingEnd;
+
+  if (!endTime && startTime) {
+    const startMinutes = parseTimeMinutes(startTime);
+    if (startMinutes !== null) {
+      endTime = minutesToTimeString(startMinutes + 60);
+    }
+  }
+
+  return { startTime, endTime };
+};
+
+const validateInterviewSlot = ({ startTime, endTime }) => {
+  const startMinutes = parseTimeMinutes(startTime);
+  const endMinutes = parseTimeMinutes(endTime);
+
+  if (startMinutes === null) {
+    const error = new Error('Interview startTime is required and must be in HH:mm format');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (endMinutes === null) {
+    const error = new Error('Interview endTime is required and must be in HH:mm format');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (endMinutes <= startMinutes) {
+    const error = new Error('Interview endTime must be later than startTime');
+    error.statusCode = 400;
+    throw error;
+  }
+};
+
+const resolveInterviewOutcome = (value) => {
+  if (value === 'pass' || value === 'passed') return 'pass';
+  if (value === 'fail' || value === 'failed' || value === 'rejected') return 'fail';
+  if (value === 'pending' || value === 'hold' || value === 'shortlisted') return 'pending';
+  return 'pending';
+};
+
+const normalizeInterviewMode = (mode) => {
+  if (mode === 'online' || mode === 'virtual') return 'online';
+  if (mode === 'onsite' || mode === 'in-person' || mode === 'in_person') return 'onsite';
+  if (mode === 'phone' || mode === 'telephone') return 'phone';
+  return mode;
+};
+
+const getInterviewSessionEndDate = (interview) => {
+  if (!interview?.date) return null;
+
+  const interviewDate = new Date(interview.date);
+  if (Number.isNaN(interviewDate.getTime())) return null;
+
+  const timeValue = interview.endTime || interview.startTime || interview.time;
+  const minutes = parseTimeMinutes(timeValue);
+
+  if (minutes === null) {
+    return new Date(interviewDate.getFullYear(), interviewDate.getMonth(), interviewDate.getDate(), 23, 59, 59, 999);
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  return new Date(
+    interviewDate.getFullYear(),
+    interviewDate.getMonth(),
+    interviewDate.getDate(),
+    hours,
+    mins,
+    59,
+    999
+  );
+};
+
+const sanitizeCandidateInterview = (interview) => ({
+  _id: interview._id,
+  roundNumber: interview.roundNumber,
+  date: interview.date,
+  startTime: interview.startTime || interview.time,
+  endTime: interview.endTime,
+  time: interview.startTime || interview.time,
+  timezone: interview.timezone,
+  mode: normalizeInterviewMode(interview.mode),
+  linkOrLocation: interview.linkOrLocation,
+  messageToCandidate: interview.messageToCandidate,
+  outcome: resolveInterviewOutcome(interview.outcome),
+  createdAt: interview.createdAt,
+  updatedAt: interview.updatedAt,
+});
+
+const sanitizeApplicationForCandidate = (applicationDoc) => {
+  const applicationObject = typeof applicationDoc.toObject === 'function'
+    ? applicationDoc.toObject()
+    : { ...applicationDoc };
+
+  if (Array.isArray(applicationObject.interviews)) {
+    applicationObject.interviews = applicationObject.interviews.map(sanitizeCandidateInterview);
+  }
+
+  return applicationObject;
+};
+
+const buildMongooseValidationError = (error, fallbackMessage = 'Validation failed') => {
+  if (!error || error.name !== 'ValidationError' || !error.errors) {
+    return null;
+  }
+
+  const details = Object.values(error.errors)
+    .map((issue) => issue?.message)
+    .filter(Boolean);
+
+  const message = details.length > 0
+    ? `${fallbackMessage}: ${details.join('; ')}`
+    : fallbackMessage;
+
+  const validationError = new Error(message);
+  validationError.statusCode = 400;
+  return validationError;
 };
 
 /**
@@ -232,9 +386,11 @@ const getMyApplications = async (applicantId, filters = {}) => {
     }
 
     const totalPages = total === 0 ? 1 : Math.ceil(total / safeLimit);
+
+    const sanitizedApplications = filteredApplications.map(sanitizeApplicationForCandidate);
     
     return {
-      applications: filteredApplications,
+      applications: sanitizedApplications,
       pagination: {
         total,
         page: safePage,
@@ -294,7 +450,7 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
     }
     
     // Valid status values
-    const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected'];
+    const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected', 'hired'];
     if (!validStatuses.includes(newStatus)) {
       const error = new Error('Invalid status value');
       error.statusCode = 400;
@@ -320,7 +476,7 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
 /**
  * Get application by ID
  */
-const getApplicationById = async (applicationId) => {
+const getApplicationById = async (applicationId, requester = null) => {
   try {
     const application = await ApplicationModel.findById(applicationId)
       .populate('jobId', 'title companyName location salary jobType isActive isDeleted deletedAt')
@@ -332,6 +488,14 @@ const getApplicationById = async (applicationId) => {
       throw error;
     }
     
+    const isRequesterJobSeeker = requester?.role === 'job_seeker';
+    const requesterId = requester?.id ? requester.id.toString() : null;
+    const isOwner = requesterId && application.applicant?._id?.toString() === requesterId;
+
+    if (isRequesterJobSeeker && isOwner) {
+      return sanitizeApplicationForCandidate(application);
+    }
+
     return application;
   } catch (error) {
     throw error;
@@ -496,19 +660,19 @@ const scheduleInterviewRound = async (applicationId, recruiterId, interviewData)
 
     ensureApplicationIsActionable(application);
     
-    // Initialize interviews array if it doesn't exist
-    if (!application.interviews) {
-      application.interviews = [];
-    }
     
     // Auto-compute round number if not provided
     const roundNumber = interviewData.roundNumber || (application.interviews.length + 1);
+    const { startTime, endTime } = normalizeInterviewSlot(interviewData);
+    validateInterviewSlot({ startTime, endTime });
     
     // Create new interview round
     const newInterview = {
       roundNumber,
       date: interviewData.date,
-      time: interviewData.time,
+      startTime,
+      endTime,
+      time: startTime,
       timezone: interviewData.timezone,
       mode: interviewData.mode,
       linkOrLocation: interviewData.linkOrLocation,
@@ -530,11 +694,13 @@ const scheduleInterviewRound = async (applicationId, recruiterId, interviewData)
     await application.save();
 
     await createApplicantStatusNotification(application, 'interview');
-    
-    // Populate before returning
-    await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
-    
-    return application;
+
+    // Reload application to ensure all interview subdocuments have _id
+    const reloaded = await ApplicationModel.findById(application._id)
+      .populate('jobId')
+      .populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
+
+    return reloaded;
   } catch (error) {
     throw error;
   }
@@ -545,6 +711,13 @@ const scheduleInterviewRound = async (applicationId, recruiterId, interviewData)
  */
 const updateInterviewFeedback = async (applicationId, interviewId, recruiterId, feedbackData) => {
   try {
+    console.log('[INTERVIEW OUTCOME] Incoming request:', {
+      applicationId,
+      interviewId,
+      recruiterId,
+      payload: feedbackData,
+    });
+
     const application = await ApplicationModel.findById(applicationId)
       .populate('jobId');
     
@@ -555,6 +728,12 @@ const updateInterviewFeedback = async (applicationId, interviewId, recruiterId, 
     }
     
     // Verify the job belongs to the recruiter
+    if (!application.jobId || !application.jobId.createdBy) {
+      const error = new Error('Associated job not found for this application');
+      error.statusCode = 404;
+      throw error;
+    }
+
     if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
       const error = new Error('Unauthorized');
       error.statusCode = 403;
@@ -564,6 +743,12 @@ const updateInterviewFeedback = async (applicationId, interviewId, recruiterId, 
     ensureApplicationIsActionable(application);
     
     // Find the interview by ID
+    if (!Array.isArray(application.interviews) || application.interviews.length === 0) {
+      const error = new Error('No interview rounds found for this application');
+      error.statusCode = 400;
+      throw error;
+    }
+
     const interview = application.interviews.id(interviewId);
     if (!interview) {
       const error = new Error('Interview not found');
@@ -572,20 +757,61 @@ const updateInterviewFeedback = async (applicationId, interviewId, recruiterId, 
     }
     
     // Update feedback fields
-    if (feedbackData.outcome) {
-      interview.outcome = feedbackData.outcome;
+    if (feedbackData.outcome !== undefined) {
+      const validRequestOutcomes = ['pass', 'fail', 'pending', 'passed', 'failed', 'hold', 'shortlisted', 'rejected'];
+      if (!validRequestOutcomes.includes(feedbackData.outcome)) {
+        const error = new Error('Invalid interview outcome value. Allowed values: pass, fail, pending');
+        error.statusCode = 400;
+        throw error;
+      }
+
+      const normalizedOutcome = resolveInterviewOutcome(feedbackData.outcome);
+      const interviewEndAt = getInterviewSessionEndDate(interview);
+
+      if ((normalizedOutcome === 'pass' || normalizedOutcome === 'fail') && interviewEndAt && interviewEndAt > new Date()) {
+        const error = new Error('Interview result can only be marked after the session is completed');
+        error.statusCode = 400;
+        throw error;
+      }
+
+      interview.outcome = normalizedOutcome;
     }
     if (feedbackData.feedback !== undefined) {
       interview.feedback = feedbackData.feedback;
     }
     interview.updatedAt = new Date();
+
+    // Normalize legacy values in all rounds before save so stale data cannot trigger validation 500s.
+    application.interviews.forEach((round) => {
+      round.outcome = resolveInterviewOutcome(round.outcome);
+      round.mode = normalizeInterviewMode(round.mode);
+    });
     
-    await application.save();
+    await application.save().catch((saveError) => {
+      const validationError = buildMongooseValidationError(saveError, 'Interview update rejected');
+      if (validationError) {
+        throw validationError;
+      }
+
+      throw saveError;
+    });
     
-    await application.populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
-    
-    return application;
+    // Reload application to ensure all interview subdocuments have _id
+    const reloaded = await ApplicationModel.findById(application._id)
+      .populate('jobId')
+      .populate('applicant', 'name fullName email number phone profileImageUrl jobSeeker');
+
+    return reloaded;
   } catch (error) {
+    console.error('[INTERVIEW OUTCOME] Failed to update:', {
+      applicationId,
+      interviewId,
+      recruiterId,
+      payload: feedbackData,
+      message: error.message,
+      statusCode: error.statusCode,
+      stack: error.stack,
+    });
     throw error;
   }
 };
@@ -631,7 +857,11 @@ const updateInterviewRound = async (applicationId, interviewId, recruiterId, int
     
     // Update interview fields
     if (interviewData.date !== undefined) interview.date = interviewData.date;
-    if (interviewData.time !== undefined) interview.time = interviewData.time;
+    const { startTime, endTime } = normalizeInterviewSlot(interviewData, interview);
+    validateInterviewSlot({ startTime, endTime });
+    interview.startTime = startTime;
+    interview.endTime = endTime;
+    interview.time = startTime;
     if (interviewData.timezone !== undefined) interview.timezone = interviewData.timezone;
     if (interviewData.mode !== undefined) interview.mode = interviewData.mode;
     if (interviewData.linkOrLocation !== undefined) interview.linkOrLocation = interviewData.linkOrLocation;

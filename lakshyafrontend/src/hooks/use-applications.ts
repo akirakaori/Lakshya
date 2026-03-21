@@ -1065,7 +1065,7 @@ export const useUpdateInterviewOutcome = () => {
     }: { 
       applicationId: string; 
       interviewId: string;
-      outcome: 'pass' | 'fail' | 'hold';
+      outcome: 'pass' | 'fail' | 'pending';
       feedback?: string;
     }) => {
       console.log('🎯 [INTERVIEW OUTCOME] Updating interview', interviewId, 'to', outcome);
@@ -1159,7 +1159,23 @@ export const useUpdateInterviewOutcome = () => {
       }
     },
     onError: (error, _variables, context) => {
-      console.error('❌ [INTERVIEW OUTCOME] Failed - rolling back:', error);
+      const axiosLikeError = error as {
+        response?: {
+          status?: number;
+          data?: {
+            message?: string;
+            [key: string]: unknown;
+          };
+        };
+        message?: string;
+      };
+
+      console.error('❌ [INTERVIEW OUTCOME] Failed - rolling back:', {
+        message: axiosLikeError?.message,
+        status: axiosLikeError?.response?.status,
+        backendMessage: axiosLikeError?.response?.data?.message,
+        backendData: axiosLikeError?.response?.data,
+      });
       
       // Rollback optimistic updates
       if (context?.previousDetail) {

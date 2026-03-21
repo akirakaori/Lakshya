@@ -113,7 +113,10 @@ const updateApplicationStatus = async (req, res) => {
 const getApplicationById = async (req, res) => {
   try {
     const applicationId = req.params.id;
-    const application = await applicationService.getApplicationById(applicationId);
+    const application = await applicationService.getApplicationById(applicationId, {
+      id: req.user?.id,
+      role: req.user?.role,
+    });
     
     res.status(200).json({
       success: true,
@@ -258,6 +261,13 @@ const updateInterviewFeedback = async (req, res) => {
     const recruiterId = req.user.id;
     const { applicationId, interviewId } = req.params;
     const feedbackData = req.body;
+
+    console.log('[INTERVIEW OUTCOME][Controller] Request received:', {
+      recruiterId,
+      applicationId,
+      interviewId,
+      payload: feedbackData,
+    });
     
     const application = await applicationService.updateInterviewFeedback(
       applicationId,
@@ -272,6 +282,15 @@ const updateInterviewFeedback = async (req, res) => {
       data: application
     });
   } catch (error) {
+    console.error('[INTERVIEW OUTCOME][Controller] Request failed:', {
+      recruiterId: req.user?.id,
+      applicationId: req.params?.applicationId,
+      interviewId: req.params?.interviewId,
+      payload: req.body,
+      statusCode: error.statusCode,
+      message: error.message,
+    });
+
     res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || 'Internal server error'

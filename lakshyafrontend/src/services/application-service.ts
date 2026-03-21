@@ -6,13 +6,15 @@ export interface Interview {
   _id?: string;
   roundNumber: number;
   date: string;
+  startTime?: string;
+  endTime?: string;
   time?: string;
   timezone?: string;
   mode: 'online' | 'onsite' | 'phone';
   linkOrLocation?: string;
   messageToCandidate?: string; // Visible to candidate
   internalNotes?: string; // Recruiter-only
-  outcome?: 'pass' | 'fail' | 'hold' | 'pending';
+  outcome?: 'pass' | 'fail' | 'pending';
   feedback?: string; // Recruiter feedback after interview
   createdAt?: string;
   updatedAt?: string;
@@ -84,6 +86,8 @@ export interface RecruiterApplicationFilters {
 export interface ScheduleInterviewData {
   roundNumber?: number; // Auto-computed if not provided
   date: string;
+  startTime?: string;
+  endTime?: string;
   time?: string;
   timezone?: string;
   mode: 'online' | 'onsite' | 'phone';
@@ -244,12 +248,30 @@ export const applicationService = {
   updateInterviewFeedback: async (
     applicationId: string,
     interviewId: string,
-    feedback: { outcome?: 'pass' | 'fail' | 'hold'; feedback?: string }
+    feedback: { outcome?: 'pass' | 'fail' | 'pending'; feedback?: string }
   ): Promise<{ success: boolean; data: Application }> => {
+    if (!applicationId || !interviewId) {
+      throw new Error('Missing applicationId or interviewId while updating interview outcome');
+    }
+
+    console.log('🧪 [INTERVIEW OUTCOME][Request]', {
+      endpoint: `/applications/${applicationId}/interviews/${interviewId}/feedback`,
+      applicationId,
+      interviewId,
+      payload: feedback,
+    });
+
     const response = await axiosInstance.patch(
       `/applications/${applicationId}/interviews/${interviewId}/feedback`,
       feedback
     );
+
+    console.log('✅ [INTERVIEW OUTCOME][Response]', {
+      applicationId,
+      interviewId,
+      outcome: response?.data?.data?.interviews?.find?.((item: Interview) => item?._id === interviewId)?.outcome,
+    });
+
     return response.data;
   },
 
