@@ -88,22 +88,22 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full flex items-center justify-between px-4 py-2.5 text-left bg-white border rounded-lg transition-all ${
+        className={`w-full flex items-center justify-between rounded-lg border bg-white px-4 py-2.5 text-left transition-all dark:bg-slate-900 ${
           disabled
-            ? 'bg-gray-50 cursor-not-allowed opacity-60'
-            : 'hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+            ? 'cursor-not-allowed bg-slate-50 opacity-60 dark:bg-slate-950'
+            : 'hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500'
         } ${
-          error ? 'border-red-300' : 'border-gray-300'
+          error ? 'border-red-300 dark:border-red-500/40' : 'border-slate-300 dark:border-slate-700'
         } ${isOpen ? 'ring-2 ring-indigo-500 border-indigo-500' : ''}`}
       >
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {value && selectedMeta ? (
             <>
               <span className="text-lg flex-shrink-0">{selectedMeta.icon}</span>
-              <span className="text-sm text-gray-900 truncate">{value}</span>
+              <span className="truncate text-sm text-slate-900 dark:text-slate-100">{value}</span>
             </>
           ) : (
-            <span className="text-sm text-gray-500">{placeholder}</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">{placeholder}</span>
           )}
         </div>
         
@@ -112,16 +112,16 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
             <span
               role="button"
               onClick={handleClear}
-              className="p-0.5 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+              className="cursor-pointer rounded p-0.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
               title="Clear selection"
             >
-              <svg className="w-4 h-4 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </span>
           )}
           <svg
-            className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            className={`h-4 w-4 text-slate-400 transition-transform dark:text-slate-500 ${isOpen ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -132,18 +132,18 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
       </button>
 
       {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
+        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900">
           {/* Search Input */}
           {searchable && (
-            <div className="p-2 border-b border-gray-200 bg-gray-50">
+            <div className="border-b border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-950">
               <div className="relative">
                 <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -156,7 +156,7 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search categories..."
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  className="w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                 />
               </div>
             </div>
@@ -177,8 +177,8 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
                       onClick={() => handleSelect(category)}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                         isSelected
-                          ? 'bg-indigo-50 text-indigo-900'
-                          : 'hover:bg-gray-50 text-gray-900'
+                          ? 'bg-indigo-50 text-indigo-900 dark:bg-indigo-500/15 dark:text-indigo-200'
+                          : 'text-slate-900 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
                       <span className="text-lg flex-shrink-0">{meta.icon}</span>
@@ -193,7 +193,7 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
                 })}
               </div>
             ) : (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
+              <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
                 No categories found matching "{searchTerm}"
               </div>
             )}

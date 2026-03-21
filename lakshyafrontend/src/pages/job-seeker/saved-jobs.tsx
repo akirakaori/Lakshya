@@ -41,13 +41,13 @@ const EasyApplyModal: React.FC<EasyApplyModalProps> = ({
   };
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Easy Apply Confirmation</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full p-6 shadow-xl">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">Easy Apply Confirmation</h3>
 
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-gray-700 dark:text-slate-300">
           Do you want to apply for this job before confirming your resume analysis?
         </p>
-        <p className="mt-3 text-sm text-gray-500">
+        <p className="mt-3 text-sm text-gray-500 dark:text-slate-400">
           You can still apply without analyzing your resume first.
         </p>
 
@@ -70,7 +70,7 @@ const EasyApplyModal: React.FC<EasyApplyModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium"
+            className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950 text-sm font-medium"
           >
             Cancel
           </button>
@@ -256,12 +256,12 @@ const SavedJobs: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Saved Jobs</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">Saved Jobs</h1>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
               Jobs you have bookmarked to review or apply later.
             </p>
             {!isLoading && !isError && (
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-gray-600 dark:text-slate-300 mt-2">
                 {normalizedPagination?.total ?? savedJobs.length} Saved Jobs • Showing {normalizedPagination?.limit ?? limit} per page
               </p>
             )}
@@ -334,7 +334,7 @@ const SavedJobs: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => navigate(`/jobs/${job._id}`)}
-                        className="px-4 py-2 text-sm rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="px-4 py-2 text-sm rounded-full border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950 transition-colors"
                       >
                         View Details
                       </button>
@@ -361,7 +361,7 @@ const SavedJobs: React.FC = () => {
                             : isWithdrawn && canReapply
                             ? 'bg-amber-500 text-white hover:bg-amber-600'
                             : isWithdrawn && !canReapply
-                            ? 'border border-gray-300 bg-gray-100 text-gray-500'
+                            ? 'border border-gray-300 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400'
                             : 'bg-green-500 text-white hover:bg-green-600'
                         }`}
                       >
@@ -388,7 +388,7 @@ const SavedJobs: React.FC = () => {
                         </span>
                         {withdrawnDateText ? `Withdrawn on ${withdrawnDateText}` : 'Application was withdrawn'}
                         {!canReapply && (
-                          <p className="text-xs text-gray-500 mt-1">This job is no longer open for reapplication.</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">This job is no longer open for reapplication.</p>
                         )}
                       </div>
                     )}
@@ -398,7 +398,7 @@ const SavedJobs: React.FC = () => {
             </div>
 
             {normalizedPagination && normalizedPagination.pages > 1 && (
-              <div className="mt-8 bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="mt-8 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden">
                 <PaginationControls
                   pagination={normalizedPagination}
                   onPageChange={(nextPage) => {
@@ -428,3 +428,4 @@ const SavedJobs: React.FC = () => {
 };
 
 export default SavedJobs;
+

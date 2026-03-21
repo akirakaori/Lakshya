@@ -219,7 +219,7 @@ const JobApplications: React.FC = () => {
       case 'withdrawn':
         return 'bg-amber-100 text-amber-800';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300';
     }
   };
 
@@ -264,13 +264,13 @@ const JobApplications: React.FC = () => {
             </svg>
             Back to Jobs
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">{job.title}</h1>
-          <p className="text-gray-600 mt-1">{job.companyName}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{job.title}</h1>
+          <p className="text-gray-600 dark:text-slate-300 mt-1">{job.companyName}</p>
         </div>
 
         {/* Tabs with Counts */}
-        <div className="bg-white rounded-xl border border-gray-200 mb-6">
-          <div className="border-b border-gray-200">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 mb-6">
+          <div className="border-b border-gray-200 dark:border-slate-800">
             <nav className="flex -mb-px overflow-x-auto">
               {[
                 { key: 'all', label: 'All', count: counts.total },
@@ -289,12 +289,12 @@ const JobApplications: React.FC = () => {
                   className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === tab.key
                       ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:border-slate-700'
                   }`}
                 >
                   {tab.label}
                   <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
-                    activeTab === tab.key ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
+                    activeTab === tab.key ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300'
                   }`}>
                     {tab.count}
                   </span>
@@ -311,7 +311,7 @@ const JobApplications: React.FC = () => {
               <div className="flex items-center gap-3 flex-1">
                 <div className="relative flex-1 max-w-md">
                 <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -333,15 +333,15 @@ const JobApplications: React.FC = () => {
                       handleApplyFilters();
                     }
                   }}
-                  className="w-full pl-10 pr-4 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full pl-10 pr-4 py-1.5 border border-gray-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600 font-medium whitespace-nowrap">Sort by:</label>
+                <label className="text-sm text-gray-600 dark:text-slate-300 font-medium whitespace-nowrap">Sort by:</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="px-3 py-1.5 border border-gray-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="newest">Newest First</option>
                   <option value="match">Highest Match Score</option>
@@ -354,7 +354,7 @@ const JobApplications: React.FC = () => {
                 className={`px-4 py-1.5 border rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
                   showAdvancedFilters || activeFilterCount > 0
                     ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    : 'border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950'
                 }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -371,16 +371,16 @@ const JobApplications: React.FC = () => {
 
           {/* Advanced Filters */}
           {showAdvancedFilters && (
-            <div className="border-t border-gray-200 pt-4">
+            <div className="border-t border-gray-200 dark:border-slate-800 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     Minimum Match Score
                   </label>
                   <select
                     value={minScoreInput}
                     onChange={(e) => setMinScoreInput(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="0">No minimum</option>
                     <option value="50">≥ 50%</option>
@@ -391,7 +391,7 @@ const JobApplications: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     Must Have Skill
                   </label>
                   <input
@@ -404,11 +404,11 @@ const JobApplications: React.FC = () => {
                         handleApplyFilters();
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     Missing Skill
                   </label>
                   <input
@@ -421,11 +421,11 @@ const JobApplications: React.FC = () => {
                         handleApplyFilters();
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     Analysis Status
                   </label>
                   <select
@@ -435,7 +435,7 @@ const JobApplications: React.FC = () => {
                       console.log('[AnalysisStatusInput] Changed to:', next);
                       setAnalysisStatusInput(next);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="all">All</option>
                     <option value="analyzed">Analyzed Only</option>
@@ -447,7 +447,7 @@ const JobApplications: React.FC = () => {
                 {activeFilterCount > 0 && (
                   <button
                     onClick={clearFilters}
-                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-700 font-medium border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-4 py-2 text-sm text-gray-600 dark:text-slate-300 hover:text-gray-700 dark:text-slate-300 font-medium border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
                   >
                     Clear
                   </button>
@@ -506,7 +506,7 @@ const JobApplications: React.FC = () => {
               </button>
               <button
                 onClick={() => setSelectedApplications(new Set())}
-                className="text-sm text-gray-600 hover:text-gray-700"
+                className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-700 dark:text-slate-300"
               >
                 Clear
               </button>
@@ -537,28 +537,28 @@ const JobApplications: React.FC = () => {
             }
           />
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr className="bg-gray-50 dark:bg-slate-950 border-b border-gray-200 dark:border-slate-800">
                   <th className="px-4 py-3 text-left">
                     <input
                       type="checkbox"
                       checked={selectedApplications.size === applications.filter((app: RecruiterApplication) => app.status !== 'withdrawn' && !app.isWithdrawn).length && applications.some((app: RecruiterApplication) => app.status !== 'withdrawn' && !app.isWithdrawn)}
                       onChange={handleSelectAll}
                       disabled={!applications.some((app: RecruiterApplication) => app.status !== 'withdrawn' && !app.isWithdrawn)}
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="rounded border-gray-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Candidate</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Match Score</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Analysis Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Matched Skills</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Missing Skills</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Experience</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Applied</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Candidate</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Match Score</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Analysis Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Matched Skills</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Missing Skills</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Experience</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Applied</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -582,14 +582,14 @@ const JobApplications: React.FC = () => {
 
                   return (
                     <React.Fragment key={application._id}>
-                      <tr className={`hover:bg-gray-50 ${isSelected ? 'bg-indigo-50' : ''}`}>
+                      <tr className={`hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950 ${isSelected ? 'bg-indigo-50' : ''}`}>
                         <td className="px-4 py-4">
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleSelectOne(application._id)}
                             disabled={isWithdrawn}
-                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            className="rounded border-gray-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
                           />
                         </td>
                         <td className="px-4 py-4">
@@ -602,12 +602,12 @@ const JobApplications: React.FC = () => {
                               </div>
                             )}
                             <div>
-                              <div className="font-medium text-gray-900">
+                              <div className="font-medium text-gray-900 dark:text-slate-100">
                                 {applicant?.fullName || applicant?.name || 'Unknown'}
                               </div>
-                              <div className="text-sm text-gray-500">{applicant?.email}</div>
+                              <div className="text-sm text-gray-500 dark:text-slate-400">{applicant?.email}</div>
                               {applicant?.jobSeeker?.title && (
-                                <div className="text-xs text-gray-400">{applicant.jobSeeker.title}</div>
+                                <div className="text-xs text-gray-400 dark:text-slate-500">{applicant.jobSeeker.title}</div>
                               )}
                             </div>
                           </div>
@@ -618,7 +618,7 @@ const JobApplications: React.FC = () => {
                               ? 'bg-green-100 text-green-700' 
                               : (application.matchScore || 0) >= 70
                               ? 'bg-yellow-100 text-yellow-700'
-                              : 'bg-gray-100 text-gray-600'
+                              : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300'
                           }`}>
                             {application.matchScore || 0}%
                           </span>
@@ -629,7 +629,7 @@ const JobApplications: React.FC = () => {
                               AI Analyzed
                             </span>
                           ) : (
-                            <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300">
                               No Analysis
                             </span>
                           )}
@@ -650,7 +650,7 @@ const JobApplications: React.FC = () => {
                               </span>
                             )}
                             {!application.matchedSkills || application.matchedSkills.length === 0 && (
-                              <span className="text-xs text-gray-400">—</span>
+                              <span className="text-xs text-gray-400 dark:text-slate-500">—</span>
                             )}
                           </div>
                         </td>
@@ -670,14 +670,14 @@ const JobApplications: React.FC = () => {
                               </span>
                             )}
                             {!application.missingSkills || application.missingSkills.length === 0 && (
-                              <span className="text-xs text-gray-400">—</span>
+                              <span className="text-xs text-gray-400 dark:text-slate-500">—</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-600">
+                        <td className="px-4 py-4 text-sm text-gray-600 dark:text-slate-300">
                           {application.experienceYears || 0} yrs
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-600">
+                        <td className="px-4 py-4 text-sm text-gray-600 dark:text-slate-300">
                           {formatDate(application.createdAt)}
                         </td>
                         <td className="px-4 py-4">
@@ -709,7 +709,7 @@ const JobApplications: React.FC = () => {
                             </button>
                             <Link
                               to={`/recruiter/application/${application._id}`}
-                              className="text-gray-600 hover:text-gray-700 text-sm font-medium"
+                              className="text-gray-600 dark:text-slate-300 hover:text-gray-700 dark:text-slate-300 text-sm font-medium"
                             >
                               Profile
                             </Link>
@@ -718,7 +718,7 @@ const JobApplications: React.FC = () => {
                                 href={getFileUrl(applicant.jobSeeker.resumeUrl) || '#'}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-600 hover:text-gray-700"
+                                className="text-gray-600 dark:text-slate-300 hover:text-gray-700 dark:text-slate-300"
                                 title="View Resume"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -742,7 +742,7 @@ const JobApplications: React.FC = () => {
           if (drawerLoading) {
             return (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg shadow-xl p-8">
+                <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl p-8">
                   <LoadingSpinner text="Loading details..." />
                 </div>
               </div>
@@ -755,8 +755,8 @@ const JobApplications: React.FC = () => {
           if (!viewingDetails || !applicant) {
             return (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg shadow-xl p-8">
-                  <p className="text-gray-600">Application not found</p>
+                <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl p-8">
+                  <p className="text-gray-600 dark:text-slate-300">Application not found</p>
                   <button
                     onClick={() => setViewingDetailsId(null)}
                     className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg"
@@ -770,8 +770,8 @@ const JobApplications: React.FC = () => {
           
           return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-indigo-600 to-indigo-700">
+              <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-indigo-600 to-indigo-700">
                   <div>
                     <h3 className="text-lg font-semibold text-white">
                       {applicant?.fullName || applicant?.name || 'Candidate'}
@@ -806,7 +806,7 @@ const JobApplications: React.FC = () => {
 
                   {/* Matched Skills */}
                   <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-slate-100 mb-3 flex items-center gap-2">
                       <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
@@ -824,13 +824,13 @@ const JobApplications: React.FC = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500 italic">No matched skills recorded</p>
+                      <p className="text-sm text-gray-500 dark:text-slate-400 italic">No matched skills recorded</p>
                     )}
                   </div>
 
                   {/* Missing Skills */}
                   <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-slate-100 mb-3 flex items-center gap-2">
                       <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
@@ -848,28 +848,28 @@ const JobApplications: React.FC = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500 italic">No missing skills recorded</p>
+                      <p className="text-sm text-gray-500 dark:text-slate-400 italic">No missing skills recorded</p>
                     )}
                   </div>
 
                   {/* Additional Info */}
                   <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="text-xs text-gray-500 mb-1">Experience</div>
-                      <div className="text-lg font-semibold text-gray-900">{viewingDetails.experienceYears || 0} years</div>
+                    <div className="bg-gray-50 dark:bg-slate-950 rounded-lg p-4 border border-gray-200 dark:border-slate-800">
+                      <div className="text-xs text-gray-500 dark:text-slate-400 mb-1">Experience</div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-slate-100">{viewingDetails.experienceYears || 0} years</div>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="text-xs text-gray-500 mb-1">Applied On</div>
-                      <div className="text-lg font-semibold text-gray-900">{formatDate(viewingDetails.createdAt)}</div>
+                    <div className="bg-gray-50 dark:bg-slate-950 rounded-lg p-4 border border-gray-200 dark:border-slate-800">
+                      <div className="text-xs text-gray-500 dark:text-slate-400 mb-1">Applied On</div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-slate-100">{formatDate(viewingDetails.createdAt)}</div>
                     </div>
                   </div>
 
                   {/* Notes */}
                   {viewingDetails.notes && (
                     <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-gray-900 mb-2">Recruiter Notes</h4>
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-slate-100 mb-2">Recruiter Notes</h4>
                       <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                        <p className="text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap">
                           {viewingDetails.notes}
                         </p>
                       </div>
@@ -877,8 +877,8 @@ const JobApplications: React.FC = () => {
                   )}
 
                   {/* Status Update */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Update Status</h4>
+                  <div className="pt-4 border-t border-gray-200 dark:border-slate-800">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-slate-100 mb-3">Update Status</h4>
                     {(viewingDetails.status === 'withdrawn' || viewingDetails.isWithdrawn) ? (
                       <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                         This candidate withdrew the application. Status updates are disabled.
@@ -898,7 +898,7 @@ const JobApplications: React.FC = () => {
                             disabled={viewingDetails.status === status}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                               viewingDetails.status === status
-                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                ? 'bg-gray-200 text-gray-500 dark:text-slate-400 cursor-not-allowed'
                                 : status === 'rejected'
                                 ? 'bg-red-600 text-white hover:bg-red-700'
                                 : 'bg-indigo-600 text-white hover:bg-indigo-700'
@@ -911,10 +911,10 @@ const JobApplications: React.FC = () => {
                     )}
                   </div>
                 </div>
-                <div className="px-6 py-4 border-t border-gray-200 flex justify-between bg-gray-50">
+                <div className="px-6 py-4 border-t border-gray-200 dark:border-slate-800 flex justify-between bg-gray-50 dark:bg-slate-950">
                   <Link
                     to={`/recruiter/application/${viewingDetails._id}`}
-                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
+                    className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
                     onClick={() => setViewingDetailsId(null)}
                   >
                     View Full Profile
@@ -936,3 +936,4 @@ const JobApplications: React.FC = () => {
 };
 
 export default JobApplications;
+

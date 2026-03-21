@@ -55,7 +55,7 @@ function ForgotPassword() {
         <div className="min-h-screen flex items-center justify-center p-4">
           <div className="w-full max-w-md">
         {/* Card Container */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-8 space-y-6">
           {/* Logo Section */}
           <div className="text-center space-y-2">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl mb-2">
@@ -63,7 +63,7 @@ function ForgotPassword() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Lakshya</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Lakshya</h2>
             <Link
               to="/"
               className="text-sm text-indigo-600 hover:text-indigo-700 transition-colors duration-300 inline-block"
@@ -74,8 +74,8 @@ function ForgotPassword() {
 
           {/* Page Title */}
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Forgot Password</h1>
-            <p className="text-sm text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Forgot Password</h1>
+            <p className="text-sm text-gray-600 dark:text-slate-300 mt-2">
               Enter your email to receive an OTP for password reset.
             </p>
           </div>
@@ -84,7 +84,7 @@ function ForgotPassword() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Email Field */}
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                 Email
               </label>
               <input
@@ -98,9 +98,9 @@ function ForgotPassword() {
                     message: 'Please enter a valid email address',
                   },
                 })}
-                className={`w-full px-4 py-3 bg-gray-50 border ${
-                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'
-                } rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
+                className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border ${
+                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 dark:border-slate-800 focus:ring-indigo-500'
+                } rounded-lg text-gray-900 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
               />
               {errors.email && (
                 <p className="text-sm text-red-600">{errors.email.message}</p>
@@ -146,3 +146,4 @@ function ForgotPassword() {
 }
 
 export default ForgotPassword;
+

@@ -22,24 +22,24 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, variant 
 
   if (variant === 'row') {
     return (
-      <tr className="hover:bg-gray-50">
+      <tr className="hover:bg-gray-50 dark:hover:bg-slate-800/60">
         <td className="px-6 py-4">
-          <div className="font-medium text-gray-900">{job?.title || 'Job Title'}</div>
+          <div className="font-medium text-gray-900 dark:text-slate-100">{job?.title || 'Job Title'}</div>
         </td>
-        <td className="px-6 py-4 text-gray-600">{job?.companyName || 'Company'}</td>
-        <td className="px-6 py-4 text-gray-600">{formatDate(application.createdAt)}</td>
+        <td className="px-6 py-4 text-gray-600 dark:text-slate-300">{job?.companyName || 'Company'}</td>
+        <td className="px-6 py-4 text-gray-600 dark:text-slate-300">{formatDate(application.createdAt)}</td>
         <td className="px-6 py-4">
-          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
+          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
             {getStatusLabel(application.status)}
           </span>
         </td>
         <td className="px-6 py-4">
           {matchScore !== null && matchScore !== undefined ? (
-            <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+            <span className="inline-flex rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
               {matchScore}%
             </span>
           ) : (
-            <span className="text-gray-400 text-xs">—</span>
+            <span className="text-xs text-gray-400 dark:text-slate-500">--</span>
           )}
         </td>
       </tr>
@@ -47,42 +47,42 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, variant 
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-            <span className="text-indigo-600 font-bold text-lg">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-500/15">
+            <span className="text-lg font-bold text-indigo-600 dark:text-indigo-300">
               {job?.companyName?.charAt(0) || 'C'}
             </span>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">{job?.title || 'Job Title'}</h3>
-            <p className="text-sm text-gray-600 mt-0.5">{job?.companyName || 'Company'}</p>
+            <h3 className="font-semibold text-gray-900 dark:text-slate-100">{job?.title || 'Job Title'}</h3>
+            <p className="mt-0.5 text-sm text-gray-600 dark:text-slate-300">{job?.companyName || 'Company'}</p>
           </div>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
+        <span className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
           {getStatusLabel(application.status)}
         </span>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-sm">
-        <div className="flex items-center gap-4 text-gray-500">
+        <div className="flex items-center gap-4 text-gray-500 dark:text-slate-400">
           <span className="flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             {job?.location || 'Location'}
           </span>
           <span className="flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             {formatDate(application.createdAt)}
           </span>
         </div>
         {matchScore !== null && matchScore !== undefined && (
-          <span className="text-green-600 font-medium">✓ {matchScore}% Match</span>
+          <span className="font-medium text-green-600 dark:text-green-300">Match {matchScore}%</span>
         )}
       </div>
     </div>

@@ -20,7 +20,7 @@ const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 1
     <div className="relative" style={{ width: size, height: size }}>
       <svg className="w-full h-full" viewBox="0 0 100 100">
         <circle
-          className="text-gray-200"
+          className="text-gray-200 dark:text-slate-800"
           strokeWidth="8"
           stroke="currentColor"
           fill="transparent"
@@ -57,14 +57,14 @@ const BreakdownBar: React.FC<{ label: string; percent: number; color: string }> 
   color,
 }) => (
   <div className="flex items-center gap-3">
-    <span className="text-xs text-gray-500 w-20 text-right">{label}</span>
-    <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+    <span className="text-xs text-gray-500 dark:text-slate-400 w-20 text-right">{label}</span>
+    <div className="flex-1 bg-gray-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
       <div
         className={`h-full rounded-full ${color}`}
         style={{ width: `${Math.min(percent, 100)}%`, transition: 'width 0.5s ease' }}
       />
     </div>
-    <span className="text-xs font-medium text-gray-700 w-10">{percent}%</span>
+    <span className="text-xs font-medium text-gray-700 dark:text-slate-300 w-10">{percent}%</span>
   </div>
 );
 
@@ -75,8 +75,8 @@ const SkillChip: React.FC<{ skill: string; variant: 'matched' | 'missing' }> = (
 }) => {
   const cls =
     variant === 'matched'
-      ? 'bg-green-50 text-green-700 border-green-200'
-      : 'bg-red-50 text-red-600 border-red-200';
+      ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/20'
+      : 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20';
   return (
     <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${cls}`}>
       {variant === 'matched' ? '✓ ' : '✗ '}
@@ -150,8 +150,8 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
                         'Analysis failed. Please try again.';
     
     return (
-      <div className="bg-white rounded-xl border border-red-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Match Score</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-red-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">AI Match Score</h3>
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
           <p className="text-sm text-red-700">{errorMessage}</p>
         </div>
@@ -168,7 +168,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6 animate-pulse">
         <div className="h-4 bg-gray-200 rounded w-1/2 mb-4" />
         <div className="flex justify-center mb-4">
           <div className="w-28 h-28 bg-gray-200 rounded-full" />
@@ -200,8 +200,8 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
     }
     
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Match Score</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">AI Match Score</h3>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
           <p className="text-sm text-yellow-800">{displayMessage}</p>
           {errorMessage && (
@@ -231,9 +231,9 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
   // No analysis exists yet
   if (!data?.data) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Match Score</h3>
-        <p className="text-sm text-gray-500 mb-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">AI Match Score</h3>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
           Get AI-powered insights on how well your profile matches this job.
         </p>
         <button
@@ -291,9 +291,9 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
         : 'Low match — consider updating your profile before applying.';
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6 space-y-5">
       {/* Header */}
-      <h3 className="text-lg font-semibold text-gray-900">AI Match Score</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">AI Match Score</h3>
 
       {/* Outdated banner */}
       {isOutdated && (
@@ -322,7 +322,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
       {/* Score ring */}
       <div className="flex flex-col items-center">
         <ScoreRing score={matchScore} />
-        <p className="text-sm text-gray-500 text-center mt-2">{matchLabel}</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400 text-center mt-2">{matchLabel}</p>
       </div>
 
       {/* Breakdown bars */}
@@ -334,7 +334,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
       {/* Matched skills */}
       {matchedSkills.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Matched Skills</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Matched Skills</h4>
           <div className="flex flex-wrap gap-1.5">
             {matchedSkills.map((s, idx) => (
               <SkillChip key={`matched-${idx}-${s}`} skill={s} variant="matched" />
@@ -346,7 +346,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
       {/* Missing skills */}
       {missingSkills.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Missing Skills</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Missing Skills</h4>
           <div className="flex flex-wrap gap-1.5">
             {missingSkills.map((s, idx) => (
               <SkillChip key={`missing-${idx}-${s}`} skill={s} variant="missing" />
@@ -358,7 +358,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
       {/* Suggestions */}
       {suggestions.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-2">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Suggestions
             <span className="ml-1.5 text-xs font-normal text-gray-400">
               ({suggestionSource === 'ollama' ? 'AI-powered' : 'Rule-based'})
@@ -366,7 +366,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
           </h4>
           <ul className="space-y-1.5">
             {suggestions.map((tip, i) => (
-              <li key={`suggestion-${i}`} className="flex items-start gap-2 text-sm text-gray-600">
+              <li key={`suggestion-${i}`} className="flex items-start gap-2 text-sm text-gray-600 dark:text-slate-300">
                 <span className="text-indigo-500 mt-0.5 flex-shrink-0">💡</span>
                 <span>{tip}</span>
               </li>
@@ -378,13 +378,13 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
       {/* Summary rewrite */}
       {summaryRewrite && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Suggested Summary</h4>
-          <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600 italic">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Suggested Summary</h4>
+          <div className="bg-gray-50 dark:bg-slate-950 rounded-lg p-3 text-sm text-gray-600 dark:text-slate-300 italic">
             "{summaryRewrite}"
           </div>
           <button
             onClick={() => handleCopy(summaryRewrite)}
-            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950 transition-colors"
           >
             {copied ? (
               <>
@@ -414,3 +414,5 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
 };
 
 export default JobMatchPanel;
+
+

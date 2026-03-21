@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { toast } from 'react-toastify';
 import { useScheduleInterviewRound, useUpdateInterviewRound } from '../../hooks';
 import type { Interview } from '../../services';
@@ -194,8 +194,8 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="app-modal-overlay">
+      <div className="app-modal-panel max-h-[90vh] max-w-2xl overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 flex items-center justify-between rounded-t-xl">
           <div>
@@ -220,17 +220,17 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
           {/* Round Number (display only, auto-computed or from edit) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium app-label">
               Interview Round
             </label>
-            <div className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 font-medium">
+            <div className="rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
               Round {roundNumberValue}
               {isEditMode ? (
-                <span className="text-xs text-blue-600 ml-2">
+                <span className="ml-2 text-xs text-blue-600 dark:text-blue-300">
                   (Editing existing round)
                 </span>
               ) : currentInterviews.length > 0 ? (
-                <span className="text-xs text-gray-500 ml-2">
+                <span className="ml-2 text-xs text-gray-500 dark:text-slate-400">
                   (Previous rounds: {currentInterviews.length})
                 </span>
               ) : null}
@@ -310,12 +310,12 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
 
           {/* Timezone */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium app-label">
               Timezone
             </label>
             <select
               {...register('timezone')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="app-select"
             >
               <option value="IST">IST (Indian Standard Time)</option>
               <option value="UTC">UTC</option>
@@ -327,7 +327,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
 
           {/* Interview Mode */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium app-label">
               Interview Mode <span className="text-red-500">*</span>
             </label>
             <Controller
@@ -342,8 +342,8 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
                       onClick={() => field.onChange(mode)}
                       className={`px-4 py-2 rounded-lg border-2 font-medium transition-colors ${
                         field.value === mode
-                          ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                          : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                          ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300'
+                          : 'border-slate-300 text-slate-700 hover:border-slate-400 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-500'
                       }`}
                     >
                       {mode === 'online' && (
@@ -371,7 +371,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
 
           {/* Link or Location */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium app-label">
               {modeValue === 'online' ? 'Meeting Link' : modeValue === 'onsite' ? 'Office Address' : 'Phone Number'}
             </label>
             <input
@@ -384,27 +384,27 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
                   ? 'Office address or room number'
                   : 'Contact number for the interview'
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="app-input"
             />
           </div>
 
           {/* Message to Candidate (Visible) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium app-label">
               Message to Candidate
-              <span className="ml-2 text-xs text-gray-500">(Candidate will see this)</span>
+              <span className="ml-2 text-xs text-gray-500 dark:text-slate-400">(Candidate will see this)</span>
             </label>
             <textarea
               {...register('messageToCandidate')}
               rows={3}
               placeholder="E.g., Please be ready with your portfolio. We'll discuss your React projects in detail."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+              className="app-input resize-none"
             />
           </div>
 
           {/* Internal Notes (Recruiter Only) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium app-label">
               Internal Notes
               <span className="ml-2 text-xs text-amber-600 font-medium">(Recruiter-only, NOT visible to candidate)</span>
             </label>
@@ -412,17 +412,17 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
               {...register('internalNotes')}
               rows={2}
               placeholder="Private notes for internal team use only..."
-              className="w-full px-3 py-2 border border-amber-200 bg-amber-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none"
+              className="w-full resize-none rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-white"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 border-t border-gray-200 pt-4 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
               disabled={isEditMode ? updateInterviewMutation.isPending : scheduleInterviewMutation.isPending}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="app-secondary-button flex-1 disabled:opacity-50"
             >
               Cancel
             </button>
@@ -443,3 +443,4 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
 };
 
 export default ScheduleInterviewModal;
+

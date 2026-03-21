@@ -48,23 +48,23 @@ const AlertModal: React.FC<AlertModalProps> = ({
   // Variant styles
   const variantStyles = {
     error: {
-      icon: 'text-red-600',
-      header: 'bg-red-50 border-b border-red-200',
+      icon: 'text-red-600 dark:text-red-400',
+      header: 'bg-red-50 border-b border-red-200 dark:bg-red-500/10 dark:border-red-500/20',
       button: 'bg-red-600 hover:bg-red-700 text-white',
     },
     warning: {
-      icon: 'text-yellow-600',
-      header: 'bg-yellow-50 border-b border-yellow-200',
+      icon: 'text-yellow-600 dark:text-yellow-400',
+      header: 'bg-yellow-50 border-b border-yellow-200 dark:bg-yellow-500/10 dark:border-yellow-500/20',
       button: 'bg-yellow-600 hover:bg-yellow-700 text-white',
     },
     success: {
-      icon: 'text-green-600',
-      header: 'bg-green-50 border-b border-green-200',
+      icon: 'text-green-600 dark:text-green-400',
+      header: 'bg-green-50 border-b border-green-200 dark:bg-green-500/10 dark:border-green-500/20',
       button: 'bg-green-600 hover:bg-green-700 text-white',
     },
     info: {
-      icon: 'text-blue-600',
-      header: 'bg-blue-50 border-b border-blue-200',
+      icon: 'text-blue-600 dark:text-blue-400',
+      header: 'bg-blue-50 border-b border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20',
       button: 'bg-blue-600 hover:bg-blue-700 text-white',
     },
   };
@@ -96,20 +96,20 @@ const AlertModal: React.FC<AlertModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
+      className="app-modal-overlay animate-fadeIn"
       onClick={handleOverlayClick}
     >
-      <div className="bg-white rounded-xl max-w-md w-full shadow-2xl transform transition-all animate-slideUp">
+      <div className="app-modal-panel max-w-md transform animate-slideUp transition-all">
         {/* Header */}
         <div className={`px-6 py-4 ${styles.header}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {icons[variant]}
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
               type="button"
               aria-label="Close modal"
             >
@@ -122,11 +122,11 @@ const AlertModal: React.FC<AlertModalProps> = ({
 
         {/* Body */}
         <div className="px-6 py-5">
-          <p className="text-gray-700 leading-relaxed">{message}</p>
+          <p className="leading-relaxed text-slate-700 dark:text-slate-300">{message}</p>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 rounded-b-xl flex items-center justify-end">
+        <div className="flex items-center justify-end rounded-b-xl bg-slate-50 px-6 py-4 dark:bg-slate-950">
           <button
             type="button"
             onClick={onClose}

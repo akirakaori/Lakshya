@@ -126,8 +126,8 @@ const NotificationsPage: React.FC = () => {
       <div className="max-w-5xl mx-auto">
         <div className="mb-6 flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">All Notifications</h1>
-            <p className="text-sm text-gray-600 mt-1">Stay updated on your application and hiring activity.</p>
+            <h1 className="text-2xl font-bold app-heading">All Notifications</h1>
+            <p className="mt-1 text-sm app-body-text">Stay updated on your application and hiring activity.</p>
           </div>
           <div className="flex items-center gap-3">
             <PageSizeSelect
@@ -156,7 +156,7 @@ const NotificationsPage: React.FC = () => {
             description="New updates will appear here when actions happen in your applications and jobs."
           />
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="app-surface overflow-hidden rounded-xl">
             <ul>
               {notifications.map((notification) => {
                 const targetPath = getNotificationTargetPath(notification, role);
@@ -164,7 +164,7 @@ const NotificationsPage: React.FC = () => {
                 return (
                   <li
                     key={notification._id}
-                    className={`border-b border-gray-100 last:border-b-0 ${notification.isRead ? 'bg-white' : 'bg-indigo-50/40'}`}
+                    className={`border-b border-gray-100 last:border-b-0 dark:border-slate-800 ${notification.isRead ? 'bg-white dark:bg-slate-900' : 'bg-indigo-50/40 dark:bg-indigo-500/10'}`}
                   >
                     <div className="p-4 sm:p-5 flex items-start gap-4">
                       <div className="mt-1">{getNotificationIcon(notification.type)}</div>
@@ -180,9 +180,9 @@ const NotificationsPage: React.FC = () => {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-sm sm:text-base font-semibold text-gray-900">{notification.title}</p>
-                            <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                            <p className="text-xs text-gray-400 mt-2">{formatRelativeTime(notification.createdAt)}</p>
+                            <p className="text-sm font-semibold text-gray-900 sm:text-base dark:text-white">{notification.title}</p>
+                            <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">{notification.message}</p>
+                            <p className="mt-2 text-xs text-gray-400 dark:text-slate-500">{formatRelativeTime(notification.createdAt)}</p>
                           </div>
                           {!notification.isRead && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
@@ -195,7 +195,7 @@ const NotificationsPage: React.FC = () => {
                       {!notification.isRead && (
                         <button
                           onClick={() => markOneAsRead.mutate(notification._id)}
-                          className="text-xs text-indigo-600 hover:text-indigo-700 font-medium whitespace-nowrap"
+                          className="whitespace-nowrap text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
                           Mark read
                         </button>

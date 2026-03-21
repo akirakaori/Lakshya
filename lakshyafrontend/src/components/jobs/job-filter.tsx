@@ -146,9 +146,9 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
   );
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+    <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Filters</h3>
         {hasActiveFilters && (
           <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full">
             Active
@@ -159,7 +159,7 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
       <form onSubmit={handleSubmit(onApplyFilters)} className="space-y-6">
         {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
             Category
           </label>
           <Controller
@@ -179,7 +179,7 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
 
         {/* Job Type */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
             Job Type
           </label>
           <div className="space-y-2">
@@ -191,7 +191,7 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
                   {...register('jobType')}
                   className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
                 />
-                <span className="text-sm text-gray-600">{type}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{type}</span>
               </label>
             ))}
             <label className="flex items-center gap-2 cursor-pointer">
@@ -201,19 +201,19 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
                 {...register('jobType')}
                 className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
               />
-              <span className="text-sm text-gray-600">All Types</span>
+              <span className="text-sm text-slate-600 dark:text-slate-300">All Types</span>
             </label>
           </div>
         </div>
 
         {/* Remote Type */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
             Work Location
           </label>
           <select
             {...register('remoteType')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            className="app-select text-sm"
           >
             <option value="">All Locations</option>
             {REMOTE_TYPES.map((type) => (
@@ -224,12 +224,12 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
 
         {/* Company Size */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
             Company Size
           </label>
           <select
             {...register('companySize')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            className="app-select text-sm"
           >
             <option value="">Any Size</option>
             {COMPANY_SIZES.map((size) => (
@@ -240,12 +240,12 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
 
         {/* Posted Within */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
             Posted Date
           </label>
           <select
             {...register('postedWithinDays', { valueAsNumber: true })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            className="app-select text-sm"
           >
             {POSTED_WITHIN_OPTIONS.map((option) => (
               <option key={option.value} value={option.value || ''}>{option.label}</option>
@@ -255,23 +255,23 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
 
         {/* Salary Range */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
             Salary Range
           </label>
           
           {/* Display selected values */}
           <div className="flex items-center justify-between mb-3 text-sm">
-            <span className="text-indigo-600 font-medium">
+            <span className="font-medium text-indigo-600 dark:text-indigo-300">
               Min: {formatCurrencyNPR(salaryMin)}
             </span>
-            <span className="text-indigo-600 font-medium">
+            <span className="font-medium text-indigo-600 dark:text-indigo-300">
               Max: {formatCurrencyNPR(salaryMax)}
             </span>
           </div>
 
           {/* Min Salary Slider */}
           <div className="mb-2">
-            <label className="text-xs text-gray-500 mb-1 block">Minimum</label>
+            <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Minimum</label>
             <input
               type="range"
               min={MIN_SALARY}
@@ -287,14 +287,14 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
                   }
                 },
               })}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-indigo-600 dark:bg-slate-700"
               aria-label="Minimum salary"
             />
           </div>
 
           {/* Max Salary Slider */}
           <div className="mb-2">
-            <label className="text-xs text-gray-500 mb-1 block">Maximum</label>
+            <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Maximum</label>
             <input
               type="range"
               min={MIN_SALARY}
@@ -310,12 +310,12 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
                   }
                 },
               })}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-indigo-600 dark:bg-slate-700"
               aria-label="Maximum salary"
             />
           </div>
 
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
             <span>{formatCurrencyNPR(MIN_SALARY)}</span>
             <span>{formatCurrencyNPR(MAX_SALARY)}</span>
           </div>
@@ -323,20 +323,20 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
 
         {/* Location */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
             Location
           </label>
           <input
             type="text"
             placeholder="e.g., Kathmandu, Remote"
             {...register('location')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            className="app-input text-sm"
           />
         </div>
 
         {/* Experience Level */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
             Experience Level
           </label>
           <div className="space-y-2">
@@ -348,7 +348,7 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
                   onChange={() => handleExperienceLevelToggle(level.value)}
                   className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
-                <span className="text-sm text-gray-600">{level.label}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{level.label}</span>
               </label>
             ))}
           </div>
@@ -356,13 +356,13 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
 
         {/* AI Match Score Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
             AI Match Score (Minimum)
           </label>
           
           {/* Display current value */}
           <div className="text-center mb-2">
-            <span className="text-2xl font-bold text-indigo-600">
+            <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-300">
               {aiMatchMin}%
             </span>
           </div>
@@ -373,10 +373,10 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
             max="100"
             step="5"
             {...register('aiMatchMin', { valueAsNumber: true })}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+            className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-indigo-600 dark:bg-slate-700"
             aria-label="Minimum AI match score"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <div className="mt-1 flex justify-between text-xs text-slate-500 dark:text-slate-400">
             <span>0%</span>
             <span>50%</span>
             <span>100%</span>
@@ -384,7 +384,7 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-2 pt-4 border-t border-gray-200">
+        <div className="space-y-2 border-t border-slate-200 pt-4 dark:border-slate-800">
           <button
             type="submit"
             className="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
@@ -394,7 +394,7 @@ const JobFilter: React.FC<JobFilterProps> = ({ filters, onFilterChange, onClearF
           <button
             type="button"
             onClick={handleClear}
-            className="w-full px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+            className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Clear All Filters
           </button>

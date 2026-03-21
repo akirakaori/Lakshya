@@ -72,8 +72,8 @@ const ManageJobs: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Manage Job Posts</h1>
-            <p className="text-gray-600 mt-1">View, edit, and manage all your job postings.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Manage Job Posts</h1>
+            <p className="text-gray-600 dark:text-slate-300 mt-1">View, edit, and manage all your job postings.</p>
           </div>
           <Link
             to="/recruiter/post-job"
@@ -87,11 +87,11 @@ const ManageJobs: React.FC = () => {
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -108,13 +108,13 @@ const ManageJobs: React.FC = () => {
                 placeholder="Search by job title or location..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="all">All Jobs</option>
               <option value="active">Active</option>
@@ -158,7 +158,7 @@ const ManageJobs: React.FC = () => {
           /* Job Cards */
           <div className="space-y-4">
             {filteredJobs.map((job: Job) => (
-              <div key={job._id} className="bg-white rounded-xl border border-gray-200 p-6">
+              <div key={job._id} className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-start gap-4">
@@ -169,18 +169,18 @@ const ManageJobs: React.FC = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{job.title}</h3>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             job.isDeleted
                               ? 'bg-red-100 text-red-700'
                               : job.isActive 
                                 ? 'bg-green-100 text-green-700' 
-                                : 'bg-gray-100 text-gray-600'
+                                : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300'
                           }`}>
                             {job.isDeleted ? 'Deleted' : job.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
+                        <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500 dark:text-slate-400">
                           <span className="flex items-center gap-1">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -211,13 +211,13 @@ const ManageJobs: React.FC = () => {
                           {job.skillsRequired?.slice(0, 4).map((skill: string, index: number) => (
                             <span
                               key={index}
-                              className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs"
+                              className="px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded text-xs"
                             >
                               {skill}
                             </span>
                           ))}
                           {(job.skillsRequired?.length ?? 0) > 4 && (
-                            <span className="px-2 py-1 text-gray-500 text-xs">
+                            <span className="px-2 py-1 text-gray-500 dark:text-slate-400 text-xs">
                               +{(job.skillsRequired?.length ?? 0) - 4} more
                             </span>
                           )}
@@ -251,8 +251,8 @@ const ManageJobs: React.FC = () => {
                         to={`/recruiter/jobs/${job._id}/edit`}
                         className={`px-3 py-2 rounded-lg text-sm font-medium ${
                           job.isDeleted
-                            ? 'bg-gray-50 text-gray-400 cursor-not-allowed pointer-events-none'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-gray-50 dark:bg-slate-950 text-gray-400 dark:text-slate-500 cursor-not-allowed pointer-events-none'
+                            : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200'
                         }`}
                         title={job.isDeleted ? 'Cannot edit deleted jobs' : ''}
                       >
@@ -277,27 +277,27 @@ const ManageJobs: React.FC = () => {
         {/* Stats Summary */}
         {jobs.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900">{jobs.length}</p>
-              <p className="text-sm text-gray-500">Total Jobs</p>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{jobs.length}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Total Jobs</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
               <p className="text-2xl font-bold text-green-600">
                 {jobs.filter((j: Job) => j.isActive && !j.isDeleted).length}
               </p>
-              <p className="text-sm text-gray-500">Active</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Active</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-2xl font-bold text-gray-600">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
+              <p className="text-2xl font-bold text-gray-600 dark:text-slate-300">
                 {jobs.filter((j: Job) => !j.isActive && !j.isDeleted).length}
               </p>
-              <p className="text-sm text-gray-500">Inactive</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Inactive</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
               <p className="text-2xl font-bold text-red-600">
                 {jobs.filter((j: Job) => j.isDeleted).length}
               </p>
-              <p className="text-sm text-gray-500">Deleted</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Deleted</p>
             </div>
           </div>
         )}
@@ -307,15 +307,15 @@ const ManageJobs: React.FC = () => {
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50" onClick={() => setDeleteConfirmId(null)} />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Delete Job Post</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="relative bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-2">Delete Job Post</h2>
+            <p className="text-gray-600 dark:text-slate-300 mb-6">
               Are you sure you want to delete this job post? The job will be marked as deleted and will no longer be visible to job seekers. Applications will be preserved.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
               >
                 Cancel
               </button>
@@ -335,3 +335,4 @@ const ManageJobs: React.FC = () => {
 };
 
 export default ManageJobs;
+

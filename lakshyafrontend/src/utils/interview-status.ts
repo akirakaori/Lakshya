@@ -177,14 +177,14 @@ export const getInterviewDisplayStatusMeta = (
   const value = getInterviewDisplayStatus(interview, now);
 
   if (value === 'in_progress') {
-    return { label: 'In Progress', colorClass: 'bg-emerald-100 text-emerald-700', value };
+    return { label: 'In Progress', colorClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300', value };
   }
 
   if (value === 'completed') {
-    return { label: 'Completed', colorClass: 'bg-gray-100 text-gray-700', value };
+    return { label: 'Completed', colorClass: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200', value };
   }
 
-  return { label: 'Scheduled', colorClass: 'bg-blue-100 text-blue-700', value };
+  return { label: 'Scheduled', colorClass: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300', value };
 };
 
 export const getInterviewOutcomeMeta = (
@@ -193,12 +193,12 @@ export const getInterviewOutcomeMeta = (
   const value = getInterviewOutcomeValue(interview);
 
   if (value === 'pass') {
-    return { label: 'Passed', colorClass: 'bg-green-100 text-green-700', value };
+    return { label: 'Passed', colorClass: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300', value };
   }
 
   if (value === 'fail') {
-    return { label: 'Rejected', colorClass: 'bg-red-100 text-red-700', value };
+    return { label: 'Rejected', colorClass: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300', value };
   }
 
-  return { label: 'Pending Decision', colorClass: 'bg-gray-100 text-gray-700', value };
+  return { label: 'Pending Decision', colorClass: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200', value };
 };

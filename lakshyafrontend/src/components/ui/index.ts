@@ -4,5 +4,6 @@ export { default as StatsCard } from './stats-card';
 export { default as SearchableSelect } from './searchable-select';
 export { default as ConfirmModal } from './confirm-modal';
 export { default as AlertModal } from './alert-modal';
+export { default as ThemeToggle } from './theme-toggle';
 export { DatePicker } from './DatePicker';
 export { TimeField, formatTimeToString } from './TimeField';

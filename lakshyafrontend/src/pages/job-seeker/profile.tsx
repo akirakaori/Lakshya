@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { DashboardLayout, LoadingSpinner } from '../../components';
 import { 
   useProfile, 
@@ -31,7 +31,7 @@ const Profile: React.FC = () => {
   const { parseStatus, startPolling } = useResumeParsePolling({
     onParseComplete: (summary) => {
       console.log('Resume parsing + autofill completed:', summary);
-      toast.success('✨ Resume parsed and profile auto-filled successfully!', {
+      toast.success('âœ¨ Resume parsed and profile auto-filled successfully!', {
         autoClose: 5000
       });
     },
@@ -94,7 +94,7 @@ const Profile: React.FC = () => {
       },
     });
 
-    console.log('🔄 formData sync check:');
+    console.log('ðŸ”„ formData sync check:');
     console.log('  isEditing:', isEditing, '| isDirty:', isDirty, '| formInitialized:', formInitialized);
     console.log('  Server skills:', latestProfile.jobSeeker?.skills?.length || 0);
     console.log('  Current formData skills:', formData.jobSeeker.skills.length);
@@ -102,14 +102,14 @@ const Profile: React.FC = () => {
     setFormData(prev => {
       // NOT in edit mode -> always replace with latest server data
       if (!isEditing) {
-        console.log('  ✅ Not editing - syncing from server');
+        console.log('  âœ… Not editing - syncing from server');
         if (!formInitialized) setFormInitialized(true);
         return mapProfileToForm();
       }
 
       // In edit mode BUT user hasn't modified anything -> safe to replace
       if (!isDirty) {
-        console.log('  ✅ Editing but not dirty - syncing from server');
+        console.log('  âœ… Editing but not dirty - syncing from server');
         return mapProfileToForm();
       }
 
@@ -120,12 +120,12 @@ const Profile: React.FC = () => {
                           !prev.jobSeeker.experience && !prev.jobSeeker.education;
       
       if (isFormEmpty) {
-        console.log('  ⚠️  FormData is empty - forcing sync from server');
+        console.log('  âš ï¸  FormData is empty - forcing sync from server');
         return mapProfileToForm();
       }
 
       // In edit mode AND user has modified -> merge only EMPTY fields (preserve user edits)
-      console.log('  ⚠️  Editing and dirty - merging only missing fields');
+      console.log('  âš ï¸  Editing and dirty - merging only missing fields');
       const merged = {
         fullName: prev.fullName || latestProfile.fullName || latestProfile.name || '',
         phone: prev.phone || latestProfile.phone || latestProfile.number || '',
@@ -198,7 +198,7 @@ const Profile: React.FC = () => {
 
   // Custom handler for entering edit mode
   const handleEnterEditMode = () => {
-    console.log('✏️ Entering edit mode - syncing with latest profile data');
+    console.log('âœï¸ Entering edit mode - syncing with latest profile data');
     
     // Reset dirty flag
     setIsDirty(false);
@@ -230,7 +230,7 @@ const Profile: React.FC = () => {
 
   // Custom handler for canceling edit mode
   const handleCancelEdit = () => {
-    console.log('❌ Canceling edit - resetting to server data');
+    console.log('âŒ Canceling edit - resetting to server data');
     
     // Reset dirty flag
     setIsDirty(false);
@@ -452,7 +452,7 @@ const Profile: React.FC = () => {
   }
 
   // Debug: Compare server data vs form state
-  console.log('📊 Profile Render Debug:');
+  console.log('ðŸ“Š Profile Render Debug:');
   console.log('  Server profile skills:', profile?.jobSeeker?.skills?.length || 0);
   console.log('  FormData skills:', formData.jobSeeker.skills.length);
   console.log('  IsEditing:', isEditing);
@@ -465,7 +465,7 @@ const Profile: React.FC = () => {
       <div className="max-w-4xl mx-auto w-full px-4 pb-10">
         {/* Read-only mode banner */}
         {!isEditing && (
-          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+          <div className="app-info-banner mb-4 flex items-center gap-3">
             <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -475,7 +475,7 @@ const Profile: React.FC = () => {
           </div>
         )}
         {/* Profile Header */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6 w-full">
+        <div className="app-surface rounded-xl overflow-hidden mb-6 w-full">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-32"></div>
           <div className="px-6 pb-6">
             <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-12 w-full min-w-0">
@@ -488,7 +488,7 @@ const Profile: React.FC = () => {
                   onChange={handleAvatarUpload}
                   className="hidden"
                 />
-                <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-lg overflow-hidden">
+                <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-full border-4 border-white shadow-lg overflow-hidden">
                   {avatarPreview || profile?.profileImageUrl ? (
                     <img
                       src={avatarPreview || getFileUrl(profile?.profileImageUrl) || undefined}
@@ -529,15 +529,15 @@ const Profile: React.FC = () => {
                 </button>
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-bold text-gray-900 truncate">{profile?.fullName || profile?.name || 'User'}</h1>
-                <p className="text-gray-600 truncate">{formData.jobSeeker.title || 'Job Seeker'}</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 truncate">{profile?.fullName || profile?.name || 'User'}</h1>
+                <p className="app-body-text truncate">{formData.jobSeeker.title || 'Job Seeker'}</p>
               </div>
               <div className="flex gap-2 flex-shrink-0">
                 {isEditing ? (
                   <>
                     <button
                       onClick={handleCancelEdit}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                      className="app-secondary-button"
                     >
                       Cancel
                     </button>
@@ -566,43 +566,43 @@ const Profile: React.FC = () => {
           {/* Main Info */}
           <div className="md:col-span-2 space-y-6 min-w-0 w-full">
             {/* Personal Information */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
+            <div className="app-surface rounded-xl p-6 w-full">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Personal Information</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                  <label className="app-label mb-1 block text-sm font-medium">Full Name</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="app-input"
                     />
                   ) : (
-                    <p className="text-gray-900 break-words">{profile?.fullName || profile?.name || '-'}</p>
+                    <p className="text-gray-900 dark:text-slate-100 break-words">{profile?.fullName || profile?.name || '-'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <p className="text-gray-900 break-words">{profile?.email || '-'}</p>
+                  <label className="app-label mb-1 block text-sm font-medium">Email</label>
+                  <p className="text-gray-900 dark:text-slate-100 break-words">{profile?.email || '-'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <label className="app-label mb-1 block text-sm font-medium">Phone</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="app-input"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.phone || profile?.number || '-'}</p>
+                    <p className="text-gray-900 dark:text-slate-100">{profile?.phone || profile?.number || '-'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Professional Title</label>
+                  <label className="app-label mb-1 block text-sm font-medium">Professional Title</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -610,18 +610,18 @@ const Profile: React.FC = () => {
                       value={formData.jobSeeker.title}
                       onChange={handleInputChange}
                       placeholder="e.g. Senior Software Engineer"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="app-input"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.jobSeeker?.title || '-'}</p>
+                    <p className="text-gray-900 dark:text-slate-100">{profile?.jobSeeker?.title || '-'}</p>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Bio */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Professional Summary</h2>
+            <div className="app-surface rounded-xl p-6 w-full">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Professional Summary</h2>
               {isEditing ? (
                 <textarea
                   name="jobSeeker.bio"
@@ -629,16 +629,16 @@ const Profile: React.FC = () => {
                   onChange={handleInputChange}
                   rows={4}
                   placeholder="Tell recruiters about yourself..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="app-input resize-none"
                 />
               ) : (
-                <p className="text-gray-600 whitespace-pre-wrap break-words">{profile?.jobSeeker?.bio || 'No bio added yet.'}</p>
+                <p className="app-body-text whitespace-pre-wrap break-words">{profile?.jobSeeker?.bio || 'No bio added yet.'}</p>
               )}
             </div>
 
             {/* Skills */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Skills</h2>
+            <div className="app-surface rounded-xl p-6 w-full">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Skills</h2>
               {isEditing && (
                 <div className="flex gap-2 mb-4">
                   <input
@@ -647,7 +647,7 @@ const Profile: React.FC = () => {
                     onChange={(e) => setNewSkill(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addSkill()}
                     placeholder="Add a skill..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                   <button
                     onClick={addSkill}
@@ -675,17 +675,17 @@ const Profile: React.FC = () => {
                   </span>
                 ))}
                 {(!isEditing && (!profile?.jobSeeker?.skills || profile.jobSeeker.skills.length === 0)) && (
-                  <p className="text-gray-500">No skills added yet.</p>
+                  <p className="text-gray-500 dark:text-slate-400">No skills added yet.</p>
                 )}
               </div>
             </div>
 
             {/* Experience & Education */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Experience & Education</h2>
+            <div className="app-surface rounded-xl p-6 w-full">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Experience & Education</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
+                  <label className="app-label mb-1 block text-sm font-medium">Experience</label>
                   {isEditing ? (
                     <textarea
                       name="jobSeeker.experience"
@@ -693,14 +693,14 @@ const Profile: React.FC = () => {
                       onChange={handleInputChange}
                       rows={3}
                       placeholder="Describe your work experience..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
+                      className="app-input resize-none"
                     />
                   ) : (
-                    <p className="text-gray-600 whitespace-pre-wrap break-words">{profile?.jobSeeker?.experience || 'No experience added.'}</p>
+                    <p className="app-body-text whitespace-pre-wrap break-words">{profile?.jobSeeker?.experience || 'No experience added.'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Education</label>
+                  <label className="app-label mb-1 block text-sm font-medium">Education</label>
                   {isEditing ? (
                     <textarea
                       name="jobSeeker.education"
@@ -708,10 +708,10 @@ const Profile: React.FC = () => {
                       onChange={handleInputChange}
                       rows={3}
                       placeholder="Describe your education..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
+                      className="app-input resize-none"
                     />
                   ) : (
-                    <p className="text-gray-600 whitespace-pre-wrap break-words">{profile?.jobSeeker?.education || 'No education added.'}</p>
+                    <p className="app-body-text whitespace-pre-wrap break-words">{profile?.jobSeeker?.education || 'No education added.'}</p>
                   )}
                 </div>
               </div>
@@ -721,8 +721,8 @@ const Profile: React.FC = () => {
           {/* Sidebar */}
           <div className="space-y-6 min-w-0 w-full">
             {/* Resume */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Resume</h2>
+            <div className="app-surface rounded-xl p-6 w-full">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Resume</h2>
               <input
                 type="file"
                 ref={fileInputRef}
@@ -752,7 +752,7 @@ const Profile: React.FC = () => {
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                          <span className="font-medium">Parsed ✓</span>
+                          <span className="font-medium">Parsed âœ“</span>
                           {parseStatus.summary && (
                             <span className="text-xs">
                               ({parseStatus.summary.skillsAdded} skills added)
@@ -819,12 +819,12 @@ const Profile: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-8 h-8 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <p className="text-gray-500 text-sm mb-4">No resume uploaded</p>
+                  <p className="text-gray-500 dark:text-slate-400 text-sm mb-4">No resume uploaded</p>
                   <button
                     onClick={() => {
                       if (!isEditing) {
@@ -838,17 +838,17 @@ const Profile: React.FC = () => {
                   >
                     {uploadResumeMutation.isPending ? 'Uploading...' : 'Upload Resume'}
                   </button>
-                  <p className="text-xs text-gray-400 mt-2">PDF, max 5MB</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">PDF, max 5MB</p>
                 </div>
               )}
             </div>
 
             {/* Preferences */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Job Preferences</h2>
+            <div className="app-surface rounded-xl p-6 w-full">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Job Preferences</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Location</label>
+                  <label className="app-label mb-1 block text-sm font-medium">Preferred Location</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -856,14 +856,14 @@ const Profile: React.FC = () => {
                       value={formData.jobSeeker.preferredLocation}
                       onChange={handleInputChange}
                       placeholder="e.g. Remote, New York"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="app-input"
                     />
                   ) : (
-                    <p className="text-gray-600">{profile?.jobSeeker?.preferredLocation || '-'}</p>
+                    <p className="app-body-text">{profile?.jobSeeker?.preferredLocation || '-'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Expected Salary</label>
+                  <label className="app-label mb-1 block text-sm font-medium">Expected Salary</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -871,18 +871,18 @@ const Profile: React.FC = () => {
                       value={formData.jobSeeker.expectedSalary}
                       onChange={handleInputChange}
                       placeholder="e.g. $80,000 - $100,000"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="app-input"
                     />
                   ) : (
-                    <p className="text-gray-600">{profile?.jobSeeker?.expectedSalary || '-'}</p>
+                    <p className="app-body-text">{profile?.jobSeeker?.expectedSalary || '-'}</p>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Security */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Security</h2>
+            <div className="app-surface rounded-xl p-6 w-full">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Security</h2>
               <button
                 onClick={() => {
                   if (!isEditing) {
@@ -892,7 +892,7 @@ const Profile: React.FC = () => {
                   setShowPasswordModal(true);
                 }}
                 disabled={!isEditing}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="app-secondary-button w-full disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Change Password
               </button>
@@ -905,41 +905,41 @@ const Profile: React.FC = () => {
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="fixed inset-0 bg-black/50" onClick={() => setShowPasswordModal(false)} />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-md my-8 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Change Password</h2>
+          <div className="app-modal-panel relative p-6 w-full max-w-md my-8 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4">Change Password</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <label className="app-label mb-1 block text-sm font-medium">Current Password</label>
                 <input
                   type="password"
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="app-input"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <label className="app-label mb-1 block text-sm font-medium">New Password</label>
                 <input
                   type="password"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="app-input"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                <label className="app-label mb-1 block text-sm font-medium">Confirm New Password</label>
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="app-input"
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowPasswordModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="app-secondary-button flex-1"
               >
                 Cancel
               </button>
@@ -959,3 +959,6 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
+
+
+

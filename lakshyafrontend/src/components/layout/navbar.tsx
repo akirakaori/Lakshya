@@ -6,6 +6,7 @@ import { useUnreadNotificationCount } from '../../hooks/use-notifications';
 import { getFileUrl, getInitials } from '../../Utils';
 import { useQueryClient } from '@tanstack/react-query';
 import NotificationDropdown from '../notification-dropdown';
+import { ThemeToggle } from '../ui';
 
 interface NavbarProps {
   title?: string;
@@ -49,9 +50,9 @@ const Navbar: React.FC<NavbarProps> = ({ title }) => {
                       '/job-seeker/profile';
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+    <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-6 py-4 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-950/95">
       <div>
-        {title && <h1 className="text-xl font-semibold text-gray-800">{title}</h1>}
+        {title && <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h1>}
       </div>
       
       <div className="flex items-center gap-4">
@@ -63,7 +64,7 @@ const Navbar: React.FC<NavbarProps> = ({ title }) => {
                 setShowNotifications((prev) => !prev);
                 setShowDropdown(false);
               }}
-              className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+              className="relative rounded-full border border-transparent p-2 text-slate-500 transition-colors hover:border-slate-200 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -82,13 +83,15 @@ const Navbar: React.FC<NavbarProps> = ({ title }) => {
           </div>
         )}
 
+        <ThemeToggle />
+
         {/* User Profile with Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 transition-colors"
+            className="flex items-center gap-3 rounded-xl border border-transparent p-2 transition-colors hover:border-slate-200 hover:bg-slate-100 dark:hover:border-slate-700 dark:hover:bg-slate-800"
           >
-            <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-gray-200">
+            <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-slate-200 dark:ring-slate-700">
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -96,19 +99,19 @@ const Navbar: React.FC<NavbarProps> = ({ title }) => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
-                  <span className="text-indigo-600 font-semibold text-sm">
+                <div className="flex h-full w-full items-center justify-center bg-indigo-100 dark:bg-indigo-500/15">
+                  <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-300">
                     {initials}
                   </span>
                 </div>
               )}
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-sm font-medium text-gray-700">{displayName}</p>
-              <p className="text-xs text-gray-500 capitalize">{user?.role?.replace('_', ' ') || 'Guest'}</p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-100">{displayName}</p>
+              <p className="text-xs capitalize text-slate-500 dark:text-slate-400">{user?.role?.replace('_', ' ') || 'Guest'}</p>
             </div>
             <svg 
-              className={`w-4 h-4 text-gray-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} 
+              className={`w-4 h-4 text-slate-400 transition-transform dark:text-slate-500 ${showDropdown ? 'rotate-180' : ''}`} 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -119,15 +122,15 @@ const Navbar: React.FC<NavbarProps> = ({ title }) => {
 
           {/* Dropdown Menu */}
           {showDropdown && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <p className="font-medium text-gray-900">{displayName}</p>
-                <p className="text-sm text-gray-500">{user?.email}</p>
+            <div className="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white py-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+              <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <p className="font-medium text-slate-900 dark:text-slate-100">{displayName}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{user?.email}</p>
               </div>
               <Link
                 to={profilePath}
                 onClick={() => setShowDropdown(false)}
-                className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 px-4 py-2 text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -143,7 +146,7 @@ const Navbar: React.FC<NavbarProps> = ({ title }) => {
                   logout();
                   navigate('/login', { replace: true });
                 }}
-                className="flex items-center gap-3 w-full px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                className="flex w-full items-center gap-3 px-4 py-2 text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

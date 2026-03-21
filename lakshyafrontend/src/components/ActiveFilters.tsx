@@ -53,15 +53,15 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({ filters, onRemoveFilter, 
   }
 
   return (
-    <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4">
+    <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-900">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           Filters Applied ({activeCount})
         </h3>
         <button
           onClick={onClearAll}
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1"
+          className="flex items-center gap-1 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -37,24 +37,24 @@ export function getStatusLabel(status?: string): string {
  * @returns Tailwind CSS classes for the badge
  */
 export function getStatusBadgeClass(status?: string): string {
-  if (!status) return 'bg-gray-100 text-gray-700';
+  if (!status) return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200';
   
   switch (status.toLowerCase()) {
     case 'applied':
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300';
     case 'shortlisted':
-      return 'bg-green-100 text-green-700';
+      return 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300';
     case 'interview':
-      return 'bg-purple-100 text-purple-700';
+      return 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300';
     case 'rejected':
-      return 'bg-red-100 text-red-700';
+      return 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300';
     case 'hired':
-      return 'bg-emerald-100 text-emerald-700';
+      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300';
     case 'offer':
-      return 'bg-teal-100 text-teal-700';
+      return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300';
     case 'withdrawn':
-      return 'bg-gray-200 text-gray-700';
+      return 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200';
     default:
-      return 'bg-gray-100 text-gray-700';
+      return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200';
   }
 }

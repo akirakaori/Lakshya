@@ -159,9 +159,9 @@ const MyApplications: React.FC = () => {
 
         {/* Header */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">My Applications</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">My Applications</h1>
           <div className="flex items-center gap-4">
-            <p className="text-gray-600">Track the status of all your job applications in one place.</p>
+            <p className="text-gray-600 dark:text-slate-300">Track the status of all your job applications in one place.</p>
             <PageSizeSelect
               value={limit}
               onChange={(nextLimit) => {
@@ -175,11 +175,11 @@ const MyApplications: React.FC = () => {
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -198,7 +198,7 @@ const MyApplications: React.FC = () => {
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
             <select
@@ -206,7 +206,7 @@ const MyApplications: React.FC = () => {
               onChange={(e) => {
                 setStatusFilter(e.target.value as typeof statusFilter);
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="all">All Statuses</option>
               <option value="applied">Pending</option>
@@ -251,16 +251,16 @@ const MyApplications: React.FC = () => {
           />
         ) : (
           /* Applications Table */
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Job Title</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Company</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Applied Date</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Status</th>                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Interview</th>                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">AI Match</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Actions</th>
+                  <tr className="bg-gray-50 dark:bg-slate-950 border-b border-gray-200 dark:border-slate-800">
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Job Title</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Company</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Applied Date</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Status</th>                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Interview</th>                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">AI Match</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -284,10 +284,10 @@ const MyApplications: React.FC = () => {
                     
                     return (
                       <React.Fragment key={application._id}>
-                        <tr className="hover:bg-gray-50">
+                        <tr className="hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950">
                           <td className="px-6 py-4">
                             <div>
-                              <div className="font-medium text-gray-900">{job?.title || 'Job Title'}</div>
+                              <div className="font-medium text-gray-900 dark:text-slate-100">{job?.title || 'Job Title'}</div>
                               {isJobInactive && (
                                 <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
                                   <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,8 +298,8 @@ const MyApplications: React.FC = () => {
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-gray-600">{job?.companyName || 'Company'}</td>
-                          <td className="px-6 py-4 text-gray-600">{formatDate(application.createdAt)}</td>
+                          <td className="px-6 py-4 text-gray-600 dark:text-slate-300">{job?.companyName || 'Company'}</td>
+                          <td className="px-6 py-4 text-gray-600 dark:text-slate-300">{formatDate(application.createdAt)}</td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
                               {getStatusLabel(application.status)}
@@ -320,7 +320,7 @@ const MyApplications: React.FC = () => {
                                 </svg>
                               </button>
                             ) : (
-                              <span className="text-gray-400 text-xs">—</span>
+                              <span className="text-gray-400 dark:text-slate-500 text-xs">—</span>
                             )}
                           </td>
                           <td className="px-6 py-4">
@@ -329,7 +329,7 @@ const MyApplications: React.FC = () => {
                                 {matchData.matchScore}%
                               </span>
                             ) : (
-                              <span className="text-gray-400 text-xs">—</span>
+                              <span className="text-gray-400 dark:text-slate-500 text-xs">—</span>
                             )}
                           </td>
                           <td className="px-6 py-4">
@@ -342,7 +342,7 @@ const MyApplications: React.FC = () => {
                                   View Job
                                 </Link>
                               ) : (
-                                <span className="text-gray-400 text-sm">N/A</span>
+                                <span className="text-gray-400 dark:text-slate-500 text-sm">N/A</span>
                               )}
 
                               <button
@@ -353,7 +353,7 @@ const MyApplications: React.FC = () => {
                                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                                   canWithdraw
                                     ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
-                                    : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                                    : 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500 border border-gray-200 dark:border-slate-800 cursor-not-allowed'
                                 }`}
                               >
                                 Withdraw Application
@@ -365,22 +365,22 @@ const MyApplications: React.FC = () => {
                         {/* Expandable Interview Details Row */}
                         {isExpanded && hasInterviews && (
                           <tr>
-                            <td colSpan={7} className="px-6 py-4 bg-gray-50">
+                            <td colSpan={7} className="px-6 py-4 bg-gray-50 dark:bg-slate-950">
                               <div className="space-y-3">
-                                <h4 className="font-semibold text-gray-900 text-sm">Interview Schedule</h4>
+                                <h4 className="font-semibold text-gray-900 dark:text-slate-100 text-sm">Interview Schedule</h4>
                                 {interviews.map((interview: Interview, idx: number) => {
                                   const interviewStatus = getInterviewDisplayStatusMeta(interview);
                                   const interviewOutcome = getInterviewOutcomeMeta(interview);
                                   const timeRange = formatInterviewTimeRange(interview);
                                   
                                   return (
-                                  <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4">
+                                  <div key={idx} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg p-4">
                                     <div className="flex items-start justify-between mb-2">
                                       <div className="flex items-center gap-2">
                                         <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
                                           Round {interview.roundNumber}
                                         </span>
-                                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize">
+                                        <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded text-xs capitalize">
                                           {interview.mode}
                                         </span>
                                       </div>
@@ -390,13 +390,13 @@ const MyApplications: React.FC = () => {
                                       </span>
                                     </div>
                                     <div className="text-sm space-y-2">
-                                      <div className="flex items-center gap-2 text-gray-700">
-                                        <span className="text-xs text-gray-500">Result:</span>
+                                      <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
+                                        <span className="text-xs text-gray-500 dark:text-slate-400">Result:</span>
                                         <span className={`px-2 py-1 rounded text-xs font-medium ${interviewOutcome.colorClass}`}>
                                           {interviewOutcome.label}
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-2 text-gray-700">
+                                      <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
@@ -410,7 +410,7 @@ const MyApplications: React.FC = () => {
                                         </span>
                                       </div>
                                       {timeRange && (
-                                        <div className="flex items-center gap-2 text-gray-600">
+                                        <div className="flex items-center gap-2 text-gray-600 dark:text-slate-300">
                                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                           </svg>
@@ -418,7 +418,7 @@ const MyApplications: React.FC = () => {
                                         </div>
                                       )}
                                       {interview.linkOrLocation && (
-                                        <div className="flex items-start gap-2 text-gray-600">
+                                        <div className="flex items-start gap-2 text-gray-600 dark:text-slate-300">
                                           <svg className="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             {interview.mode === 'online' ? (
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -444,7 +444,7 @@ const MyApplications: React.FC = () => {
                                         </div>
                                       )}
                                       {interviewStatus.value === 'completed' && interviewOutcome.value === 'pending' && (
-                                        <p className="text-xs text-gray-500">Awaiting recruiter decision</p>
+                                        <p className="text-xs text-gray-500 dark:text-slate-400">Awaiting recruiter decision</p>
                                       )}
                                       {/* DO NOT SHOW: internalNotes, feedback, or pass/fail outcome - these are recruiter-only */}
                                     </div>
@@ -478,21 +478,21 @@ const MyApplications: React.FC = () => {
         {/* Stats Summary */}
         {stats.total > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              <p className="text-sm text-gray-500">Total Applications</p>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{stats.total}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Total Applications</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
               <p className="text-2xl font-bold text-blue-600">{stats.pending}</p>
-              <p className="text-sm text-gray-500">Pending</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Pending</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
               <p className="text-2xl font-bold text-green-600">{stats.interview}</p>
-              <p className="text-sm text-gray-500">Interview</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Interview</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
               <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
-              <p className="text-sm text-gray-500">Rejected</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Rejected</p>
             </div>
           </div>
         )}
@@ -531,3 +531,4 @@ const MyApplications: React.FC = () => {
 };
 
 export default MyApplications;
+

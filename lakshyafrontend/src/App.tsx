@@ -6,6 +6,7 @@ import './styles/toast.css';
 import { useState } from "react";
 import RefreshHandler from "./refresh-handler";
 import { AuthProvider } from "./context/auth-context";
+import { ThemeProvider } from "./context/theme-context";
 import ProtectedRoute from "./routes/protected-route";
 
 // Auth Pages
@@ -46,25 +47,26 @@ function App() {
   const [, setIsAuthenticated] = useState(false);
 
   return (
-    <AuthProvider>
-      <div className="App">
-        <RefreshHandler setIsAuthenticated={setIsAuthenticated} />
-        {/* Global Toast Container */}
-        <ToastContainer
-          position="top-center"
-          autoClose={2500}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss={false}
-          draggable={false}
-          pauseOnHover={false}
-          theme="colored"
-          transition={Slide}
-          limit={1}
-        />
-        <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <div className="App min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] transition-colors duration-300">
+          <RefreshHandler setIsAuthenticated={setIsAuthenticated} />
+          {/* Global Toast Container */}
+          <ToastContainer
+            position="top-center"
+            autoClose={2500}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss={false}
+            draggable={false}
+            pauseOnHover={false}
+            theme="colored"
+            transition={Slide}
+            limit={1}
+          />
+          <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
@@ -232,6 +234,7 @@ function App() {
           </Routes>
         </div>
       </AuthProvider>
+    </ThemeProvider>
   );
 }
 

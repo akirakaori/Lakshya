@@ -28,9 +28,9 @@ const RecruiterDashboard: React.FC = () => {
     <DashboardLayout variant="recruiter" title="Dashboard">
       <div className="max-w-7xl mx-auto">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user?.fullName || user?.name?.split(' ')[0] || 'Recruiter'}!</h1>
-          <p className="text-gray-600 mt-1">Here's an overview of your recruitment activity.</p>
+        <div className="mb-8 overflow-hidden rounded-[1.75rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(15,118,110,0.95),_rgba(5,150,105,0.92)_52%,_rgba(59,130,246,0.82)_100%)] px-6 py-8 text-white shadow-[0_24px_70px_rgba(16,185,129,0.16)] dark:border-slate-800/80">
+          <h1 className="text-2xl font-bold text-white">Welcome back, {user?.fullName || user?.name?.split(' ')[0] || 'Recruiter'}!</h1>
+          <p className="mt-2 max-w-2xl text-sm text-emerald-50">Here's an overview of your recruitment activity.</p>
         </div>
 
         {/* Stats Cards */}
@@ -79,7 +79,7 @@ const RecruiterDashboard: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 mb-8 text-white">
+        <div className="mb-8 rounded-[1.5rem] border border-white/15 bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white shadow-[0_18px_60px_rgba(79,70,229,0.24)]">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-xl font-bold mb-2">Ready to find your next great hire?</h2>
@@ -87,7 +87,7 @@ const RecruiterDashboard: React.FC = () => {
             </div>
             <Link
               to="/recruiter/post-job"
-              className="mt-4 md:mt-0 inline-flex items-center px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition-colors"
+            className="mt-4 inline-flex items-center rounded-xl bg-white px-6 py-3 font-semibold text-indigo-600 transition-colors hover:bg-indigo-50 md:mt-0 dark:bg-slate-950 dark:text-indigo-300 dark:hover:bg-slate-900"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -100,9 +100,9 @@ const RecruiterDashboard: React.FC = () => {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Recent Job Posts */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">Recent Job Posts</h2>
+            <div className="overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-800">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Recent Job Posts</h2>
                 <Link
                   to="/recruiter/manage-jobs"
                   className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
@@ -113,24 +113,24 @@ const RecruiterDashboard: React.FC = () => {
               {recentJobs.length > 0 ? (
                 <div className="divide-y divide-gray-200">
                   {recentJobs.map((job) => (
-                    <div key={job._id} className="p-6 hover:bg-gray-50">
+                    <div key={job._id} className="p-6 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="font-semibold text-gray-900">{job.title}</h3>
-                          <p className="text-gray-500 text-sm mt-1">
+                          <h3 className="font-semibold text-gray-900 dark:text-slate-100">{job.title}</h3>
+                          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
                             {job.location} • {job.type}
                           </p>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                           job.isActive 
                             ? 'bg-green-100 text-green-700' 
-                            : 'bg-gray-100 text-gray-700'
+                            : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300'
                         }`}>
                           {job.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </div>
                       <div className="flex items-center gap-4 mt-4 text-sm">
-                        <span className="text-gray-500">
+                        <span className="text-gray-500 dark:text-slate-400">
                           Posted {new Date(job.createdAt).toLocaleDateString()}
                         </span>
                         <Link
@@ -163,8 +163,8 @@ const RecruiterDashboard: React.FC = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Recent Activity */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+            <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Recent Activity</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -173,8 +173,8 @@ const RecruiterDashboard: React.FC = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-900">New application received</p>
-                    <p className="text-xs text-gray-500">Just now</p>
+                    <p className="text-sm text-gray-900 dark:text-slate-100">New application received</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Just now</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -184,8 +184,8 @@ const RecruiterDashboard: React.FC = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-900">Job post approved</p>
-                    <p className="text-xs text-gray-500">2 hours ago</p>
+                    <p className="text-sm text-gray-900 dark:text-slate-100">Job post approved</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">2 hours ago</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -196,34 +196,34 @@ const RecruiterDashboard: React.FC = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-900">Profile viewed</p>
-                    <p className="text-xs text-gray-500">Yesterday</p>
+                    <p className="text-sm text-gray-900 dark:text-slate-100">Profile viewed</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Yesterday</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Tips */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recruiting Tips</h2>
+            <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Recruiting Tips</h2>
               <div className="space-y-3">
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <p className="text-sm text-gray-600">Write clear, detailed job descriptions</p>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">Write clear, detailed job descriptions</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <p className="text-sm text-gray-600">Respond to applications within 48 hours</p>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">Respond to applications within 48 hours</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <p className="text-sm text-gray-600">Use AI matching to find the best candidates</p>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">Use AI matching to find the best candidates</p>
                 </div>
               </div>
             </div>
@@ -235,3 +235,4 @@ const RecruiterDashboard: React.FC = () => {
 };
 
 export default RecruiterDashboard;
+

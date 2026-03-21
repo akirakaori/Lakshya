@@ -32,15 +32,15 @@ export function TimeField({
       className={className}
     >
       {label && (
-        <Label className="block text-sm font-medium text-gray-700 mb-1">
+        <Label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
           {label} {isRequired && <span className="text-red-500">*</span>}
         </Label>
       )}
-      <DateInput className="flex items-center gap-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 bg-white">
+      <DateInput className="app-input flex items-center gap-1 px-3 py-2">
         {(segment) => (
           <DateSegment
             segment={segment}
-            className="px-0.5 tabular-nums outline-none rounded-sm focus:bg-indigo-600 focus:text-white caret-transparent placeholder:text-gray-500 text-sm"
+            className="rounded-sm px-0.5 text-sm tabular-nums caret-transparent outline-none placeholder:text-slate-500 focus:bg-indigo-600 focus:text-white dark:placeholder:text-slate-500"
           />
         )}
       </DateInput>

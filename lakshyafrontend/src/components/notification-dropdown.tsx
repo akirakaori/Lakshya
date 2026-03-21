@@ -107,14 +107,14 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
   }
 
   return (
-    <div className="absolute right-0 mt-3 w-[360px] max-w-[90vw] bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+    <div className="absolute right-0 z-50 mt-3 w-[360px] max-w-[90vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Notifications</h3>
         {unreadCount > 0 && (
           <button
             onClick={() => markAllAsRead.mutate()}
             disabled={markAllAsRead.isPending}
-            className="text-xs text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-60"
+            className="text-xs font-medium text-indigo-600 hover:text-indigo-700 disabled:opacity-60 dark:text-indigo-300 dark:hover:text-indigo-200"
           >
             Mark all as read
           </button>
@@ -123,9 +123,9 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
 
       <div className="max-h-80 overflow-y-auto">
         {isLoading ? (
-          <div className="p-4 text-sm text-gray-500">Loading notifications...</div>
+          <div className="p-4 text-sm text-slate-500 dark:text-slate-400">Loading notifications...</div>
         ) : notifications.length === 0 ? (
-          <div className="p-6 text-center text-sm text-gray-500">No notifications yet</div>
+          <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No notifications yet</div>
         ) : (
           notifications.map((notification) => {
             const targetPath = getNotificationTargetPath(notification, user?.role);
@@ -140,19 +140,19 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
                   onClose();
                   navigate(targetPath);
                 }}
-                className={`w-full text-left p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors ${
-                  notification.isRead ? 'bg-white' : 'bg-indigo-50/40'
+                className={`w-full border-b border-slate-100 p-4 text-left transition-colors last:border-b-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 ${
+                  notification.isRead ? 'bg-white dark:bg-slate-900' : 'bg-indigo-50/40 dark:bg-indigo-500/10'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5">{getNotificationIcon(notification.type)}</div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium text-gray-900 truncate">{notification.title}</p>
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{notification.title}</p>
                       {!notification.isRead && <span className="w-2 h-2 rounded-full bg-indigo-600 flex-shrink-0" />}
                     </div>
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notification.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(notification.createdAt)}</p>
+                    <p className="mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{notification.message}</p>
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{formatRelativeTime(notification.createdAt)}</p>
                   </div>
                 </div>
               </button>
@@ -161,11 +161,11 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
         )}
       </div>
 
-      <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <div className="border-t border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
         <Link
           to="/notifications"
           onClick={onClose}
-          className="block text-center text-sm font-medium text-indigo-600 hover:text-indigo-700"
+          className="block text-center text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
         >
           View all notifications
         </Link>

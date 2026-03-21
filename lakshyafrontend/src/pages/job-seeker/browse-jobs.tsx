@@ -4,6 +4,7 @@ import { DashboardLayout, JobCard, JobFilter, LoadingSpinner, EmptyState, Active
 import { useJobs, useJobMatchScores, useMyApplications } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import type { Application, JobFilters } from '../../services';
+import ThemeToggle from '../../components/ui/theme-toggle';
 
 // Default filters
 const DEFAULT_FILTERS: JobFilters = {
@@ -207,20 +208,21 @@ const BrowseJobs: React.FC = () => {
 
   // Public Navbar render helper (for non-authenticated users)
   const renderPublicNavbar = () => (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 w-full">
+    <nav className="sticky top-0 z-50 w-full border-b border-white/70 bg-white/85 backdrop-blur-xl dark:border-slate-800/90 dark:bg-slate-950/80">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-row justify-between items-center gap-8">
         {/* Logo - Left */}
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
             <span className="text-xl">💼</span>
           </div>
-          <span className="text-xl font-bold text-gray-800 cursor-default select-none">
+          <span className="text-xl font-bold text-gray-800 dark:text-slate-100 cursor-default select-none">
             Lakshya
           </span>
         </div>
         
         {/* Auth Buttons - Right */}
         <div className="flex flex-row items-center gap-3">
+          <ThemeToggle />
           <button 
             className="text-sm text-white bg-indigo-400 hover:bg-indigo-500 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm px-4 py-2 rounded-lg transition-all duration-200 ease-in-out select-none"
             onClick={() => navigate("/login")}
@@ -242,10 +244,10 @@ const BrowseJobs: React.FC = () => {
   const renderJobContent = () => (
     <>
         {/* Blue Gradient Search Header Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700 px-4 sm:px-6 lg:px-10 py-6 sm:py-8 mb-6">
+        <div className="relative mb-6 overflow-hidden rounded-[1.75rem] border border-white/15 bg-[linear-gradient(135deg,_rgba(37,99,235,1),_rgba(79,70,229,0.96)_52%,_rgba(14,165,233,0.9)_100%)] px-4 py-6 shadow-[0_24px_70px_rgba(37,99,235,0.25)] sm:px-6 sm:py-8 lg:px-10">
           {/* Decorative Shapes */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white dark:bg-slate-900/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white dark:bg-slate-900/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
           
           {/* Content */}
           <div className="relative z-10">
@@ -255,7 +257,7 @@ const BrowseJobs: React.FC = () => {
             
             {/* Search Form */}
             <form onSubmit={handleSearch} className="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch">
-              <div className="flex-1 flex items-center gap-3 bg-white/15 backdrop-blur-md rounded-full px-4 py-3 ring-1 ring-white/20">
+              <div className="flex-1 flex items-center gap-3 bg-white dark:bg-slate-900/15 backdrop-blur-md rounded-full px-4 py-3 ring-1 ring-white/20">
                 <svg
                   className="w-5 h-5 text-white/70 flex-shrink-0"
                   fill="none"
@@ -284,7 +286,7 @@ const BrowseJobs: React.FC = () => {
               </div>
               <button
                 type="submit"
-                className="rounded-full bg-white text-blue-700 font-semibold px-6 py-3 hover:bg-white/90 transition flex items-center justify-center gap-2"
+                className="rounded-full bg-white dark:bg-slate-900 text-blue-700 font-semibold px-6 py-3 hover:bg-white dark:bg-slate-900/90 transition flex items-center justify-center gap-2"
               >
                 <span>Search</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -297,7 +299,7 @@ const BrowseJobs: React.FC = () => {
 
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Filters Sidebar */}
-          <aside className="w-full lg:w-80 flex-shrink-0">
+          <aside className="w-full flex-shrink-0 lg:w-80">
             <JobFilter
               filters={appliedFilters}
               onFilterChange={handleFilterChange}
@@ -308,18 +310,18 @@ const BrowseJobs: React.FC = () => {
           {/* Job Results */}
           <div className="flex-1 min-w-0">
             {/* Results Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
+            <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100">
                 {isLoading ? 'Searching...' : `${filteredJobs.length} Job${filteredJobs.length !== 1 ? 's' : ''} Found`}
                 {appliedFilters.aiMatchMin && appliedFilters.aiMatchMin > 0 && (
-                  <span className="text-sm text-gray-500 ml-2">
+                  <span className="text-sm text-gray-500 dark:text-slate-400 ml-2">
                     (filtered by {appliedFilters.aiMatchMin}%+ match)
                   </span>
                 )}
               </h2>
               <div className="flex items-center gap-4">
                 {isFetching && !isLoading && (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
                     <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -408,9 +410,9 @@ const BrowseJobs: React.FC = () => {
 
   // Public view
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {renderPublicNavbar()}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="mx-auto max-w-7xl px-4 py-6">
         {renderJobContent()}
       </div>
       <Footer variant="public" />
@@ -419,3 +421,4 @@ const BrowseJobs: React.FC = () => {
 };
 
 export default BrowseJobs;
+

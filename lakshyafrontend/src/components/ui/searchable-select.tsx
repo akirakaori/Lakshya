@@ -58,13 +58,13 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-left flex items-center justify-between"
+        className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2 text-left focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
       >
-        <span className="text-gray-900">
+        <span className="text-gray-900 dark:text-slate-100">
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <svg
-          className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-5 w-5 text-gray-400 transition-transform dark:text-slate-500 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -75,15 +75,15 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+        <div className="absolute z-50 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
           {/* Search input */}
-          <div className="p-2 border-b border-gray-200">
+          <div className="border-b border-gray-200 p-2 dark:border-slate-800">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
               autoFocus
             />
           </div>
@@ -91,7 +91,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           {/* Options list */}
           <div className="max-h-60 overflow-y-auto">
             {filteredOptions.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-gray-500">No options found</div>
+              <div className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">No options found</div>
             ) : (
               filteredOptions.map((option) => (
                 <button
@@ -99,7 +99,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                   type="button"
                   onClick={() => handleSelect(option.value)}
                   className={`w-full text-left px-4 py-2 hover:bg-indigo-50 text-sm ${
-                    value === option.value ? 'bg-indigo-100 text-indigo-900 font-medium' : 'text-gray-900'
+                    value === option.value ? 'bg-indigo-100 text-indigo-900 font-medium dark:bg-indigo-500/15 dark:text-indigo-200' : 'text-gray-900 dark:text-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   {option.label}

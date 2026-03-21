@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+﻿import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Footer, PageSizeSelect, PaginationControls, type PaginationMeta } from "../components";
@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { motion, type Variants } from "framer-motion";
 import CountUp from "react-countup";
 import { useInView } from "react-intersection-observer";
+import { ThemeToggle } from "../components/ui";
 
 function Landing() {
   const navigate = useNavigate();
@@ -162,11 +163,11 @@ function Landing() {
 
   return (
     <div
-      className="landing-page w-full min-h-screen bg-white relative overflow-x-hidden select-none"
+      className="landing-page relative min-h-screen w-full overflow-x-hidden bg-white text-slate-900 select-none dark:bg-slate-950 dark:text-slate-100"
       onDragStart={(e) => e.preventDefault()}
     >
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 w-full left-0">
+      <nav className="sticky top-0 left-0 z-50 w-full border-b border-gray-100 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-row justify-between items-center gap-8">
           {/* Logo - Left */}
           <div className="flex items-center space-x-3">
@@ -175,9 +176,12 @@ function Landing() {
               transition={{ duration: 0.2 }}
               className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-shadow"
             >
-              <span className="text-xl">💼</span>
+              <span className="text-xl" aria-hidden="true">💼</span>
             </motion.div>
-            <span className="text-xl font-bold text-gray-800 cursor-default select-none" draggable="false">
+            <span
+              className="cursor-default select-none text-xl font-bold text-gray-800 dark:text-slate-100"
+              draggable="false"
+            >
               Lakshya
             </span>
           </div>
@@ -186,21 +190,21 @@ function Landing() {
           <div className="hidden md:flex flex-row items-center gap-8 flex-1 justify-center">
             <a
               href="#jobs"
-              className="text-sm text-gray-600 hover:text-primary transition-colors select-none cursor-pointer"
+              className="cursor-pointer select-none text-sm text-gray-600 transition-colors hover:text-primary dark:text-slate-300 dark:hover:text-indigo-300"
               draggable="false"
             >
               Find Jobs
             </a>
             <a
               href="#employers"
-              className="text-sm text-gray-600 hover:text-primary transition-colors select-none cursor-pointer"
+              className="cursor-pointer select-none text-sm text-gray-600 transition-colors hover:text-primary dark:text-slate-300 dark:hover:text-indigo-300"
               draggable="false"
             >
               For Employers
             </a>
             <a
               href="#scoring"
-              className="text-sm text-gray-600 hover:text-primary transition-colors select-none cursor-pointer"
+              className="cursor-pointer select-none text-sm text-gray-600 transition-colors hover:text-primary dark:text-slate-300 dark:hover:text-indigo-300"
               draggable="false"
             >
               About AI Scoring
@@ -209,6 +213,7 @@ function Landing() {
 
           {/* Auth Buttons - Right */}
           <div className="flex flex-row items-center gap-3">
+            <ThemeToggle />
             {user ? (
               <motion.button
                 whileHover={{ y: -2, scale: 1.01 }}
@@ -272,7 +277,7 @@ function Landing() {
           <motion.form
             variants={fadeUp}
             onSubmit={handleSearch}
-            className="bg-white rounded-lg p-3 md:p-4 flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 shadow-2xl max-w-3xl mx-auto"
+            className="mx-auto flex max-w-3xl flex-col items-stretch gap-2 rounded-lg bg-white p-3 shadow-2xl md:flex-row md:items-center md:gap-3 md:p-4 dark:border dark:border-slate-700/70 dark:bg-slate-900/95 dark:shadow-[0_24px_60px_-24px_rgba(15,23,42,0.9)]"
           >
             <input
               type="text"
@@ -285,7 +290,7 @@ function Landing() {
                 }
               }}
               placeholder="Search jobs, skills, companies or location"
-              className="flex-1 px-4 py-2.5 outline-none border border-gray-200 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent text-gray-700 text-sm select-text transition-all"
+              className="flex-1 rounded-md border border-gray-200 px-4 py-2.5 text-sm text-gray-700 outline-none transition-all select-text focus:border-transparent focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-400"
             />
             <motion.button
               whileHover={{ y: -2, scale: 1.01 }}
@@ -300,7 +305,7 @@ function Landing() {
       </section>
 
       {/* Browse Jobs Section */}
-      <section id="jobs" ref={jobsRef} className="py-16 md:py-20 px-4 md:px-8 bg-gray-50">
+      <section id="jobs" ref={jobsRef} className="bg-gray-50 px-4 py-16 md:px-8 md:py-20 dark:bg-slate-900">
         <motion.div
           className="max-w-7xl mx-auto"
           variants={staggerContainer}
@@ -311,12 +316,12 @@ function Landing() {
             variants={fadeUp}
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6"
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 select-none">
+            <h2 className="select-none text-2xl font-bold text-gray-900 md:text-3xl dark:text-slate-100">
               {appliedSearch ? (
                 <>
                   Search Results
                   {pagination && (
-                    <span className="text-lg text-gray-600 ml-2">({pagination.total} jobs)</span>
+                    <span className="ml-2 text-lg text-gray-600 dark:text-slate-400">({pagination.total} jobs)</span>
                   )}
                 </>
               ) : (
@@ -331,7 +336,7 @@ function Landing() {
                 disabled={isLoading}
               />
               {isFetchingJobs && (
-                <span className="text-sm text-indigo-600 animate-pulse">Updating...</span>
+                <span className="animate-pulse text-sm text-indigo-600 dark:text-indigo-300">Updating...</span>
               )}
             </div>
           </motion.div>
@@ -361,11 +366,14 @@ function Landing() {
           {isLoading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 animate-pulse">
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                <div
+                  key={i}
+                  className="animate-pulse rounded-lg border border-gray-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950/70"
+                >
+                  <div className="mb-3 h-6 w-3/4 rounded bg-gray-200 dark:bg-slate-800"></div>
+                  <div className="mb-2 h-4 w-1/2 rounded bg-gray-200 dark:bg-slate-800"></div>
+                  <div className="mb-4 h-4 w-2/3 rounded bg-gray-200 dark:bg-slate-800"></div>
+                  <div className="h-3 w-1/3 rounded bg-gray-200 dark:bg-slate-800"></div>
                 </div>
               ))}
             </div>
@@ -374,7 +382,7 @@ function Landing() {
           {/* Error State */}
           {isError && !isLoading && (
             <motion.div variants={fadeUp} className="text-center py-12">
-              <p className="text-gray-500 mb-4">Unable to load jobs at the moment.</p>
+              <p className="mb-4 text-gray-500 dark:text-slate-400">Unable to load jobs at the moment.</p>
               <motion.button
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.99 }}
@@ -402,11 +410,11 @@ function Landing() {
                     variants={fadeUp}
                     whileHover={{ y: -6 }}
                     transition={{ duration: 0.25 }}
-                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out"
+                    className="rounded-lg border border-gray-200 bg-white p-6 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-xl active:translate-y-0 active:shadow-lg dark:border-slate-800 dark:bg-slate-950 dark:hover:border-indigo-400 dark:hover:shadow-[0_22px_60px_-28px_rgba(99,102,241,0.55)]"
                   >
                     {/* Header with Save Button */}
                     <div className="flex items-start justify-between mb-2 gap-3">
-                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 select-none flex-1">
+                      <h3 className="line-clamp-2 flex-1 select-none text-lg font-semibold text-gray-900 dark:text-slate-100">
                         {job.title}
                       </h3>
 
@@ -418,8 +426,8 @@ function Landing() {
                         title={isSaved ? "Saved" : "Save Job"}
                         className={`flex-shrink-0 flex items-center justify-center p-2 rounded-lg transition ${
                           isSaved
-                            ? "text-yellow-600"
-                            : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                            ? "text-yellow-600 dark:text-amber-300"
+                            : "text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                         }`}
                         aria-label={isSaved ? "Remove from saved jobs" : "Save this job"}
                       >
@@ -447,7 +455,7 @@ function Landing() {
                     </div>
 
                     {/* Company Name */}
-                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1 select-none">
+                    <p className="mb-1 flex items-center gap-1 select-none text-sm text-gray-600 dark:text-slate-400">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
@@ -460,7 +468,7 @@ function Landing() {
                     </p>
 
                     {/* Location */}
-                    <p className="text-sm text-gray-600 mb-2 flex items-center gap-1 select-none">
+                    <p className="mb-2 flex items-center gap-1 select-none text-sm text-gray-600 dark:text-slate-400">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
@@ -480,13 +488,13 @@ function Landing() {
 
                     {/* Job Type */}
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs rounded-full select-none">
+                      <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-600 select-none dark:bg-blue-500/15 dark:text-blue-300">
                         {job.jobType}
                       </span>
                     </div>
 
                     {/* Posted Date */}
-                    <p className="text-xs text-gray-500 mb-4 select-none">
+                    <p className="mb-4 select-none text-xs text-gray-500 dark:text-slate-500">
                       Posted {formatDate(job.createdAt)}
                     </p>
 
@@ -508,7 +516,7 @@ function Landing() {
           {/* No Jobs State */}
           {!isLoading && !isError && displayJobs && displayJobs.length === 0 && (
             <motion.div variants={fadeUp} className="text-center py-12">
-              <p className="text-gray-500 mb-2">
+              <p className="mb-2 text-gray-500 dark:text-slate-400">
                 {appliedSearch ? `No jobs found for "${appliedSearch}"` : "No jobs available at the moment."}
               </p>
               {appliedSearch && (
@@ -539,12 +547,12 @@ function Landing() {
       </section>
 
       {/* How It Works Section */}
-      <section ref={howItWorksRef} className="py-16 md:py-20 px-4 md:px-8 bg-white">
+      <section ref={howItWorksRef} className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
           animate={howItWorksInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-2xl md:text-3xl font-bold text-center mb-12 text-gray-900 select-none"
+          className="mb-12 text-center text-2xl font-bold text-gray-900 select-none md:text-3xl dark:text-slate-100"
         >
           How It Works
         </motion.h2>
@@ -558,10 +566,10 @@ function Landing() {
           <motion.div
             variants={fadeUp}
             whileHover={{ y: -8 }}
-            className="bg-white border border-gray-300 rounded-lg p-6 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
+            className="cursor-pointer rounded-lg border border-gray-300 bg-white p-6 text-center transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-xl active:translate-y-0 active:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-400"
           >
-            <div className="text-2xl font-bold text-gray-900 mb-4 select-none">1. Upload PDF Resume</div>
-            <p className="text-sm text-gray-600 leading-relaxed select-none">
+            <div className="mb-4 select-none text-2xl font-bold text-gray-900 dark:text-slate-100">1. Upload PDF Resume</div>
+            <p className="select-none text-sm leading-relaxed text-gray-600 dark:text-slate-400">
               Simply upload your Resume in PDF format. Our system is designed to handle various layouts.
             </p>
           </motion.div>
@@ -569,10 +577,10 @@ function Landing() {
           <motion.div
             variants={fadeUp}
             whileHover={{ y: -8 }}
-            className="bg-white border border-gray-300 rounded-lg p-6 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
+            className="cursor-pointer rounded-lg border border-gray-300 bg-white p-6 text-center transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-xl active:translate-y-0 active:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-400"
           >
-            <div className="text-2xl font-bold text-gray-900 mb-4 select-none">2. AI Analyzes & Scores</div>
-            <p className="text-sm text-gray-600 leading-relaxed select-none">
+            <div className="mb-4 select-none text-2xl font-bold text-gray-900 dark:text-slate-100">2. AI Analyzes & Scores</div>
+            <p className="select-none text-sm leading-relaxed text-gray-600 dark:text-slate-400">
               Our advanced AI evaluates your resume according to the skills, and education requirements.
             </p>
           </motion.div>
@@ -580,10 +588,10 @@ function Landing() {
           <motion.div
             variants={fadeUp}
             whileHover={{ y: -8 }}
-            className="bg-white border border-gray-300 rounded-lg p-6 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
+            className="cursor-pointer rounded-lg border border-gray-300 bg-white p-6 text-center transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-xl active:translate-y-0 active:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-400"
           >
-            <div className="text-2xl font-bold text-gray-900 mb-4 select-none">3. Apply to High-Match Jobs</div>
-            <p className="text-sm text-gray-600 leading-relaxed select-none">
+            <div className="mb-4 select-none text-2xl font-bold text-gray-900 dark:text-slate-100">3. Apply to High-Match Jobs</div>
+            <p className="select-none text-sm leading-relaxed text-gray-600 dark:text-slate-400">
               Get an excellent list of opportunities that fit your skills and aspirations. Our highest match rates...
             </p>
           </motion.div>
@@ -591,12 +599,12 @@ function Landing() {
       </section>
 
       {/* Stats Section */}
-      <section ref={statsRef} className="py-16 md:py-20 px-4 md:px-8 bg-white">
+      <section ref={statsRef} className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
           animate={statsInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-2xl md:text-3xl font-bold text-center mb-12 text-gray-900 select-none"
+          className="mb-12 text-center text-2xl font-bold text-gray-900 select-none md:text-3xl dark:text-slate-100"
         >
           Lakshya by the Numbers
         </motion.h2>
@@ -610,11 +618,11 @@ function Landing() {
           <motion.div
             variants={fadeUp}
             whileHover={{ y: -8 }}
-            className="bg-white border border-gray-300 rounded-lg p-8 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
+            className="cursor-pointer rounded-lg border border-gray-300 bg-white p-8 text-center transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-xl active:translate-y-0 active:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-400"
           >
             <div className="text-4xl md:text-5xl font-bold text-primary mb-2 select-none">
               {isLoading ? (
-                <div className="animate-pulse bg-gray-200 h-12 rounded mx-auto w-32"></div>
+                <div className="mx-auto h-12 w-32 animate-pulse rounded bg-gray-200 dark:bg-slate-800"></div>
               ) : isError ? (
                 "—"
               ) : statsInView ? (
@@ -625,17 +633,17 @@ function Landing() {
                 "0+"
               )}
             </div>
-            <div className="text-sm text-gray-600 select-none">Active Jobs</div>
+            <div className="select-none text-sm text-gray-600 dark:text-slate-400">Active Jobs</div>
           </motion.div>
 
           <motion.div
             variants={fadeUp}
             whileHover={{ y: -8 }}
-            className="bg-white border border-gray-300 rounded-lg p-8 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
+            className="cursor-pointer rounded-lg border border-gray-300 bg-white p-8 text-center transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-xl active:translate-y-0 active:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-400"
           >
             <div className="text-4xl md:text-5xl font-bold text-primary mb-2 select-none">
               {isLoading ? (
-                <div className="animate-pulse bg-gray-200 h-12 rounded mx-auto w-32"></div>
+                <div className="mx-auto h-12 w-32 animate-pulse rounded bg-gray-200 dark:bg-slate-800"></div>
               ) : isError ? (
                 "—"
               ) : statsInView ? (
@@ -646,17 +654,17 @@ function Landing() {
                 "0+"
               )}
             </div>
-            <div className="text-sm text-gray-600 select-none">Verified Users</div>
+            <div className="select-none text-sm text-gray-600 dark:text-slate-400">Verified Users</div>
           </motion.div>
 
           <motion.div
             variants={fadeUp}
             whileHover={{ y: -8 }}
-            className="bg-white border border-gray-300 rounded-lg p-8 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
+            className="cursor-pointer rounded-lg border border-gray-300 bg-white p-8 text-center transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-xl active:translate-y-0 active:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-400"
           >
             <div className="text-4xl md:text-5xl font-bold text-primary mb-2 select-none">
               {isLoading ? (
-                <div className="animate-pulse bg-gray-200 h-12 rounded mx-auto w-32"></div>
+                <div className="mx-auto h-12 w-32 animate-pulse rounded bg-gray-200 dark:bg-slate-800"></div>
               ) : isError ? (
                 "—"
               ) : statsInView ? (
@@ -667,13 +675,13 @@ function Landing() {
                 "0+"
               )}
             </div>
-            <div className="text-sm text-gray-600 select-none">Top Companies</div>
+            <div className="select-none text-sm text-gray-600 dark:text-slate-400">Top Companies</div>
           </motion.div>
         </motion.div>
       </section>
 
       {/* CTA Section */}
-      <section ref={ctaRef} className="py-16 md:py-20 px-4 md:px-8 bg-white">
+      <section ref={ctaRef} className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
         <motion.div
           className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8"
           variants={staggerContainer}
@@ -683,10 +691,10 @@ function Landing() {
           <motion.div
             variants={fadeUp}
             whileHover={{ y: -8 }}
-            className="bg-white border border-gray-300 rounded-lg p-8 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out"
+            className="rounded-lg border border-gray-300 bg-white p-8 text-center transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-xl active:translate-y-0 active:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-400"
           >
-            <h3 className="text-xl font-bold mb-3 text-gray-900 select-none">I am a Job Seeker</h3>
-            <p className="text-sm text-gray-600 leading-relaxed mb-6 select-none">
+            <h3 className="mb-3 select-none text-xl font-bold text-gray-900 dark:text-slate-100">I am a Job Seeker</h3>
+            <p className="mb-6 select-none text-sm leading-relaxed text-gray-600 dark:text-slate-400">
               Upload your resume and receive AI-powered personalized job recommendations.
             </p>
             <motion.button
@@ -702,10 +710,10 @@ function Landing() {
           <motion.div
             variants={fadeUp}
             whileHover={{ y: -8 }}
-            className="bg-white border border-gray-300 rounded-lg p-8 text-center hover:shadow-xl hover:border-primary hover:-translate-y-1 active:translate-y-0 active:shadow-lg transition-all duration-300 ease-in-out"
+            className="rounded-lg border border-gray-300 bg-white p-8 text-center transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-xl active:translate-y-0 active:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-400"
           >
-            <h3 className="text-xl font-bold mb-3 text-gray-900 select-none">I am an Employer</h3>
-            <p className="text-sm text-gray-600 leading-relaxed mb-6 select-none">
+            <h3 className="mb-3 select-none text-xl font-bold text-gray-900 dark:text-slate-100">I am an Employer</h3>
+            <p className="mb-6 select-none text-sm leading-relaxed text-gray-600 dark:text-slate-400">
               Access top talent that perfectly matches your job requirements.
             </p>
             <br />
@@ -728,3 +736,4 @@ function Landing() {
 }
 
 export default Landing;
+

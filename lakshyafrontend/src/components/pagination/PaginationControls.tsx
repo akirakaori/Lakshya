@@ -53,9 +53,9 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-6 border-t bg-gray-50">
+    <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 px-6 py-4 dark:border-slate-800 dark:bg-slate-950 sm:flex-row">
       {/* Showing X-Y of total */}
-      <div className="text-sm text-gray-700">
+      <div className="text-sm text-slate-700 dark:text-slate-300">
         {isFetching ? (
           <span className="flex items-center gap-2">
             <svg className="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -78,7 +78,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1 || isLoading}
-          className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:disabled:hover:bg-slate-900"
         >
           Previous
         </button>
@@ -87,7 +87,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
         <div className="hidden sm:flex items-center gap-1">
           {getPageNumbers().map((pageNum, index) => (
             pageNum === '...' ? (
-              <span key={`ellipsis-${index}`} className="px-3 py-2 text-sm text-gray-500">
+              <span key={`ellipsis-${index}`} className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
                 ...
               </span>
             ) : (
@@ -98,7 +98,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
                 className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   page === pageNum
                     ? 'bg-indigo-600 text-white'
-                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
+                    : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
                 }`}
               >
                 {pageNum}
@@ -108,7 +108,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
         </div>
 
         {/* Mobile page indicator */}
-        <div className="sm:hidden text-sm text-gray-700 font-medium">
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-300 sm:hidden">
           Page {page} of {pages}
         </div>
 
@@ -116,7 +116,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page === pages || isLoading}
-          className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:disabled:hover:bg-slate-900"
         >
           Next
         </button>

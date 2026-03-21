@@ -9,7 +9,7 @@ const Footer: React.FC<FooterProps> = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-gray-300 flex-shrink-0">
+    <footer className="flex-shrink-0 border-t border-slate-800 bg-slate-950 text-slate-300">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
@@ -30,7 +30,7 @@ const Footer: React.FC<FooterProps> = () => {
                 href="https://www.facebook.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-indigo-600 flex items-center justify-center transition-colors duration-200"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 transition-colors duration-200 hover:bg-indigo-600"
                 aria-label="Facebook"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -41,7 +41,7 @@ const Footer: React.FC<FooterProps> = () => {
                 href="https://twitter.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-indigo-600 flex items-center justify-center transition-colors duration-200"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 transition-colors duration-200 hover:bg-indigo-600"
                 aria-label="Twitter"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -52,7 +52,7 @@ const Footer: React.FC<FooterProps> = () => {
                 href="https://www.linkedin.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-indigo-600 flex items-center justify-center transition-colors duration-200"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 transition-colors duration-200 hover:bg-indigo-600"
                 aria-label="LinkedIn"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -63,7 +63,7 @@ const Footer: React.FC<FooterProps> = () => {
                 href="https://www.instagram.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-indigo-600 flex items-center justify-center transition-colors duration-200"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 transition-colors duration-200 hover:bg-indigo-600"
                 aria-label="Instagram"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

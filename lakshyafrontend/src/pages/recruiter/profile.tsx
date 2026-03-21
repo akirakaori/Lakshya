@@ -166,13 +166,13 @@ const RecruiterProfile: React.FC = () => {
           </div>
         )}
         {/* Profile Header */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden mb-6">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-32"></div>
           <div className="px-6 pb-6">
             <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-12">
               {/* Avatar */}
               <div className="relative">
-                <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-lg overflow-hidden">
+                <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-full border-4 border-white shadow-lg overflow-hidden">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
@@ -214,8 +214,8 @@ const RecruiterProfile: React.FC = () => {
               </div>
               
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900">{displayName}</h1>
-                <p className="text-gray-600">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{displayName}</h1>
+                <p className="text-gray-600 dark:text-slate-300">
                   {formData.recruiter.position || 'Recruiter'} at {formData.companyName || 'Company'}
                 </p>
               </div>
@@ -224,7 +224,7 @@ const RecruiterProfile: React.FC = () => {
                   <>
                     <button
                       onClick={exitEditMode}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                      className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
                     >
                       Cancel
                     </button>
@@ -253,43 +253,43 @@ const RecruiterProfile: React.FC = () => {
           {/* Main Info */}
           <div className="md:col-span-2 space-y-6">
             {/* Personal Information */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Personal Information</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Full Name</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.fullName || profile?.name || '-'}</p>
+                    <p className="text-gray-900 dark:text-slate-100">{profile?.fullName || profile?.name || '-'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <p className="text-gray-900">{profile?.email || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email</label>
+                  <p className="text-gray-900 dark:text-slate-100">{profile?.email || '-'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Phone</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.phone || profile?.number || '-'}</p>
+                    <p className="text-gray-900 dark:text-slate-100">{profile?.phone || profile?.number || '-'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Position/Title</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Position/Title</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -297,14 +297,14 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.recruiter.position}
                       onChange={handleInputChange}
                       placeholder="e.g., Senior HR Manager"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.recruiter?.position || '-'}</p>
+                    <p className="text-gray-900 dark:text-slate-100">{profile?.recruiter?.position || '-'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Department</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -312,21 +312,21 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.recruiter.department}
                       onChange={handleInputChange}
                       placeholder="e.g., Human Resources"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.recruiter?.department || '-'}</p>
+                    <p className="text-gray-900 dark:text-slate-100">{profile?.recruiter?.department || '-'}</p>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Company Information */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Company Information</h2>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Company Information</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Company Name</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -334,14 +334,14 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.companyName}
                       onChange={handleInputChange}
                       placeholder="e.g., Tech Corp Inc."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.companyName || '-'}</p>
+                    <p className="text-gray-900 dark:text-slate-100">{profile?.companyName || '-'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Location</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -349,14 +349,14 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.location}
                       onChange={handleInputChange}
                       placeholder="e.g., Kathmandu, Nepal"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-900">{profile?.location || '-'}</p>
+                    <p className="text-gray-900 dark:text-slate-100">{profile?.location || '-'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Company Website</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Company Website</label>
                   {isEditing ? (
                     <input
                       type="url"
@@ -364,10 +364,10 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.recruiter.companyWebsite}
                       onChange={handleInputChange}
                       placeholder="https://www.company.com"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-900">
+                    <p className="text-gray-900 dark:text-slate-100">
                       {profile?.recruiter?.companyWebsite ? (
                         <a 
                           href={profile.recruiter.companyWebsite} 
@@ -382,7 +382,7 @@ const RecruiterProfile: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Company Description</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Company Description</label>
                   {isEditing ? (
                     <textarea
                       name="recruiter.companyDescription"
@@ -390,10 +390,10 @@ const RecruiterProfile: React.FC = () => {
                       onChange={handleInputChange}
                       rows={4}
                       placeholder="Tell candidates about your company..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <p className="text-gray-600 whitespace-pre-wrap">
+                    <p className="text-gray-600 dark:text-slate-300 whitespace-pre-wrap">
                       {profile?.recruiter?.companyDescription || 'No description added.'}
                     </p>
                   )}
@@ -405,12 +405,12 @@ const RecruiterProfile: React.FC = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Account Stats */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Account Stats</h2>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Account Stats</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Member Since</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="text-gray-600 dark:text-slate-300">Member Since</span>
+                  <span className="font-medium text-gray-900 dark:text-slate-100">
                     {profile?.createdAt 
                       ? new Date(profile.createdAt).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -420,7 +420,7 @@ const RecruiterProfile: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Account Status</span>
+                  <span className="text-gray-600 dark:text-slate-300">Account Status</span>
                   <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                     Active
                   </span>
@@ -429,8 +429,8 @@ const RecruiterProfile: React.FC = () => {
             </div>
 
             {/* Security */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Security</h2>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Security</h2>
               <button
                 onClick={() => {
                   if (!isEditing) {
@@ -440,16 +440,16 @@ const RecruiterProfile: React.FC = () => {
                   setShowPasswordModal(true);
                 }}
                 disabled={!isEditing}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Change Password
               </button>
             </div>
 
             {/* Help */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Need Help?</h2>
-              <p className="text-gray-600 text-sm mb-4">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Need Help?</h2>
+              <p className="text-gray-600 dark:text-slate-300 text-sm mb-4">
                 Contact our support team if you have any questions about recruiting on our platform.
               </p>
               <a
@@ -467,41 +467,41 @@ const RecruiterProfile: React.FC = () => {
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50" onClick={() => setShowPasswordModal(false)} />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Change Password</h2>
+          <div className="relative bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4">Change Password</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Current Password</label>
                 <input
                   type="password"
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">New Password</label>
                 <input
                   type="password"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Confirm New Password</label>
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowPasswordModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
               >
                 Cancel
               </button>
@@ -521,3 +521,4 @@ const RecruiterProfile: React.FC = () => {
 };
 
 export default RecruiterProfile;
+

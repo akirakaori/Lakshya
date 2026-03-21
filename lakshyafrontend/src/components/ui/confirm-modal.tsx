@@ -58,18 +58,18 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
+      className="app-modal-overlay animate-fadeIn"
       onClick={handleOverlayClick}
     >
-      <div className="bg-white rounded-xl max-w-md w-full shadow-2xl transform transition-all animate-slideUp">
+      <div className="app-modal-panel max-w-md transform animate-slideUp transition-all">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-800">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-slate-400 transition-colors hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-500 dark:hover:text-slate-300"
               type="button"
               aria-label="Close modal"
             >
@@ -82,16 +82,16 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
         {/* Body */}
         <div className="px-6 py-5">
-          <p className="text-gray-700 leading-relaxed">{message}</p>
+          <p className="leading-relaxed text-slate-700 dark:text-slate-300">{message}</p>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 rounded-b-xl flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-3 rounded-b-xl bg-slate-50 px-6 py-4 dark:bg-slate-950">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             {cancelText}
           </button>

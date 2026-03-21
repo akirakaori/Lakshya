@@ -197,10 +197,10 @@ const PostJob: React.FC = () => {
     <DashboardLayout variant="recruiter" title={isEditMode ? 'Edit Job' : 'Post New Job'}>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
             {isEditMode ? 'Edit Job' : 'Post a New Job'}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 dark:text-slate-300 mt-1">
             {isEditMode 
               ? 'Update the job details below.' 
               : 'Fill in the details below to create a new job posting.'}
@@ -209,11 +209,11 @@ const PostJob: React.FC = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Basic Information */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Basic Information</h2>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Job Title <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -222,14 +222,14 @@ const PostJob: React.FC = () => {
                   {...register('title', {
                     required: 'Job title is required',
                   })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
                 {errors.title && (
                   <p className="text-sm text-red-600 mt-1">{errors.title.message}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Company Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -238,14 +238,14 @@ const PostJob: React.FC = () => {
                   {...register('companyName', {
                     required: 'Company name is required',
                   })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
                 {errors.companyName && (
                   <p className="text-sm text-red-600 mt-1">{errors.companyName.message}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Location <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -254,17 +254,17 @@ const PostJob: React.FC = () => {
                   {...register('location', {
                     required: 'Location is required',
                   })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
                 {errors.location && (
                   <p className="text-sm text-red-600 mt-1">{errors.location.message}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Job Type</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Job Type</label>
                 <select
                   {...register('type')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="Full-time">Full-time</option>
                   <option value="Part-time">Part-time</option>
@@ -274,10 +274,10 @@ const PostJob: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Work Location</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Work Location</label>
                 <select
                   {...register('remoteType')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="Onsite">Onsite</option>
                   <option value="Remote">Remote</option>
@@ -285,7 +285,7 @@ const PostJob: React.FC = () => {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Category <span className="text-red-500">*</span>
                 </label>
                 <Controller
@@ -303,7 +303,7 @@ const PostJob: React.FC = () => {
                       {/* Category Preview Badge */}
                       {field.value && (
                         <div className="mt-2 flex items-center gap-2">
-                          <span className="text-xs text-gray-500">Preview:</span>
+                          <span className="text-xs text-gray-500 dark:text-slate-400">Preview:</span>
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border ${
                             getCategoryMeta(field.value).bgClass
                           } ${
@@ -321,10 +321,10 @@ const PostJob: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Company Size</label>
                 <select
                   {...register('companySize')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="">Not specified</option>
                   <option value="1-10">1-10 employees</option>
@@ -336,10 +336,10 @@ const PostJob: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Experience Level</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Experience Level</label>
                 <select
                   {...register('experienceLevel')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="entry">Entry Level</option>
                   <option value="mid">Mid Level</option>
@@ -349,20 +349,20 @@ const PostJob: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Interview Rounds Required
-                  <span className="ml-2 text-xs text-gray-500">(How many rounds before hire?)</span>
+                  <span className="ml-2 text-xs text-gray-500 dark:text-slate-400">(How many rounds before hire?)</span>
                 </label>
                 <select
                   {...register('interviewRoundsRequired')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value={1}>1 Round</option>
                   <option value={2}>2 Rounds (Recommended)</option>
                   <option value={3}>3 Rounds</option>
                   <option value={4}>4 Rounds</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                   Candidates must pass all {interviewRoundsRequired} round{interviewRoundsRequired > 1 ? 's' : ''} before being eligible for hire
                 </p>
               </div>
@@ -370,20 +370,20 @@ const PostJob: React.FC = () => {
           </div>
 
           {/* Salary Information */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Salary Information</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Salary Information</h2>
             <div className="grid md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Salary</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Minimum Salary</label>
                 <input
                   type="number"
                   placeholder="50000"
                   {...register('salary.min')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Salary</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Maximum Salary</label>
                 <input
                   type="number"
                   placeholder="80000"
@@ -396,14 +396,14 @@ const PostJob: React.FC = () => {
                       return true;
                     }
                   })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
                 {errors.salary?.max && (
                   <p className="text-sm text-red-600 mt-1">{errors.salary.max.message}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Currency</label>
                 <Controller
                   name="salary.currency"
                   control={control}
@@ -423,9 +423,9 @@ const PostJob: React.FC = () => {
                 <input
                   type="checkbox"
                   {...register('salaryVisible')}
-                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-slate-700 rounded"
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-700 dark:text-slate-300">
                   Display salary publicly (uncheck to show "Negotiable")
                 </span>
               </label>
@@ -433,10 +433,10 @@ const PostJob: React.FC = () => {
           </div>
 
           {/* Job Description */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Job Description</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Job Description</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 Description <span className="text-red-500">*</span>
               </label>
               <Controller
@@ -444,7 +444,7 @@ const PostJob: React.FC = () => {
                 control={control}
                 rules={{ required: 'Job description is required' }}
                 render={({ field }) => (
-                  <div className="rounded-lg border border-gray-300 overflow-hidden [&_.ql-toolbar]:rounded-t-lg [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-300 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[160px] [&_.ql-editor]:text-sm">
+                  <div className="rounded-lg border border-gray-300 dark:border-slate-700 overflow-hidden [&_.ql-toolbar]:rounded-t-lg [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-300 dark:border-slate-700 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[160px] [&_.ql-editor]:text-sm">
                     <ReactQuill
                       theme="snow"
                       value={field.value}
@@ -462,8 +462,8 @@ const PostJob: React.FC = () => {
           </div>
 
           {/* Skills */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Required Skills</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Required Skills</h2>
             <div className="flex gap-2 mb-4">
               <input
                 type="text"
@@ -471,7 +471,7 @@ const PostJob: React.FC = () => {
                 onChange={(e) => setNewSkill(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
                 placeholder="Add a skill (e.g. React, Python, AWS)"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
               <button
                 type="button"
@@ -498,23 +498,23 @@ const PostJob: React.FC = () => {
                 </span>
               ))}
               {skills.length === 0 && (
-                <p className="text-gray-500 text-sm">No skills added yet. Add skills that are required for this position.</p>
+                <p className="text-gray-500 dark:text-slate-400 text-sm">No skills added yet. Add skills that are required for this position.</p>
               )}
             </div>
           </div>
 
           {/* Requirements */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Requirements</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Requirements</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 List Requirements
               </label>
               <Controller
                 name="requirements"
                 control={control}
                 render={({ field }) => (
-                  <div className="rounded-lg border border-gray-300 overflow-hidden [&_.ql-toolbar]:rounded-t-lg [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-300 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-sm">
+                  <div className="rounded-lg border border-gray-300 dark:border-slate-700 overflow-hidden [&_.ql-toolbar]:rounded-t-lg [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-300 dark:border-slate-700 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-sm">
                     <ReactQuill
                       theme="snow"
                       value={field.value}
@@ -529,17 +529,17 @@ const PostJob: React.FC = () => {
           </div>
 
           {/* Benefits */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Benefits</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Benefits</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 List Benefits
               </label>
               <Controller
                 name="benefits"
                 control={control}
                 render={({ field }) => (
-                  <div className="rounded-lg border border-gray-300 overflow-hidden [&_.ql-toolbar]:rounded-t-lg [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-300 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-sm">
+                  <div className="rounded-lg border border-gray-300 dark:border-slate-700 overflow-hidden [&_.ql-toolbar]:rounded-t-lg [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-300 dark:border-slate-700 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-sm">
                     <ReactQuill
                       theme="snow"
                       value={field.value}
@@ -558,7 +558,7 @@ const PostJob: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/recruiter/manage-jobs')}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="px-6 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
             >
               Cancel
             </button>
@@ -579,3 +579,4 @@ const PostJob: React.FC = () => {
 };
 
 export default PostJob;
+

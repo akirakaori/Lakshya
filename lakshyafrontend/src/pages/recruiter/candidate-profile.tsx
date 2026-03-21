@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, ScheduleInterviewModal } from '../../components';
 import { ConfirmModal } from '../../components/ui';
@@ -64,9 +64,9 @@ const CandidateProfile: React.FC = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['recruiterApplication', applicationId],
     queryFn: async () => {
-      console.log('🔄 [QUERY] Fetching application details for:', applicationId);
+      console.log('ðŸ”„ [QUERY] Fetching application details for:', applicationId);
       const response = await axiosInstance.get(`/recruiter/applications/${applicationId}`);
-      console.log('✅ [QUERY] Fetched application. Notes length:', response.data?.data?.application?.notes?.length || 0);
+      console.log('âœ… [QUERY] Fetched application. Notes length:', response.data?.data?.application?.notes?.length || 0);
       return response.data;
     },
     enabled: !!applicationId,
@@ -99,7 +99,7 @@ const CandidateProfile: React.FC = () => {
     }
 
     // Debug log to verify data structure
-    console.log('🔍 [INTERVIEW DEBUG] Raw interviews from backend:', rawInterviews);
+    console.log('ðŸ” [INTERVIEW DEBUG] Raw interviews from backend:', rawInterviews);
 
     return rawInterviews.map((interview, idx) => {
       const source = interview as {
@@ -160,9 +160,9 @@ const CandidateProfile: React.FC = () => {
 
       // Extra debug for _id and time fields
       if (!normalized._id) {
-        console.warn(`❗ [INTERVIEW NORMALIZATION] Missing _id for round ${normalized.roundNumber}:`, source);
+        console.warn(`â— [INTERVIEW NORMALIZATION] Missing _id for round ${normalized.roundNumber}:`, source);
       }
-      console.log(`🔍 [INTERVIEW DEBUG] Round ${normalized.roundNumber}:`, {
+      console.log(`ðŸ” [INTERVIEW DEBUG] Round ${normalized.roundNumber}:`, {
         _id: normalized._id,
         date: normalized.date,
         startTime: normalized.startTime,
@@ -211,7 +211,7 @@ const CandidateProfile: React.FC = () => {
       (!lastRound || getInterviewOutcomeValue(lastRound) === 'pass') && 
       scheduledRounds < requiredRounds;
     
-    console.log('🎯 [INTERVIEW PROGRESS]', {
+    console.log('ðŸŽ¯ [INTERVIEW PROGRESS]', {
       requiredRounds,
       scheduledRounds,
       passedRounds,
@@ -238,20 +238,20 @@ const CandidateProfile: React.FC = () => {
   // Sync notes from server when not dirty (prevents overwriting user typing)
   useEffect(() => {
     if (!isDirty && application?.notes !== undefined) {
-      console.log('📝 [SYNC] Syncing notes from server:', application.notes?.substring(0, 50) + (application.notes?.length > 50 ? '...' : ''));
+      console.log('ðŸ“ [SYNC] Syncing notes from server:', application.notes?.substring(0, 50) + (application.notes?.length > 50 ? '...' : ''));
       const timer = setTimeout(() => {
         setNotes(application.notes || '');
       }, 0);
       return () => clearTimeout(timer);
     } else if (isDirty) {
-      console.log('✏️ [SYNC] Skipping sync - user is editing (dirty=true)');
+      console.log('âœï¸ [SYNC] Skipping sync - user is editing (dirty=true)');
     }
   }, [application?.notes, isDirty]);
 
   // Debug: Log when query data changes
   useEffect(() => {
     if (data) {
-      console.log('🔍 [QUERY] Query data updated. Notes:', data?.data?.application?.notes?.substring(0, 50));
+      console.log('ðŸ” [QUERY] Query data updated. Notes:', data?.data?.application?.notes?.substring(0, 50));
     }
   }, [data]);
 
@@ -328,19 +328,19 @@ const CandidateProfile: React.FC = () => {
     }
 
     try {
-      console.log('💾 [SAVE] Attempting to save notes. Length:', notes.length, 'ApplicationId:', application._id);
-      console.log('💾 [SAVE] Notes content:', notes.substring(0, 100) + (notes.length > 100 ? '...' : ''));
+      console.log('ðŸ’¾ [SAVE] Attempting to save notes. Length:', notes.length, 'ApplicationId:', application._id);
+      console.log('ðŸ’¾ [SAVE] Notes content:', notes.substring(0, 100) + (notes.length > 100 ? '...' : ''));
       
       const result = await updateNotesMutation.mutateAsync({
         applicationId: application._id,
         notes,
       });
       
-      console.log('✅ [SAVE] Save complete. Result:', result);
+      console.log('âœ… [SAVE] Save complete. Result:', result);
       setIsDirty(false); // Clear dirty flag after successful save
       toast.success('Notes saved successfully!');
     } catch (error) {
-      console.error('❌ [SAVE] Failed to save notes:', error);
+      console.error('âŒ [SAVE] Failed to save notes:', error);
       toast.error('Failed to save notes');
     }
   };
@@ -368,8 +368,8 @@ const CandidateProfile: React.FC = () => {
     return (
       <DashboardLayout variant="recruiter" title="Candidate Profile">
         <div className="text-center py-12">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Candidate not found</h2>
-          <p className="text-gray-600 mb-4">The candidate profile you're looking for doesn't exist.</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">Candidate not found</h2>
+          <p className="app-body-text mb-4">The candidate profile you're looking for doesn't exist.</p>
           <Link
             to="/recruiter/manage-jobs"
             className="text-indigo-600 hover:text-indigo-700 font-medium"
@@ -399,11 +399,11 @@ const CandidateProfile: React.FC = () => {
           {/* Main Profile */}
           <div className="lg:col-span-2 space-y-6">
             {/* Profile Header */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="app-surface rounded-xl overflow-hidden">
               <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-24"></div>
               <div className="px-6 pb-6">
                 <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-10">
-                  <div className="w-20 h-20 bg-white rounded-full border-4 border-white shadow-lg overflow-hidden">
+                  <div className="w-20 h-20 bg-white dark:bg-slate-900 rounded-full border-4 border-white shadow-lg overflow-hidden">
                     {avatarUrl ? (
                       <img
                         src={avatarUrl}
@@ -419,8 +419,8 @@ const CandidateProfile: React.FC = () => {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h1 className="text-xl font-bold text-gray-900">{candidate.fullName}</h1>
-                    <p className="text-gray-600">{candidate.jobSeeker?.title || 'Job Seeker'}</p>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">{candidate.fullName}</h1>
+                    <p className="app-body-text">{candidate.jobSeeker?.title || 'Job Seeker'}</p>
                     {application && (
                       <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${
                         application.status === 'shortlisted' 
@@ -431,7 +431,7 @@ const CandidateProfile: React.FC = () => {
                           ? 'bg-red-100 text-red-700'
                           : application.status === 'withdrawn'
                           ? 'bg-amber-100 text-amber-800'
-                          : 'bg-gray-100 text-gray-700'
+                          : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300'
                       }`}>
                         {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
                       </span>
@@ -454,7 +454,7 @@ const CandidateProfile: React.FC = () => {
                         href={signedResumeUrl || getFileUrl(candidate.jobSeeker.resumeUrl) || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium"
+                        className="app-secondary-button text-sm font-medium"
                       >
                         Download Resume
                       </a>
@@ -465,68 +465,68 @@ const CandidateProfile: React.FC = () => {
             </div>
 
             {/* Contact Information */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
+            <div className="app-surface rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Contact Information</h2>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium text-gray-900">{candidate.email}</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Email</p>
+                    <p className="font-medium text-gray-900 dark:text-slate-100">{candidate.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium text-gray-900">{candidate.phone || 'Not provided'}</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Phone</p>
+                    <p className="font-medium text-gray-900 dark:text-slate-100">{candidate.phone || 'Not provided'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Preferred Location</p>
-                    <p className="font-medium text-gray-900">{candidate.jobSeeker?.preferredLocation || 'Not specified'}</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Preferred Location</p>
+                    <p className="font-medium text-gray-900 dark:text-slate-100">{candidate.jobSeeker?.preferredLocation || 'Not specified'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Expected Salary</p>
-                    <p className="font-medium text-gray-900">{candidate.jobSeeker?.expectedSalary || 'Not specified'}</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Expected Salary</p>
+                    <p className="font-medium text-gray-900 dark:text-slate-100">{candidate.jobSeeker?.expectedSalary || 'Not specified'}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* About */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">About</h2>
-              <p className="text-gray-600 whitespace-pre-wrap">
+            <div className="app-surface rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">About</h2>
+              <p className="text-gray-600 dark:text-slate-300 whitespace-pre-wrap">
                 {candidate.jobSeeker?.bio || 'No bio provided.'}
               </p>
             </div>
 
             {/* Skills */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Skills</h2>
+            <div className="app-surface rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Skills</h2>
               <div className="flex flex-wrap gap-2">
                 {candidate.jobSeeker?.skills?.map((skill, index) => (
                   <span
@@ -537,23 +537,23 @@ const CandidateProfile: React.FC = () => {
                   </span>
                 ))}
                 {(!candidate.jobSeeker?.skills || candidate.jobSeeker.skills.length === 0) && (
-                  <p className="text-gray-500">No skills listed.</p>
+                  <p className="text-gray-500 dark:text-slate-400">No skills listed.</p>
                 )}
               </div>
             </div>
 
             {/* Experience */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Experience</h2>
-              <p className="text-gray-600 whitespace-pre-wrap">
+            <div className="app-surface rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Experience</h2>
+              <p className="text-gray-600 dark:text-slate-300 whitespace-pre-wrap">
                 {candidate.jobSeeker?.experience || 'No experience information provided.'}
               </p>
             </div>
 
             {/* Education */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Education</h2>
-              <p className="text-gray-600 whitespace-pre-wrap">
+            <div className="app-surface rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Education</h2>
+              <p className="text-gray-600 dark:text-slate-300 whitespace-pre-wrap">
                 {candidate.jobSeeker?.education || 'No education information provided.'}
               </p>
             </div>
@@ -562,9 +562,9 @@ const CandidateProfile: React.FC = () => {
           {/* Sidebar - AI Analysis */}
           <div className="space-y-6">
             {/* AI Match Score */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">AI Match Analysis</h2>
-              <p className="text-xs text-gray-500 mb-4">Snapshot at time of application</p>
+            <div className="app-surface rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">AI Match Analysis</h2>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">Snapshot at time of application</p>
               
               {matchScore > 0 ? (
                 <>
@@ -594,9 +594,9 @@ const CandidateProfile: React.FC = () => {
                         <span className="text-3xl font-bold text-indigo-600">{matchScore}%</span>
                       </div>
                     </div>
-                    <p className="text-gray-600 mt-2">Overall Match Score</p>
+                    <p className="text-gray-600 dark:text-slate-300 mt-2">Overall Match Score</p>
                     {matchAnalyzedAt && (
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                         Analyzed {new Date(matchAnalyzedAt).toLocaleDateString()}
                       </p>
                     )}
@@ -605,7 +605,7 @@ const CandidateProfile: React.FC = () => {
                   {/* Matched Skills */}
                   {matchedSkills.length > 0 && (
                     <div className="mb-4">
-                      <h3 className="text-sm font-medium text-gray-700 mb-2">
+                      <h3 className="app-label mb-2 text-sm font-medium">
                         Matched Skills ({matchedSkills.length})
                       </h3>
                       <div className="flex flex-wrap gap-1.5">
@@ -614,11 +614,11 @@ const CandidateProfile: React.FC = () => {
                             key={index}
                             className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium"
                           >
-                            ✓ {skill}
+                            âœ“ {skill}
                           </span>
                         ))}
                         {matchedSkills.length > 10 && (
-                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-full text-xs">
                             +{matchedSkills.length - 10} more
                           </span>
                         )}
@@ -629,7 +629,7 @@ const CandidateProfile: React.FC = () => {
                   {/* Missing Skills */}
                   {missingSkills.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-700 mb-2">
+                      <h3 className="app-label mb-2 text-sm font-medium">
                         Missing Skills ({missingSkills.length})
                       </h3>
                       <div className="flex flex-wrap gap-1.5">
@@ -638,11 +638,11 @@ const CandidateProfile: React.FC = () => {
                             key={index}
                             className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-medium"
                           >
-                            ✗ {skill}
+                            âœ— {skill}
                           </span>
                         ))}
                         {missingSkills.length > 8 && (
-                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-full text-xs">
                             +{missingSkills.length - 8} more
                           </span>
                         )}
@@ -652,8 +652,8 @@ const CandidateProfile: React.FC = () => {
                 </>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 text-sm">No analysis snapshot available</p>
-                  <p className="text-gray-400 text-xs mt-1">
+                  <p className="text-gray-500 dark:text-slate-400 text-sm">No analysis snapshot available</p>
+                  <p className="text-gray-400 dark:text-slate-500 text-xs mt-1">
                     The candidate applied before match analysis was enabled
                   </p>
                 </div>
@@ -661,8 +661,8 @@ const CandidateProfile: React.FC = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div className="app-surface rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Quick Actions</h2>
               {application ? (
                 <div className="space-y-3">
                   {isWithdrawnApplication && (
@@ -689,10 +689,10 @@ const CandidateProfile: React.FC = () => {
                       </div>
                       {interviewProgress.eligible ? (
                         <p className="text-xs text-green-600 font-medium mt-2">
-                          ✓ All rounds completed - Eligible for hire
+                          âœ“ All rounds completed - Eligible for hire
                         </p>
                       ) : (
-                        <p className="text-xs text-gray-600 mt-2">
+                        <p className="app-body-text mt-2 text-xs">
                           {interviewProgress.required - interviewProgress.completed} more round{(interviewProgress.required - interviewProgress.completed) > 1 ? 's' : ''} needed
                         </p>
                       )}
@@ -772,7 +772,7 @@ const CandidateProfile: React.FC = () => {
                             All rounds completed - Eligible for hire
                           </p>
                         ) : (
-                          <p className="text-xs text-gray-600">
+                          <p className="app-body-text text-xs">
                             {interviewProgress.required - interviewProgress.completed} more round{interviewProgress.required - interviewProgress.completed > 1 ? 's' : ''} needed
                           </p>
                         )}
@@ -831,12 +831,12 @@ const CandidateProfile: React.FC = () => {
                   {/* REJECTED/HIRED status (read-only) */}
                   {(application.status === 'rejected' || application.status === 'hired' || application.status === 'withdrawn') && (
                     <div className="text-center py-4">
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-slate-400">
                         Status: <span className="font-medium capitalize">{application.status}</span>
                       </p>
                       {application.status === 'hired' && (
                         <p className="text-xs text-green-600 font-medium mt-1">
-                          ✓ Candidate successfully hired after {interviewProgress.completed} interview rounds
+                          âœ“ Candidate successfully hired after {interviewProgress.completed} interview rounds
                         </p>
                       )}
                     </div>
@@ -845,22 +845,22 @@ const CandidateProfile: React.FC = () => {
                   {/* Common actions */}
                   <a
                     href={`mailto:${candidate?.email}`}
-                    className="block w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-center"
+                    className="app-secondary-button block w-full font-medium text-center"
                   >
                     Send Message
                   </a>
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm">Application not found. Quick actions are not available.</p>
+                <p className="text-gray-500 dark:text-slate-400 text-sm">Application not found. Quick actions are not available.</p>
               )}
             </div>
 
             {/* Interview Schedule */}
             {normalizedInterviews.length > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <div className="app-surface rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">
                   Interview Schedule
-                  <span className="ml-2 text-sm text-gray-500 font-normal">({normalizedInterviews.length} round{normalizedInterviews.length > 1 ? 's' : ''})</span>
+                  <span className="ml-2 text-sm text-gray-500 dark:text-slate-400 font-normal">({normalizedInterviews.length} round{normalizedInterviews.length > 1 ? 's' : ''})</span>
                 </h2>
                 <div className="space-y-3">
                   {(() => {
@@ -918,7 +918,7 @@ const CandidateProfile: React.FC = () => {
                       });
 
                     return (
-                    <div key={interview._id || `round-${interview.roundNumber}`} className="border border-gray-200 rounded-lg p-4">
+                    <div key={interview._id || `round-${interview.roundNumber}`} className="border border-gray-200 dark:border-slate-800 rounded-lg p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
@@ -931,11 +931,11 @@ const CandidateProfile: React.FC = () => {
                             {displayStatus.label}
                           </span>
                         </div>
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize">
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded text-xs capitalize">
                           {interview.mode}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600 space-y-1">
+                      <div className="app-body-text space-y-1 text-sm">
                         <div className="flex items-center gap-2">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -972,7 +972,7 @@ const CandidateProfile: React.FC = () => {
                         )}
                         
                         {/* Action buttons based on interview status */}
-                        <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-slate-800">
                           {canEditOrReschedule && interview._id && (
                             <div className="space-y-2">
                               {/* Edit/Reschedule Button - Only for scheduled interviews */}
@@ -993,7 +993,7 @@ const CandidateProfile: React.FC = () => {
 
                           {canMarkOutcome && (
                             <div className="space-y-2">
-                              <p className="text-xs text-gray-500">Interview session completed. Record result to continue workflow.</p>
+                              <p className="text-xs text-gray-500 dark:text-slate-400">Interview session completed. Record result to continue workflow.</p>
                               <div className="flex gap-2">
                                 <button
                                   onClick={async () => {
@@ -1086,8 +1086,8 @@ const CandidateProfile: React.FC = () => {
             )}
 
             {/* Notes */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recruiter Notes</h2>
+            <div className="app-surface rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Recruiter Notes</h2>
               {application ? (
                 <>
                   <textarea
@@ -1095,7 +1095,7 @@ const CandidateProfile: React.FC = () => {
                     onChange={(e) => handleNotesChange(e.target.value)}
                     placeholder="Add private notes about this candidate..."
                     rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
+                    className="app-input resize-none"
                   />
                   <div className="mt-3 flex items-center gap-2">
                     <button
@@ -1111,7 +1111,7 @@ const CandidateProfile: React.FC = () => {
                   </div>
                 </>
               ) : (
-                <p className="text-gray-500 text-sm">Application not found. Notes are not available.</p>
+                <p className="text-gray-500 dark:text-slate-400 text-sm">Application not found. Notes are not available.</p>
               )}
             </div>
           </div>
@@ -1153,3 +1153,6 @@ const CandidateProfile: React.FC = () => {
 };
 
 export default CandidateProfile;
+
+
+

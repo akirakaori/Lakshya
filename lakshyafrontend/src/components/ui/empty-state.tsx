@@ -9,17 +9,17 @@ interface EmptyStateProps {
 
 const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description, action }) => {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-6 bg-white rounded-xl border border-gray-200">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-16 dark:border-slate-800 dark:bg-slate-900">
       {icon || (
-        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-          <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+          <svg className="h-10 w-10 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
         </div>
       )}
-      <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">{title}</h3>
       {description && (
-        <p className="text-gray-500 text-center mt-2 max-w-sm">{description}</p>
+        <p className="mt-2 max-w-sm text-center text-slate-500 dark:text-slate-400">{description}</p>
       )}
       {action && <div className="mt-6">{action}</div>}
     </div>
