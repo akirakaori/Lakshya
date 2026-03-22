@@ -954,7 +954,7 @@ function AdminDashboard() {
                     </div>
                   )}
                   <div className='admin-table-head border-t border-slate-200 p-4 text-center dark:border-slate-800'>
-                    <button onClick={() => setActiveNav('posts')} className='text-indigo-600 hover:text-indigo-900 font-medium'>View full jobs list â†’</button>
+                    <button onClick={() => setActiveNav('posts')} className='text-indigo-600 hover:text-indigo-900 font-medium'>View full jobs list</button>
                   </div>
                 </div>
               </div>            </>
