@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/auth-context';
 import { profileService } from '../../services';
 import { toast } from 'react-toastify';
 import { Footer, ConfirmModal } from '../../components';
+import ThemeToggle from '../../components/ui/theme-toggle';
 
 const AdminProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -26,7 +27,6 @@ const AdminProfile: React.FC = () => {
     confirmPassword: '',
   });
 
-  // Load profile data
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -51,7 +51,7 @@ const AdminProfile: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -99,157 +99,147 @@ const AdminProfile: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    setShowLogoutModal(true);
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="admin-shell min-h-screen flex items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-slate-950 overflow-hidden">
+    <div className="admin-shell h-screen overflow-hidden">
       <div className="h-full overflow-y-auto">
-        {/* Header */}
-        <header className="bg-white dark:bg-slate-900 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate('/AdminDashboard')}
-              className="text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100 dark:text-slate-100"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Admin Profile</h1>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
-        {/* Main Content */}
-        <main className="min-h-screen max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Profile Info Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 mb-6">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100">Profile Information</h2>
-              <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">Update your personal information</p>
-            </div>
-            {!isEditing ? (
+        <header className="admin-topbar shadow-sm">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+            <div className="flex items-center space-x-4">
               <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 text-sm font-medium text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50"
+                onClick={() => navigate('/AdminDashboard')}
+                className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
               >
-                Edit Profile
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
               </button>
-            ) : (
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setIsEditing(false)}
-                  disabled={isSaving}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </button>
+              <h1 className="text-2xl font-bold app-heading">Admin Profile</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <button
+                onClick={() => setShowLogoutModal(true)}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="mx-auto min-h-screen max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="admin-panel mb-6 p-6">
+            <div className="mb-6 flex items-start justify-between">
+              <div>
+                <h2 className="text-xl font-semibold app-heading">Profile Information</h2>
+                <p className="mt-1 text-sm app-body-text">Update your personal information</p>
               </div>
-            )}
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-lg border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
+                >
+                  Edit Profile
+                </button>
+              ) : (
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    disabled={isSaving}
+                    className="app-secondary-button text-sm disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="app-label mb-1 block text-sm font-medium">Full Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className="app-input disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="app-label mb-1 block text-sm font-medium">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  disabled
+                  className="app-input cursor-not-allowed bg-slate-100 dark:bg-slate-800"
+                />
+                <p className="app-soft-text mt-1 text-xs">Email cannot be changed</p>
+              </div>
+
+              <div>
+                <label className="app-label mb-1 block text-sm font-medium">Phone Number</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className="app-input disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="app-label mb-1 block text-sm font-medium">Role</label>
+                <input
+                  type="text"
+                  value="Administrator"
+                  disabled
+                  className="app-input cursor-not-allowed bg-slate-100 dark:bg-slate-800"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Full Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                disabled={!isEditing}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100 dark:bg-slate-800 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            {/* Email (Read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email</label>
-              <input
-                type="email"
-                value={formData.email}
-                disabled
-                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-gray-100 dark:bg-slate-800 cursor-not-allowed"
-              />
-              <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Email cannot be changed</p>
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Phone Number</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                disabled={!isEditing}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100 dark:bg-slate-800 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            {/* Role (Read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Role</label>
-              <input
-                type="text"
-                value="Administrator"
-                disabled
-                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-gray-100 dark:bg-slate-800 cursor-not-allowed"
-              />
-            </div>
+          <div className="admin-panel p-6">
+            <h2 className="mb-4 text-xl font-semibold app-heading">Security</h2>
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+            >
+              Change Password
+            </button>
           </div>
-        </div>
-
-        {/* Security Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Security</h2>
-          <button
-            onClick={() => setShowPasswordModal(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
-          >
-            Change Password
-          </button>
-        </div>
         </main>
         <Footer variant="dashboard" />
       </div>
 
-      {/* Password Change Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Change Password</h3>
+        <div className="app-modal-overlay">
+          <div className="app-modal-panel w-full max-w-md p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold app-heading">Change Password</h3>
               <button
                 onClick={() => setShowPasswordModal(false)}
-                className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:text-slate-300"
+                className="rounded-lg p-1 text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-200"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -257,32 +247,32 @@ const AdminProfile: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Current Password</label>
+                <label className="app-label mb-1 block text-sm font-medium">Current Password</label>
                 <input
                   type="password"
                   value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  onChange={(e) => setPasswordData((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                  className="app-input"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">New Password</label>
+                <label className="app-label mb-1 block text-sm font-medium">New Password</label>
                 <input
                   type="password"
                   value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  onChange={(e) => setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))}
+                  className="app-input"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Confirm New Password</label>
+                <label className="app-label mb-1 block text-sm font-medium">Confirm New Password</label>
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  onChange={(e) => setPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                  className="app-input"
                 />
               </div>
 
@@ -290,14 +280,14 @@ const AdminProfile: React.FC = () => {
                 <button
                   onClick={() => setShowPasswordModal(false)}
                   disabled={isSaving}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
+                  className="app-secondary-button flex-1 text-sm disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePasswordChange}
                   disabled={isSaving}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                  className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                 >
                   {isSaving ? 'Changing...' : 'Change Password'}
                 </button>
@@ -307,7 +297,6 @@ const AdminProfile: React.FC = () => {
         </div>
       )}
 
-      {/* Logout Confirmation Modal */}
       <ConfirmModal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
@@ -327,4 +316,3 @@ const AdminProfile: React.FC = () => {
 };
 
 export default AdminProfile;
-

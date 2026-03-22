@@ -1,9 +1,10 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { handleSuccess, handleError } from '../../Utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/api-client';
 import { Footer, PageSizeSelect, PaginationControls, ConfirmModal, type PaginationMeta } from '../../components';
+import ThemeToggle from '../../components/ui/theme-toggle';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface User {
@@ -373,14 +374,14 @@ function AdminDashboard() {
   };
 
   return (
-    <div className='flex h-screen bg-gray-50 dark:bg-slate-950'>
-      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-indigo-900 via-indigo-800 to-indigo-900 text-white transition-all duration-300 flex flex-col shadow-2xl`}>
+    <div className='admin-shell flex h-screen'>
+      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} flex flex-col bg-gradient-to-b from-indigo-950 via-indigo-900 to-indigo-950 text-white shadow-2xl transition-all duration-300`}>
 
         <div className='p-6 flex items-center justify-between border-b border-indigo-700'>
           {isSidebarOpen && (
             <div onClick={() => navigate("/landing")}
             className='flex items-center space-x-3 cursor-pointer hover:opacity-80 transition'>
-              <div className='w-10 h-10 bg-white dark:bg-slate-900 rounded-lg flex items-center justify-center'>
+              <div className='admin-subpanel flex h-10 w-10 items-center justify-center rounded-lg'>
                 <span className='text-2xl'>💼</span>
               </div>
               <h1 className='text-xl font-bold'>Lakshya</h1>
@@ -389,15 +390,15 @@ function AdminDashboard() {
         </div>
 
         <nav className='flex-1 p-4 space-y-2'>
-          <button onClick={() => setActiveNav('dashboard')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeNav === 'dashboard' ? 'bg-white dark:bg-slate-900/20 shadow-lg' : 'hover:bg-white dark:bg-slate-900/10'}`}>
+          <button onClick={() => setActiveNav('dashboard')} className={`admin-sidebar-item flex items-center space-x-3 ${activeNav === 'dashboard' ? 'admin-sidebar-item-active' : ''}`}>
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' /></svg>
             {isSidebarOpen && <span className='font-medium'>Dashboard</span>}
           </button>
-          <button onClick={() => setActiveNav('users')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeNav === 'users' ? 'bg-white dark:bg-slate-900/20 shadow-lg' : 'hover:bg-white dark:bg-slate-900/10'}`}>
+          <button onClick={() => setActiveNav('users')} className={`admin-sidebar-item flex items-center space-x-3 ${activeNav === 'users' ? 'admin-sidebar-item-active' : ''}`}>
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' /></svg>
             {isSidebarOpen && <span className='font-medium'>Users</span>}
           </button>
-          <button onClick={() => setActiveNav('posts')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeNav === 'posts' ? 'bg-white dark:bg-slate-900/20 shadow-lg' : 'hover:bg-white dark:bg-slate-900/10'}`}>
+          <button onClick={() => setActiveNav('posts')} className={`admin-sidebar-item flex items-center space-x-3 ${activeNav === 'posts' ? 'admin-sidebar-item-active' : ''}`}>
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' /></svg>
             {isSidebarOpen && <span className='font-medium'>Posts</span>}
           </button>
@@ -412,18 +413,19 @@ function AdminDashboard() {
       </aside>
 
       <div className='flex-1 flex flex-col overflow-hidden'>
-        <header className='bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-800'>
+        <header className='admin-topbar shadow-sm'>
           <div className='flex items-center justify-between px-8 py-4'>
             <div className='flex items-center space-x-4'>
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 dark:bg-slate-800'>
-                <svg className='w-6 h-6 text-gray-600 dark:text-slate-300' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 6h16M4 12h16M4 18h16' /></svg>
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className='rounded-lg p-2 transition-colors hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700'>
+                <svg className='h-6 w-6 app-body-text' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 6h16M4 12h16M4 18h16' /></svg>
               </button>
-              <h2 className='text-2xl font-bold text-gray-800 dark:text-slate-100'>{activeNav === 'dashboard' ? 'Overview' : activeNav === 'users' ? 'User Management' : 'Post Management'}</h2>
+              <h2 className='text-2xl font-bold app-heading'>{activeNav === 'dashboard' ? 'Overview' : activeNav === 'users' ? 'User Management' : 'Post Management'}</h2>
             </div>
             <div className='flex items-center space-x-3'>
+              <ThemeToggle />
               <button
                 onClick={() => navigate('/admin/profile')}
-                className='px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors flex items-center space-x-2'
+                className='flex items-center space-x-2 rounded-lg px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'
               >
                 <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' />
@@ -435,7 +437,7 @@ function AdminDashboard() {
           </div>
         </header>
 
-        <div className='flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-950'>
+        <div className='flex-1 overflow-y-auto admin-shell'>
           <main className='min-h-screen p-8'>
           {activeNav === 'dashboard' && (
             <>
@@ -444,17 +446,17 @@ function AdminDashboard() {
                 {loadingAnalytics ? (
                   <>
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className='bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-slate-800 animate-pulse'>
-                        <div className='h-12 w-12 bg-gray-200 rounded-lg mb-4'></div>
-                        <div className='h-8 w-20 bg-gray-200 rounded mb-2'></div>
-                        <div className='h-4 w-24 bg-gray-200 rounded mb-1'></div>
-                        <div className='h-3 w-16 bg-gray-200 rounded'></div>
+                      <div key={i} className='admin-panel animate-pulse p-6'>
+                        <div className='mb-4 h-12 w-12 rounded-lg bg-slate-200 dark:bg-slate-800'></div>
+                        <div className='mb-2 h-8 w-20 rounded bg-slate-200 dark:bg-slate-800'></div>
+                        <div className='mb-1 h-4 w-24 rounded bg-slate-200 dark:bg-slate-800'></div>
+                        <div className='h-3 w-16 rounded bg-slate-200 dark:bg-slate-800'></div>
                       </div>
                     ))}
                   </>
                 ) : (
                   <>
-                    <div className='bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-slate-800 hover:shadow-md transition-shadow'>
+                    <div className='admin-panel p-6 hover:shadow-md transition-shadow'>
                       <div className='flex items-center justify-between mb-3'>
                         <div className='w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center'>
                           <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -465,12 +467,12 @@ function AdminDashboard() {
                           {parseFloat(analytics?.totals.userChange || '0') > 0 ? '+' : ''}{analytics?.totals.userChange}%
                         </span>
                       </div>
-                      <h3 className='text-3xl font-bold text-gray-900 dark:text-slate-100 mb-1'>{analytics?.totals.totalUsers.toLocaleString() || '0'}</h3>
-                      <p className='text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1'>TOTAL USERS</p>
+                      <h3 className='mb-1 text-3xl font-bold app-heading'>{analytics?.totals.totalUsers.toLocaleString() || '0'}</h3>
+                      <p className='mb-1 text-sm font-semibold app-label'>TOTAL USERS</p>
                       <p className='text-xs text-gray-500 dark:text-slate-400'>Active users on platform</p>
                     </div>
 
-                    <div className='bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-slate-800 hover:shadow-md transition-shadow'>
+                    <div className='admin-panel p-6 hover:shadow-md transition-shadow'>
                       <div className='flex items-center justify-between mb-3'>
                         <div className='w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center'>
                           <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -481,12 +483,12 @@ function AdminDashboard() {
                           {parseFloat(analytics?.totals.jobSeekerChange || '0') > 0 ? '+' : ''}{analytics?.totals.jobSeekerChange}%
                         </span>
                       </div>
-                      <h3 className='text-3xl font-bold text-gray-900 dark:text-slate-100 mb-1'>{analytics?.totals.totalJobSeekers.toLocaleString() || '0'}</h3>
-                      <p className='text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1'>JOB SEEKERS</p>
+                      <h3 className='mb-1 text-3xl font-bold app-heading'>{analytics?.totals.totalJobSeekers.toLocaleString() || '0'}</h3>
+                      <p className='mb-1 text-sm font-semibold app-label'>JOB SEEKERS</p>
                       <p className='text-xs text-gray-500 dark:text-slate-400'>Active job seekers</p>
                     </div>
 
-                    <div className='bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-slate-800 hover:shadow-md transition-shadow'>
+                    <div className='admin-panel p-6 hover:shadow-md transition-shadow'>
                       <div className='flex items-center justify-between mb-3'>
                         <div className='w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center'>
                           <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -497,12 +499,12 @@ function AdminDashboard() {
                           {parseFloat(analytics?.totals.recruiterChange || '0') > 0 ? '+' : ''}{analytics?.totals.recruiterChange}%
                         </span>
                       </div>
-                      <h3 className='text-3xl font-bold text-gray-900 dark:text-slate-100 mb-1'>{analytics?.totals.totalRecruiters.toLocaleString() || '0'}</h3>
-                      <p className='text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1'>RECRUITERS</p>
+                      <h3 className='mb-1 text-3xl font-bold app-heading'>{analytics?.totals.totalRecruiters.toLocaleString() || '0'}</h3>
+                      <p className='mb-1 text-sm font-semibold app-label'>RECRUITERS</p>
                       <p className='text-xs text-gray-500 dark:text-slate-400'>Active recruiters</p>
                     </div>
 
-                    <div className='bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-slate-800 hover:shadow-md transition-shadow'>
+                    <div className='admin-panel p-6 hover:shadow-md transition-shadow'>
                       <div className='flex items-center justify-between mb-3'>
                         <div className='w-12 h-12 bg-cyan-500 rounded-lg flex items-center justify-center'>
                           <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -513,8 +515,8 @@ function AdminDashboard() {
                           {parseFloat(analytics?.totals.jobChange || '0') > 0 ? '+' : ''}{analytics?.totals.jobChange}%
                         </span>
                       </div>
-                      <h3 className='text-3xl font-bold text-gray-900 dark:text-slate-100 mb-1'>{analytics?.totals.openJobs.toLocaleString() || '0'}</h3>
-                      <p className='text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1'>OPEN JOBS</p>
+                      <h3 className='mb-1 text-3xl font-bold app-heading'>{analytics?.totals.openJobs.toLocaleString() || '0'}</h3>
+                      <p className='mb-1 text-sm font-semibold app-label'>OPEN JOBS</p>
                       <p className='text-xs text-gray-500 dark:text-slate-400'>{analytics?.totals.closedJobs || 0} closed</p>
                     </div>
                   </>
@@ -526,31 +528,31 @@ function AdminDashboard() {
                 <div className='mb-8 space-y-6'>
                   {/* Secondary Stats Row */}
                   <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-                    <div className='bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-5'>
-                      <p className='text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase mb-1'>TOTAL APPLICATIONS</p>
-                      <p className='text-2xl font-bold text-gray-900 dark:text-slate-100'>{analytics.totals.totalApplications.toLocaleString()}</p>
+                    <div className='admin-subpanel p-5'>
+                      <p className='mb-1 text-xs font-semibold uppercase app-label'>TOTAL APPLICATIONS</p>
+                      <p className='text-2xl font-bold app-heading'>{analytics.totals.totalApplications.toLocaleString()}</p>
                     </div>
-                    <div className='bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-5'>
-                      <p className='text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase mb-1'>APPLICATIONS TODAY</p>
-                      <p className='text-2xl font-bold text-gray-900 dark:text-slate-100'>{analytics.totals.applicationsToday.toLocaleString()}</p>
+                    <div className='admin-subpanel p-5'>
+                      <p className='mb-1 text-xs font-semibold uppercase app-label'>APPLICATIONS TODAY</p>
+                      <p className='text-2xl font-bold app-heading'>{analytics.totals.applicationsToday.toLocaleString()}</p>
                     </div>
-                    <div className='bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-5'>
-                      <p className='text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase mb-1'>TOTAL JOBS LIVE</p>
-                      <p className='text-2xl font-bold text-gray-900 dark:text-slate-100'>{analytics.totals.openJobs.toLocaleString()}</p>
+                    <div className='admin-subpanel p-5'>
+                      <p className='mb-1 text-xs font-semibold uppercase app-label'>TOTAL JOBS LIVE</p>
+                      <p className='text-2xl font-bold app-heading'>{analytics.totals.openJobs.toLocaleString()}</p>
                     </div>
-                    <div className='bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-5'>
-                      <p className='text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase mb-1'>TOP SKILL IN DEMAND</p>
-                      <p className='text-2xl font-bold text-gray-900 dark:text-slate-100 capitalize'>{analytics.topSkills[0]?.skill || 'N/A'}</p>
+                    <div className='admin-subpanel p-5'>
+                      <p className='mb-1 text-xs font-semibold uppercase app-label'>TOP SKILL IN DEMAND</p>
+                      <p className='text-2xl font-bold app-heading capitalize'>{analytics.topSkills[0]?.skill || 'N/A'}</p>
                     </div>
                   </div>
 
                   {/* Charts Row */}
                   <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                     {/* Applications Trend */}
-                    <div className='bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-6'>
+                    <div className='admin-subpanel p-6'>
                       <div className='flex items-center justify-between mb-5'>
                         <div>
-                          <h3 className='text-base font-bold text-gray-900 dark:text-slate-100'>Applications Trend</h3>
+                          <h3 className='text-base font-bold app-heading'>Applications Trend</h3>
                           <p className='text-xs text-gray-500 dark:text-slate-400'>Daily incoming applications (Last 30 days)</p>
                         </div>
                         {fetchingAnalytics && (
@@ -595,8 +597,8 @@ function AdminDashboard() {
                     </div>
 
                     {/* Popular Job Categories */}
-                    <div className='bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-6'>
-                      <h3 className='text-base font-bold text-gray-900 dark:text-slate-100 mb-1'>Popular Job Categories</h3>
+                    <div className='admin-subpanel p-6'>
+                      <h3 className='mb-1 text-base font-bold app-heading'>Popular Job Categories</h3>
                       <p className='text-xs text-gray-500 dark:text-slate-400 mb-5'>Based on application volume</p>
                       <ResponsiveContainer width='100%' height={250}>
                         <BarChart data={analytics.topJobs} layout='vertical'>
@@ -625,10 +627,10 @@ function AdminDashboard() {
                   {/* Skills and Recruiter Activity Row */}
                   <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                     {/* Top Skills in Demand */}
-                    <div className='bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-6'>
+                    <div className='admin-subpanel p-6'>
                       <div className='flex items-center justify-between mb-5'>
                         <div>
-                          <h3 className='text-base font-bold text-gray-900 dark:text-slate-100'>Top Skills in Demand</h3>
+                          <h3 className='text-base font-bold app-heading'>Top Skills in Demand</h3>
                           <p className='text-xs text-gray-500 dark:text-slate-400'>Extracted from top 500 active job postings</p>
                         </div>
                         <button 
@@ -663,16 +665,16 @@ function AdminDashboard() {
                     </div>
 
                     {/* Recent Recruiter Activity */}
-                    <div className='bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-6'>
+                    <div className='admin-subpanel p-6'>
                       <div className='flex items-center justify-between mb-4'>
                         <div>
-                          <h3 className='text-base font-bold text-gray-900 dark:text-slate-100'>Recent Recruiter Activity</h3>
+                          <h3 className='text-base font-bold app-heading'>Recent Recruiter Activity</h3>
                         </div>
                         <div className='flex gap-2'>
-                          <button className='px-3 py-1 text-xs font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 rounded hover:bg-gray-200'>
+                          <button className='app-secondary-button px-3 py-1 text-xs font-medium'>
                             All Recruiters
                           </button>
-                          <button className='px-3 py-1 text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 dark:bg-slate-800 rounded'>
+                          <button className='app-secondary-button px-3 py-1 text-xs font-medium'>
                             Active Only
                           </button>
                         </div>
@@ -680,44 +682,44 @@ function AdminDashboard() {
                       <div className='overflow-hidden'>
                         <table className='w-full'>
                           <thead>
-                            <tr className='border-b border-gray-200 dark:border-slate-800'>
-                              <th className='text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase pb-2'>RECRUITER NAME</th>
-                              <th className='text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase pb-2'>JOBS POSTED</th>
-                              <th className='text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase pb-2'>APPLICATIONS RECEIVED</th>
-                              <th className='text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase pb-2'>STATUS</th>
+                            <tr className='border-b border-slate-200 dark:border-slate-800'>
+                              <th className='app-label pb-2 text-left text-xs font-semibold uppercase'>RECRUITER NAME</th>
+                              <th className='app-label pb-2 text-center text-xs font-semibold uppercase'>JOBS POSTED</th>
+                              <th className='app-label pb-2 text-center text-xs font-semibold uppercase'>APPLICATIONS RECEIVED</th>
+                              <th className='app-label pb-2 text-center text-xs font-semibold uppercase'>STATUS</th>
                             </tr>
                           </thead>
                           <tbody className='divide-y divide-gray-100'>
                             {analytics.recruiterActivity.slice(0, 5).map((recruiter, idx) => (
-                              <tr key={idx} className='hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950'>
+                              <tr key={idx} className='admin-table-row'>
                                 <td className='py-3'>
                                   <div className='flex items-center gap-2'>
                                     <div className='w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
                                       {recruiter.recruiterName.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
-                                      <p className='text-sm font-medium text-gray-900 dark:text-slate-100'>{recruiter.recruiterName}</p>
+                                      <p className='text-sm font-medium app-heading'>{recruiter.recruiterName}</p>
                                       <p className='text-xs text-gray-500 dark:text-slate-400'>{recruiter.recruiterEmail}</p>
                                     </div>
                                   </div>
                                 </td>
-                                <td className='text-center text-sm font-semibold text-gray-900 dark:text-slate-100'>{recruiter.jobsPosted}</td>
+                                <td className='text-center text-sm font-semibold app-heading'>{recruiter.jobsPosted}</td>
                                 <td className='text-center'>
                                   <div className='flex items-center justify-center gap-2'>
-                                    <div className='flex-1 bg-gray-200 rounded-full h-1.5 max-w-[60px]'>
+                                    <div className='max-w-[60px] flex-1 rounded-full bg-slate-200 h-1.5 dark:bg-slate-800'>
                                       <div 
                                         className='bg-blue-600 h-1.5 rounded-full' 
                                         style={{ width: `${Math.min((recruiter.applicationsReceived / 5000) * 100, 100)}%` }}
                                       ></div>
                                     </div>
-                                    <span className='text-sm font-semibold text-gray-900 dark:text-slate-100'>{recruiter.applicationsReceived.toLocaleString()}</span>
+                                    <span className='text-sm font-semibold app-heading'>{recruiter.applicationsReceived.toLocaleString()}</span>
                                   </div>
                                 </td>
                                 <td className='text-center'>
                                   <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${
                                     recruiter.status === 'Active' 
                                       ? 'bg-green-100 text-green-800' 
-                                      : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-100'
+                                      : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
                                   }`}>
                                     {recruiter.status}
                                   </span>
@@ -741,8 +743,8 @@ function AdminDashboard() {
 
               {/* User Management Section */}
               <div className='mb-8'>
-                <h3 className='text-xl font-bold text-gray-800 dark:text-slate-100 mb-4'>User Management</h3>
-                <div className='bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800'>
+                <h3 className='mb-4 text-xl font-bold app-heading'>User Management</h3>
+                <div className='admin-panel'>
                   <div className='p-6 border-b'>
                     <div className='flex gap-3 items-center'>
                       <input 
@@ -773,7 +775,7 @@ function AdminDashboard() {
                       )}
                     </div>
                   </div>
-                  <div className='p-4 border-b bg-gray-50 dark:bg-slate-950 flex justify-between items-center'>
+                  <div className='admin-table-head flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800'>
                     <PageSizeSelect
                       value={previewUsersLimit}
                       onChange={handlePreviewUsersLimitChange}
@@ -781,7 +783,7 @@ function AdminDashboard() {
                       disabled={loadingPreviewUsers}
                     />
                     {previewUsersPagination && (
-                      <span className='text-sm text-gray-600 dark:text-slate-300'>
+                      <span className='text-sm app-body-text'>
                         Total users: {previewUsersPagination.total}
                         {fetchingPreviewUsers && <span className='ml-2 text-indigo-600 animate-pulse'>Updating...</span>}
                       </span>
@@ -789,15 +791,15 @@ function AdminDashboard() {
                   </div>
                   <div className='overflow-x-auto'>
                     <table className='w-full'>
-                      <thead className='bg-gray-50 dark:bg-slate-950 border-b'>
+                      <thead className='admin-table-head border-b border-slate-200 dark:border-slate-800'>
                         <tr>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>S.N.</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Name</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Email</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Role</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Status</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Joined</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Actions</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>S.N.</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Name</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Email</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Role</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Status</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Joined</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Actions</th>
                         </tr>
                       </thead>
                       <tbody className='divide-y'>
@@ -808,16 +810,16 @@ function AdminDashboard() {
                         ) : previewUsers.map((user, index) => {
                           const serial = (previewUsersPage - 1) * previewUsersLimit + index + 1;
                           return (
-                            <tr key={user._id} className='hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950'>
-                              <td className='px-6 py-4 text-sm text-gray-900 dark:text-slate-100'>{serial}</td>
-                              <td className='px-6 py-4'><div className='text-sm font-medium text-gray-900 dark:text-slate-100'>{user.name}</div></td>
-                              <td className='px-6 py-4'><div className='text-sm text-gray-600 dark:text-slate-300'>{user.email}</div></td>
+                            <tr key={user._id} className='admin-table-row'>
+                              <td className='px-6 py-4 text-sm app-heading'>{serial}</td>
+                              <td className='px-6 py-4'><div className='text-sm font-medium app-heading'>{user.name}</div></td>
+                              <td className='px-6 py-4'><div className='text-sm app-body-text'>{user.email}</div></td>
                               <td className='px-6 py-4'><span className='px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800'>{user.role}</span></td>
                               <td className='px-6 py-4'><span className={`px-3 py-1 text-xs rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Suspended'}</span></td>
-                              <td className='px-6 py-4 text-sm text-gray-600 dark:text-slate-300'>{formatDate(user.createdAt)}</td>
+                              <td className='px-6 py-4 text-sm app-body-text'>{formatDate(user.createdAt)}</td>
                               <td className='px-6 py-4 space-x-2'>
-                                <button onClick={() => handleEditUser(user)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
-                                <button onClick={() => handleDeleteClick('user', user._id)} className='text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50'>Delete</button>
+                                <button onClick={() => handleEditUser(user)} className='rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'>Edit</button>
+                                <button onClick={() => handleDeleteClick('user', user._id)} className='rounded-lg p-2 text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'>Delete</button>
                               </td>
                             </tr>
                           );
@@ -835,16 +837,16 @@ function AdminDashboard() {
                       />
                     </div>
                   )}
-                  <div className='p-4 border-t bg-gray-50 dark:bg-slate-950 text-center'>
-                    <button onClick={() => setActiveNav('users')} className='text-indigo-600 hover:text-indigo-900 font-medium'>View full users list →</button>
+                  <div className='admin-table-head border-t border-slate-200 p-4 text-center dark:border-slate-800'>
+                    <button onClick={() => setActiveNav('users')} className='text-indigo-600 hover:text-indigo-900 font-medium'>View full users list</button>
                   </div>
                 </div>
               </div>
 
               {/* Job Management Section */}
               <div>
-                <h3 className='text-xl font-bold text-gray-800 dark:text-slate-100 mb-4'>Job Management Overview</h3>
-                <div className='bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800'>
+                <h3 className='mb-4 text-xl font-bold app-heading'>Job Management Overview</h3>
+                <div className='admin-panel'>
                   <div className='p-6 border-b'>
                     <div className='flex gap-3 items-center'>
                       <input 
@@ -875,7 +877,7 @@ function AdminDashboard() {
                       )}
                     </div>
                   </div>
-                  <div className='p-4 border-b bg-gray-50 dark:bg-slate-950 flex justify-between items-center'>
+                  <div className='admin-table-head flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800'>
                     <PageSizeSelect
                       value={previewJobsLimit}
                       onChange={handlePreviewJobsLimitChange}
@@ -883,7 +885,7 @@ function AdminDashboard() {
                       disabled={loadingPreviewJobs}
                     />
                     {previewJobsPagination && (
-                      <span className='text-sm text-gray-600 dark:text-slate-300'>
+                      <span className='text-sm app-body-text'>
                         Total jobs: {previewJobsPagination.total}
                         {fetchingPreviewJobs && <span className='ml-2 text-indigo-600 animate-pulse'>Updating...</span>}
                       </span>
@@ -891,15 +893,15 @@ function AdminDashboard() {
                   </div>
                   <div className='overflow-x-auto'>
                     <table className='w-full'>
-                      <thead className='bg-gray-50 dark:bg-slate-950 border-b'>
+                      <thead className='admin-table-head border-b border-slate-200 dark:border-slate-800'>
                         <tr>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>S.N.</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Title</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Company</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Posted By</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Status</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Date</th>
-                          <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Actions</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>S.N.</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Title</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Company</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Posted By</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Status</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Date</th>
+                          <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Actions</th>
                         </tr>
                       </thead>
                       <tbody className='divide-y'>
@@ -910,30 +912,30 @@ function AdminDashboard() {
                         ) : previewJobs.map((post, index) => {
                           const serial = (previewJobsPage - 1) * previewJobsLimit + index + 1;
                           return (
-                            <tr key={post._id} className='hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950'>
-                              <td className='px-6 py-4 text-sm text-gray-900 dark:text-slate-100'>{serial}</td>
+                            <tr key={post._id} className='admin-table-row'>
+                              <td className='px-6 py-4 text-sm app-heading'>{serial}</td>
                               <td className='px-6 py-4'>
-                                <div className='text-sm font-medium text-gray-900 dark:text-slate-100'>{post.title}</div>
+                                <div className='text-sm font-medium app-heading'>{post.title}</div>
                                 <div className='text-xs text-gray-500 dark:text-slate-400'>{post.jobType}</div>
                               </td>
                               <td className='px-6 py-4'>
-                                <div className='text-sm text-gray-900 dark:text-slate-100'>{post.company}</div>
+                                <div className='text-sm app-heading'>{post.company}</div>
                                 <div className='text-xs text-gray-500 dark:text-slate-400'>{post.location}</div>
                               </td>
-                              <td className='px-6 py-4'><div className='text-sm text-gray-600 dark:text-slate-300'>{post.createdByName}</div></td>
+                              <td className='px-6 py-4'><div className='text-sm app-body-text'>{post.createdByName}</div></td>
                               <td className='px-6 py-4'>
                                 <span className={`px-3 py-1 text-xs rounded-full ${
                                   post.status === 'open' 
                                     ? 'bg-green-100 text-green-800' 
-                                    : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-100'
+                                    : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
                                 }`}>
                                   {post.status === 'open' ? 'Open' : 'Closed'}
                                 </span>
                               </td>
-                              <td className='px-6 py-4 text-sm text-gray-600 dark:text-slate-300'>{formatDate(post.createdAt)}</td>
+                              <td className='px-6 py-4 text-sm app-body-text'>{formatDate(post.createdAt)}</td>
                               <td className='px-6 py-4 space-x-2'>
-                                <button onClick={() => handleEditPost(post)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
-                                <button onClick={() => handleDeleteClick('post', post._id)} className='text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50'>Delete</button>
+                                <button onClick={() => handleEditPost(post)} className='rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'>Edit</button>
+                                <button onClick={() => handleDeleteClick('post', post._id)} className='rounded-lg p-2 text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'>Delete</button>
                               </td>
                             </tr>
                           );
@@ -951,15 +953,15 @@ function AdminDashboard() {
                       />
                     </div>
                   )}
-                  <div className='p-4 border-t bg-gray-50 dark:bg-slate-950 text-center'>
-                    <button onClick={() => setActiveNav('posts')} className='text-indigo-600 hover:text-indigo-900 font-medium'>View full jobs list →</button>
+                  <div className='admin-table-head border-t border-slate-200 p-4 text-center dark:border-slate-800'>
+                    <button onClick={() => setActiveNav('posts')} className='text-indigo-600 hover:text-indigo-900 font-medium'>View full jobs list â†’</button>
                   </div>
                 </div>
               </div>            </>
           )}
 
           {activeNav === 'users' && (
-            <div className='bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800'>
+            <div className='admin-panel'>
               {/* Search & Filters */}
               <div className='p-6 border-b space-y-4'>
                 <div className='flex flex-col md:flex-row gap-4'>
@@ -974,14 +976,14 @@ function AdminDashboard() {
                   <div className='flex gap-2'>
                     <button
                       onClick={handleApplyUserSearch}
-                      className='px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium'
+                      className='rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition-colors hover:bg-indigo-700'
                     >
                       Apply Search
                     </button>
                     {appliedUserSearch && (
                       <button
                         onClick={handleClearUserSearch}
-                        className='px-6 py-3 bg-gray-200 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-300 transition-colors font-medium'
+                        className='app-secondary-button px-6 py-3 font-medium'
                       >
                         Clear
                       </button>
@@ -995,7 +997,7 @@ function AdminDashboard() {
                     disabled={loadingUsers}
                   />
                   {usersPagination && (
-                    <div className='text-sm text-gray-600 dark:text-slate-300'>
+                    <div className='text-sm app-body-text'>
                       {fetchingUsers && <span className='text-indigo-600 mr-2'>Updating...</span>}
                       Total: <span className='font-semibold'>{usersPagination.total}</span> users
                     </div>
@@ -1006,15 +1008,15 @@ function AdminDashboard() {
               {/* Table */}
               <div className='overflow-x-auto'>
                 <table className='w-full'>
-                  <thead className='bg-gray-50 dark:bg-slate-950 border-b'>
+                  <thead className='admin-table-head border-b border-slate-200 dark:border-slate-800'>
                     <tr>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase w-20'>S.N.</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Name</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Email</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Role</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Status</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Joined</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Actions</th>
+                      <th className='app-label w-20 px-6 py-4 text-left text-xs font-semibold uppercase'>S.N.</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Name</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Email</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Role</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Status</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Joined</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Actions</th>
                     </tr>
                   </thead>
                   <tbody className='divide-y'>
@@ -1025,16 +1027,16 @@ function AdminDashboard() {
                     ) : users.map((user, index) => {
                       const serial = (usersPage - 1) * usersLimit + index + 1;
                       return (
-                        <tr key={user._id} className='hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950'>
-                          <td className='px-6 py-4 text-sm text-gray-600 dark:text-slate-300'>{serial}</td>
-                          <td className='px-6 py-4'><div className='text-sm font-medium text-gray-900 dark:text-slate-100'>{user.name}</div></td>
-                          <td className='px-6 py-4'><div className='text-sm text-gray-600 dark:text-slate-300'>{user.email}</div></td>
+                        <tr key={user._id} className='admin-table-row'>
+                          <td className='px-6 py-4 text-sm app-body-text'>{serial}</td>
+                          <td className='px-6 py-4'><div className='text-sm font-medium app-heading'>{user.name}</div></td>
+                          <td className='px-6 py-4'><div className='text-sm app-body-text'>{user.email}</div></td>
                           <td className='px-6 py-4'><span className='px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800'>{user.role}</span></td>
                           <td className='px-6 py-4'><span className={`px-3 py-1 text-xs rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Suspended'}</span></td>
-                          <td className='px-6 py-4 text-sm text-gray-600 dark:text-slate-300'>{formatDate(user.createdAt)}</td>
+                          <td className='px-6 py-4 text-sm app-body-text'>{formatDate(user.createdAt)}</td>
                           <td className='px-6 py-4 space-x-2'>
-                            <button onClick={() => handleEditUser(user)} className='text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50'>Edit</button>
-                            <button onClick={() => handleDeleteClick('user', user._id)} className='text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50'>Delete</button>
+                            <button onClick={() => handleEditUser(user)} className='rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'>Edit</button>
+                            <button onClick={() => handleDeleteClick('user', user._id)} className='rounded-lg p-2 text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'>Delete</button>
                           </td>
                         </tr>
                       );
@@ -1056,7 +1058,7 @@ function AdminDashboard() {
           )}
 
           {activeNav === 'posts' && (
-            <div className='bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800'>
+            <div className='admin-panel'>
               {/* Search & Filters */}
               <div className='p-6 border-b space-y-4'>
                 <div className='flex flex-col md:flex-row gap-4'>
@@ -1080,14 +1082,14 @@ function AdminDashboard() {
                   <div className='flex gap-2'>
                     <button
                       onClick={handleApplyPostSearch}
-                      className='px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium'
+                      className='rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition-colors hover:bg-indigo-700'
                     >
                       Apply Search
                     </button>
                     {appliedPostSearch && (
                       <button
                         onClick={handleClearPostSearch}
-                        className='px-6 py-3 bg-gray-200 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-300 transition-colors font-medium'
+                        className='app-secondary-button px-6 py-3 font-medium'
                       >
                         Clear
                       </button>
@@ -1101,7 +1103,7 @@ function AdminDashboard() {
                     disabled={loadingPosts}
                   />
                   {postsPagination && (
-                    <div className='text-sm text-gray-600 dark:text-slate-300'>
+                    <div className='text-sm app-body-text'>
                       {fetchingPosts && <span className='text-indigo-600 mr-2'>Updating...</span>}
                       Total: <span className='font-semibold'>{postsPagination.total}</span> jobs
                     </div>
@@ -1112,15 +1114,15 @@ function AdminDashboard() {
               {/* Table */}
               <div className='overflow-x-auto'>
                 <table className='w-full'>
-                  <thead className='bg-gray-50 dark:bg-slate-950 border-b'>
+                  <thead className='admin-table-head border-b border-slate-200 dark:border-slate-800'>
                     <tr>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase w-20'>S.N.</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Title</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Company</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Posted By</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Status</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Date</th>
-                      <th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase'>Actions</th>
+                      <th className='app-label w-20 px-6 py-4 text-left text-xs font-semibold uppercase'>S.N.</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Title</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Company</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Posted By</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Status</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Date</th>
+                      <th className='app-label px-6 py-4 text-left text-xs font-semibold uppercase'>Actions</th>
                     </tr>
                   </thead>
                   <tbody className='divide-y'>
@@ -1131,25 +1133,25 @@ function AdminDashboard() {
                     ) : posts.map((post, index) => {
                       const serial = (postsPage - 1) * postsLimit + index + 1;
                       return (
-                        <tr key={post._id} className='hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950'>
-                          <td className='px-6 py-4 text-sm text-gray-600 dark:text-slate-300'>{serial}</td>
+                        <tr key={post._id} className='admin-table-row'>
+                          <td className='px-6 py-4 text-sm app-body-text'>{serial}</td>
                           <td className='px-6 py-4'>
-                            <div className='text-sm font-medium text-gray-900 dark:text-slate-100'>{post.title}</div>
+                            <div className='text-sm font-medium app-heading'>{post.title}</div>
                             <div className='text-xs text-gray-500 dark:text-slate-400'>{post.jobType}</div>
                           </td>
                           <td className='px-6 py-4'>
-                            <div className='text-sm text-gray-900 dark:text-slate-100'>{post.company}</div>
+                            <div className='text-sm app-heading'>{post.company}</div>
                             <div className='text-xs text-gray-500 dark:text-slate-400'>{post.location}</div>
                           </td>
                           <td className='px-6 py-4'>
-                            <div className='text-sm text-gray-600 dark:text-slate-300'>{post.createdByName}</div>
+                            <div className='text-sm app-body-text'>{post.createdByName}</div>
                           </td>
                           <td className='px-6 py-4'>
                             <div className="flex flex-col gap-1">
                               <span className={`px-3 py-1 text-xs rounded-full inline-block ${
                                 post.status === 'open' 
                                   ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-100'
+                                  : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
                               }`}>
                                 {post.status === 'open' ? 'Open' : 'Closed'}
                               </span>
@@ -1160,15 +1162,15 @@ function AdminDashboard() {
                               )}
                             </div>
                           </td>
-                          <td className='px-6 py-4 text-sm text-gray-600 dark:text-slate-300'>{formatDate(post.createdAt)}</td>
+                          <td className='px-6 py-4 text-sm app-body-text'>{formatDate(post.createdAt)}</td>
                           <td className='px-6 py-4 space-x-2'>
                             <button 
                               onClick={() => handleEditPost(post)} 
                               disabled={post.isDeleted}
                               className={`p-2 rounded-lg ${
                                 post.isDeleted 
-                                  ? 'text-gray-400 dark:text-slate-500 cursor-not-allowed' 
-                                  : 'text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50'
+                                  ? 'cursor-not-allowed text-slate-400 dark:text-slate-500' 
+                                  : 'text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'
                               }`}
                               title={post.isDeleted ? 'Cannot edit deleted jobs' : 'Edit job'}
                             >
@@ -1179,8 +1181,8 @@ function AdminDashboard() {
                               disabled={post.isDeleted}
                               className={`p-2 rounded-lg ${
                                 post.isDeleted 
-                                  ? 'text-gray-400 dark:text-slate-500 cursor-not-allowed' 
-                                  : 'text-red-600 hover:text-red-900 hover:bg-red-50'
+                                  ? 'cursor-not-allowed text-slate-400 dark:text-slate-500' 
+                                  : 'text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'
                               }`}
                               title={post.isDeleted ? 'Already deleted' : 'Delete job'}
                             >
@@ -1211,48 +1213,48 @@ function AdminDashboard() {
       </div>
 
       {showEditUserModal && editingUser && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white dark:bg-slate-900 rounded-lg p-8 max-w-md w-full'>
-            <h3 className='text-xl font-bold mb-4'>Edit User: {editingUser.name}</h3>
+        <div className='app-modal-overlay'>
+          <div className='app-modal-panel max-w-md w-full p-8'>
+            <h3 className='mb-4 text-xl font-bold app-heading'>Edit User: {editingUser.name}</h3>
             <div className='space-y-4'>
-              <div><label className='block text-sm font-medium mb-2'>Role</label><select value={editUserData.role} onChange={(e) => setEditUserData({...editUserData, role: e.target.value})} className='w-full px-4 py-2 border rounded-lg'><option value='job_seeker'>Job Seeker</option><option value='recruiter'>Recruiter</option><option value='admin'>Admin</option></select></div>
-              <div><label className='block text-sm font-medium mb-2'>Status</label><select value={editUserData.isActive ? 'active' : 'suspended'} onChange={(e) => setEditUserData({...editUserData, isActive: e.target.value === 'active'})} className='w-full px-4 py-2 border rounded-lg'><option value='active'>Active</option><option value='suspended'>Suspended</option></select></div>
-              <div><label className='block text-sm font-medium mb-2'>Reset Password (optional)</label><input type='password' value={editUserData.password} onChange={(e) => setEditUserData({...editUserData, password: e.target.value})} placeholder='Leave blank to keep current' className='w-full px-4 py-2 border rounded-lg' /></div>
+              <div><label className='app-label mb-2 block text-sm font-medium'>Role</label><select value={editUserData.role} onChange={(e) => setEditUserData({...editUserData, role: e.target.value})} className='app-input'><option value='job_seeker'>Job Seeker</option><option value='recruiter'>Recruiter</option><option value='admin'>Admin</option></select></div>
+              <div><label className='app-label mb-2 block text-sm font-medium'>Status</label><select value={editUserData.isActive ? 'active' : 'suspended'} onChange={(e) => setEditUserData({...editUserData, isActive: e.target.value === 'active'})} className='app-input'><option value='active'>Active</option><option value='suspended'>Suspended</option></select></div>
+              <div><label className='app-label mb-2 block text-sm font-medium'>Reset Password (optional)</label><input type='password' value={editUserData.password} onChange={(e) => setEditUserData({...editUserData, password: e.target.value})} placeholder='Leave blank to keep current' className='app-input' /></div>
             </div>
             <div className='flex space-x-4 mt-6'>
-              <button onClick={handleSaveUser} className='flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700'>Save</button>
-              <button onClick={() => setShowEditUserModal(false)} className='flex-1 bg-gray-200 text-gray-700 dark:text-slate-300 py-2 rounded-lg hover:bg-gray-300'>Cancel</button>
+              <button onClick={handleSaveUser} className='flex-1 rounded-lg bg-indigo-600 py-2 text-white hover:bg-indigo-700'>Save</button>
+              <button onClick={() => setShowEditUserModal(false)} className='app-secondary-button flex-1 py-2'>Cancel</button>
             </div>
           </div>
         </div>
       )}
 
       {showEditPostModal && editingPost && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white dark:bg-slate-900 rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto'>
-            <h3 className='text-xl font-bold mb-4'>Edit Post</h3>
+        <div className='app-modal-overlay'>
+          <div className='app-modal-panel max-h-[90vh] max-w-2xl w-full overflow-y-auto p-8'>
+            <h3 className='mb-4 text-xl font-bold app-heading'>Edit Post</h3>
             <div className='space-y-4'>
-              <div><label className='block text-sm font-medium mb-2'>Title</label><input type='text' value={editPostData.title} onChange={(e) => setEditPostData({...editPostData, title: e.target.value})} className='w-full px-4 py-2 border rounded-lg' /></div>
-              <div><label className='block text-sm font-medium mb-2'>Description</label><textarea value={editPostData.description} onChange={(e) => setEditPostData({...editPostData, description: e.target.value})} rows={4} className='w-full px-4 py-2 border rounded-lg' /></div>
-              <div className='grid grid-cols-2 gap-4'><div><label className='block text-sm font-medium mb-2'>Company</label><input type='text' value={editPostData.company} onChange={(e) => setEditPostData({...editPostData, company: e.target.value})} className='w-full px-4 py-2 border rounded-lg' /></div><div><label className='block text-sm font-medium mb-2'>Location</label><input type='text' value={editPostData.location} onChange={(e) => setEditPostData({...editPostData, location: e.target.value})} className='w-full px-4 py-2 border rounded-lg' /></div></div>
+              <div><label className='app-label mb-2 block text-sm font-medium'>Title</label><input type='text' value={editPostData.title} onChange={(e) => setEditPostData({...editPostData, title: e.target.value})} className='app-input' /></div>
+              <div><label className='app-label mb-2 block text-sm font-medium'>Description</label><textarea value={editPostData.description} onChange={(e) => setEditPostData({...editPostData, description: e.target.value})} rows={4} className='app-input' /></div>
+              <div className='grid grid-cols-2 gap-4'><div><label className='app-label mb-2 block text-sm font-medium'>Company</label><input type='text' value={editPostData.company} onChange={(e) => setEditPostData({...editPostData, company: e.target.value})} className='app-input' /></div><div><label className='app-label mb-2 block text-sm font-medium'>Location</label><input type='text' value={editPostData.location} onChange={(e) => setEditPostData({...editPostData, location: e.target.value})} className='app-input' /></div></div>
             </div>
             <div className='flex space-x-4 mt-6'>
-              <button onClick={handleSavePost} className='flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700'>Save</button>
-              <button onClick={() => setShowEditPostModal(false)} className='flex-1 bg-gray-200 text-gray-700 dark:text-slate-300 py-2 rounded-lg hover:bg-gray-300'>Cancel</button>
+              <button onClick={handleSavePost} className='flex-1 rounded-lg bg-indigo-600 py-2 text-white hover:bg-indigo-700'>Save</button>
+              <button onClick={() => setShowEditPostModal(false)} className='app-secondary-button flex-1 py-2'>Cancel</button>
             </div>
           </div>
         </div>
       )}
 
       {showDeleteConfirm && deleteTarget && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white dark:bg-slate-900 rounded-lg p-8 max-w-md w-full'>
+        <div className='app-modal-overlay'>
+          <div className='app-modal-panel max-w-md w-full p-8'>
             <h3 className='text-xl font-bold mb-4 text-red-600'>Confirm Deletion</h3>
-            <p className='mb-4'>Are you sure you want to delete this {deleteTarget.type}?</p>
-            <div className='mb-4'><label className='block text-sm font-medium mb-2'>Reason (optional)</label><textarea value={deleteReason} onChange={(e) => setDeleteReason(e.target.value)} placeholder='e.g., Spam, inappropriate...' rows={3} className='w-full px-4 py-2 border rounded-lg' /></div>
+            <p className='mb-4 app-body-text'>Are you sure you want to delete this {deleteTarget.type}?</p>
+            <div className='mb-4 app-body-text'><label className='app-label mb-2 block text-sm font-medium'>Reason (optional)</label><textarea value={deleteReason} onChange={(e) => setDeleteReason(e.target.value)} placeholder='e.g., Spam, inappropriate...' rows={3} className='app-input' /></div>
             <div className='flex space-x-4'>
-              <button onClick={handleConfirmDelete} className='flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700'>Delete</button>
-              <button onClick={() => setShowDeleteConfirm(false)} className='flex-1 bg-gray-200 text-gray-700 dark:text-slate-300 py-2 rounded-lg hover:bg-gray-300'>Cancel</button>
+              <button onClick={handleConfirmDelete} className='flex-1 rounded-lg bg-red-600 py-2 text-white hover:bg-red-700'>Delete</button>
+              <button onClick={() => setShowDeleteConfirm(false)} className='app-secondary-button flex-1 py-2'>Cancel</button>
             </div>
           </div>
         </div>
@@ -1282,4 +1284,6 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
+
+
 
