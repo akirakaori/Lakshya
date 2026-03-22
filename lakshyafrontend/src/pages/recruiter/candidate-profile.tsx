@@ -296,6 +296,14 @@ const CandidateProfile: React.FC = () => {
       return;
     }
 
+    console.log('[HIRE FLOW][UI] Hire button clicked:', {
+      applicationId: application._id,
+      currentStatus: application.status,
+      candidateId: candidate?._id,
+      candidateName: candidate?.fullName,
+      interviewProgress,
+    });
+
     if (!interviewProgress.eligible) {
       toast.error(`Candidate must pass all ${interviewProgress.required} interview rounds before hiring`);
       return;
@@ -309,13 +317,19 @@ const CandidateProfile: React.FC = () => {
     if (!application?._id) return;
 
     try {
-      await updateStatusMutation.mutateAsync({
+      const payload = {
         applicationId: application._id,
         status: 'hired',
-      });
+      } as const;
+
+      console.log('[HIRE FLOW][UI] Confirming hire with mutation payload:', payload);
+
+      const result = await updateStatusMutation.mutateAsync(payload);
+      console.log('[HIRE FLOW][UI] Hire mutation response:', result);
       toast.success('Candidate marked as hired!');
       setShowHireConfirm(false);
-    } catch {
+    } catch (error) {
+      console.error('[HIRE FLOW][UI] Hire mutation failed:', error);
       toast.error('Failed to mark as hired');
       // Keep modal open on error so user can retry
     }

@@ -841,7 +841,13 @@ export const useUpdateRecruiterApplicationStatus = () => {
     }: { 
       applicationId: string; 
       status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired'
-    }) => applicationService.updateRecruiterApplicationStatus(applicationId, status),
+    }) => {
+      console.log('[RECRUITER STATUS][MUTATION] Executing mutation with payload:', {
+        applicationId,
+        status,
+      });
+      return applicationService.updateRecruiterApplicationStatus(applicationId, status);
+    },
     onMutate: async (variables) => {
       const { applicationId, status } = variables;
       console.log('🔄 [OPTIMISTIC] Updating status to:', status);
@@ -932,8 +938,13 @@ export const useUpdateRecruiterApplicationStatus = () => {
       
       return { previousDetail, previousLists, previousCandidateLists, jobId };
     },
-    onSuccess: (_response, variables, context) => {
+    onSuccess: (response, variables, context) => {
       const { applicationId, status } = variables;
+      console.log('[RECRUITER STATUS][MUTATION] Server confirmed status update:', {
+        applicationId,
+        requestedStatus: status,
+        response,
+      });
       console.log('✅ [STATUS UPDATE] Server confirmed');
       
       // Invalidate to sync with server (updates counts, etc.)
@@ -965,8 +976,26 @@ export const useUpdateRecruiterApplicationStatus = () => {
           queryKey: ['applications', 'detail', applicationId]
         });
       }
+      queryClient.invalidateQueries({
+        queryKey: ['notifications']
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['notifications', 'unread-count']
+      });
+      queryClient.refetchQueries({
+        queryKey: ['notifications'],
+        type: 'active'
+      });
+      queryClient.refetchQueries({
+        queryKey: ['notifications', 'unread-count'],
+        type: 'active'
+      });
     },
     onError: (_error, _variables, context) => {
+      console.error('[RECRUITER STATUS][MUTATION] Status update failed - rolling back:', {
+        error: _error,
+        variables: _variables,
+      });
       console.error('❌ [STATUS UPDATE] Failed - rolling back');
       
       // Rollback optimistic updates

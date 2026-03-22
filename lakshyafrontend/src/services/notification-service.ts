@@ -3,6 +3,7 @@ import axiosInstance from './axios-instance';
 export type NotificationType =
   | 'application_submitted'
   | 'shortlisted'
+  | 'hired'
   | 'interview_scheduled'
   | 'rejected'
   | 'new_applicant'

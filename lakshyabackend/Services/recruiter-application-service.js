@@ -19,22 +19,51 @@ const statusNotificationMap = {
     title: 'Application Update',
     messageBuilder: (jobTitle) => `Your application for ${jobTitle} was not selected`,
   },
+  hired: {
+    type: 'hired',
+    title: 'Congratulations!',
+    messageBuilder: (jobTitle) => `You have been hired for ${jobTitle}`,
+  },
+  offer: {
+    type: 'hired',
+    title: 'Congratulations!',
+    messageBuilder: (jobTitle) => `You have been hired for ${jobTitle}`,
+  },
 };
 
 const notifyApplicantOnStatusUpdate = async ({ application, status, jobTitle }) => {
   const config = statusNotificationMap[status];
+  console.log('[RECRUITER STATUS][NOTIFY] Notification lookup:', {
+    applicationId: application?._id?.toString?.() || application?._id,
+    applicantId: application?.applicant?._id?.toString?.() || application?.applicant,
+    incomingStatus: status,
+    resolvedNotificationType: config?.type || null,
+    jobTitle: jobTitle || null,
+  });
   if (!config || !application?.applicant) {
+    console.log('[RECRUITER STATUS][NOTIFY] Skipping notification creation', {
+      hasConfig: !!config,
+      hasApplicant: !!application?.applicant,
+    });
     return;
   }
 
   try {
-    await notificationService.createNotification({
+    const notificationPayload = {
       recipientId: application.applicant,
       type: config.type,
       title: config.title,
       message: config.messageBuilder(jobTitle || 'this job'),
       relatedJobId: application.jobId?._id || application.jobId,
       relatedApplicationId: application._id,
+    };
+    console.log('[RECRUITER STATUS][NOTIFY] Creating notification with payload:', notificationPayload);
+    const notificationResult = await notificationService.createNotification(notificationPayload);
+    console.log('[RECRUITER STATUS][NOTIFY] Notification creation result:', {
+      success: notificationResult?.success,
+      notificationId: notificationResult?.data?._id,
+      type: notificationResult?.data?.type,
+      recipientId: notificationResult?.data?.recipientId,
     });
   } catch (notificationError) {
     console.warn('⚠ Failed to create recruiter status notification:', notificationError.message);
@@ -222,6 +251,13 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
  * Update application status (single)
  */
 const updateApplicationStatus = async (applicationId, recruiterId, newStatus) => {
+  const normalizedStatus = newStatus === 'offer' ? 'hired' : newStatus;
+  console.log('[RECRUITER STATUS][SERVICE] Incoming status update request:', {
+    applicationId,
+    recruiterId,
+    incomingStatus: newStatus,
+    normalizedStatus,
+  });
   // Validate status
   const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected', 'hired', 'offer'];
   if (!validStatuses.includes(newStatus)) {
@@ -240,14 +276,22 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
   }
 
   ensureApplicationIsActionable(application);
+  const oldStatus = application.status;
 
   // Update status
-  application.status = newStatus;
+  application.status = normalizedStatus;
   await application.save();
+  console.log('[RECRUITER STATUS][SERVICE] Application status saved:', {
+    applicationId,
+    recruiterId,
+    oldStatus,
+    newStatus: application.status,
+    notificationAttempted: !!statusNotificationMap[normalizedStatus],
+  });
 
   await notifyApplicantOnStatusUpdate({
     application,
-    status: newStatus,
+    status: normalizedStatus,
     jobTitle: application.jobId?.title,
   });
 
@@ -266,6 +310,14 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
  * Bulk update application statuses
  */
 const bulkUpdateApplicationStatus = async (jobId, recruiterId, applicationIds, newStatus) => {
+  const normalizedStatus = newStatus === 'offer' ? 'hired' : newStatus;
+  console.log('[RECRUITER STATUS][SERVICE][BULK] Incoming bulk status update request:', {
+    jobId,
+    recruiterId,
+    applicationIds,
+    incomingStatus: newStatus,
+    normalizedStatus,
+  });
   // Validate status
   const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected', 'hired', 'offer'];
   if (!validStatuses.includes(newStatus)) {
@@ -307,16 +359,24 @@ const bulkUpdateApplicationStatus = async (jobId, recruiterId, applicationIds, n
       jobId: jobId
     },
     {
-      $set: { status: newStatus }
+      $set: { status: normalizedStatus }
     }
   );
 
-  if (statusNotificationMap[newStatus]) {
+  console.log('[RECRUITER STATUS][SERVICE][BULK] Bulk status update saved:', {
+    jobId,
+    recruiterId,
+    modifiedCount: result.modifiedCount,
+    newStatus: normalizedStatus,
+    notificationAttempted: !!statusNotificationMap[normalizedStatus],
+  });
+
+  if (statusNotificationMap[normalizedStatus]) {
     await Promise.allSettled(
       applicationsToNotify.map((application) =>
         notifyApplicantOnStatusUpdate({
           application,
-          status: newStatus,
+          status: normalizedStatus,
           jobTitle: job.title,
         })
       )
@@ -325,7 +385,7 @@ const bulkUpdateApplicationStatus = async (jobId, recruiterId, applicationIds, n
 
   return {
     modifiedCount: result.modifiedCount,
-    status: newStatus
+    status: normalizedStatus
   };
 };
 

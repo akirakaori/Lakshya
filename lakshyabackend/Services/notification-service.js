@@ -9,6 +9,15 @@ const createNotification = async ({
   relatedApplicationId = null,
 }) => {
   try {
+    console.log('[NOTIFICATION SERVICE] Attempting notification create:', {
+      recipientId,
+      type,
+      title,
+      message,
+      relatedJobId,
+      relatedApplicationId,
+    });
+
     const notification = await NotificationModel.create({
       recipientId,
       type,
@@ -24,6 +33,17 @@ const createNotification = async ({
       data: notification,
     };
   } catch (error) {
+    console.error('[NOTIFICATION SERVICE] Notification create failed:', {
+      recipientId,
+      type,
+      title,
+      message,
+      relatedJobId,
+      relatedApplicationId,
+      errorMessage: error.message,
+      errorName: error.name,
+      stack: error.stack,
+    });
     throw error;
   }
 };

@@ -340,7 +340,19 @@ export const applicationService = {
     applicationId: string,
     status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired'
   ): Promise<{ success: boolean; data: RecruiterApplication }> => {
+    console.log('[RECRUITER STATUS][API] Sending status update request:', {
+      applicationId,
+      status,
+      payload: { status },
+      endpoint: `/recruiter/applications/${applicationId}/status`,
+    });
     const response = await axiosInstance.patch(`/recruiter/applications/${applicationId}/status`, { status });
+    console.log('[RECRUITER STATUS][API] Status update response:', {
+      applicationId,
+      requestedStatus: status,
+      responseStatus: response?.status,
+      responseData: response?.data,
+    });
     return response.data;
   },
 

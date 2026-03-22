@@ -35,6 +35,12 @@ const updateApplicationStatus = async (req, res, next) => {
     const { status } = req.body;
     const recruiterId = req.user.id;
 
+    console.log('[RECRUITER STATUS][CONTROLLER] Status update request received:', {
+      applicationId,
+      recruiterId,
+      incomingStatus: status,
+    });
+
     if (!status) {
       return res.status(400).json({
         success: false,
@@ -67,6 +73,13 @@ const bulkUpdateApplicationStatus = async (req, res, next) => {
     const { jobId } = req.params;
     const { applicationIds, status } = req.body;
     const recruiterId = req.user.id;
+
+    console.log('[RECRUITER STATUS][CONTROLLER][BULK] Bulk status update request received:', {
+      jobId,
+      recruiterId,
+      applicationIds,
+      incomingStatus: status,
+    });
 
     if (!applicationIds || !Array.isArray(applicationIds) || applicationIds.length === 0) {
       return res.status(400).json({

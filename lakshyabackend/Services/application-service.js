@@ -433,22 +433,22 @@ const getJobApplications = async (jobId, recruiterId) => {
  */
 const updateApplicationStatus = async (applicationId, recruiterId, newStatus) => {
   try {
-    const application = await ApplicationModel.findById(applicationId)
+    let application = await ApplicationModel.findById(applicationId)
       .populate('jobId');
-    
+
     if (!application) {
       const error = new Error('Application not found');
       error.statusCode = 404;
       throw error;
     }
-    
+
     // Verify the job belongs to the recruiter
-    if (application.jobId.createdBy.toString() !== recruiterId.toString()) {
+    if (!application.jobId || !application.jobId.createdBy || application.jobId.createdBy.toString() !== recruiterId.toString()) {
       const error = new Error('Unauthorized: You can only update applications for your jobs');
       error.statusCode = 403;
       throw error;
     }
-    
+
     // Valid status values
     const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected', 'hired'];
     if (!validStatuses.includes(newStatus)) {
@@ -458,20 +458,40 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
     }
 
     ensureApplicationIsActionable(application);
-    
+
     application.status = newStatus;
     await application.save();
 
-    await createApplicantStatusNotification(application, newStatus);
-    
+    // Ensure job title is available for notification
+    let jobTitle = application.jobId?.title;
+    let jobId = application.jobId?._id || application.jobId;
+    if (!jobTitle || !jobId) {
+      // Fallback: fetch job if not populated
+      const jobDoc = await JobModel.findById(application.jobId);
+      if (jobDoc) {
+        jobTitle = jobDoc.title;
+        jobId = jobDoc._id;
+      }
+    }
+
+    // Debug log for notification creation
+    if (newStatus === 'hired') {
+      console.log('[NOTIFICATION] Creating hired notification for applicant:', application.applicant, 'job:', jobTitle);
+    }
+
+    await createApplicantStatusNotification({
+      ...application.toObject(),
+      jobId: { _id: jobId, title: jobTitle },
+    }, newStatus);
+
     // Populate before returning
     await application.populate('applicant', 'name email number');
-    
+
     return application;
   } catch (error) {
     throw error;
   }
-};
+}
 
 /**
  * Get application by ID
