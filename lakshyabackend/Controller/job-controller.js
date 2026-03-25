@@ -100,17 +100,24 @@ const softDeleteJob = async (req, res) => {
 };
 
 /**
- * Get all jobs posted by the recruiter
+ * Get all jobs posted by the recruiter (paginated)
  */
 const getMyJobs = async (req, res) => {
   try {
     const recruiterId = req.user.id;
-    const jobs = await jobService.getRecruiterJobs(recruiterId);
+    const { page, limit, search } = req.query;
+    
+    const result = await jobService.getRecruiterJobs(recruiterId, {
+      page,
+      limit,
+      search
+    });
     
     res.status(200).json({
       success: true,
       message: 'Jobs retrieved successfully',
-      data: jobs
+      data: result.jobs,
+      pagination: result.pagination
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({

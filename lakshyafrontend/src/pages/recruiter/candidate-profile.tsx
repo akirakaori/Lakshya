@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, ScheduleInterviewModal } from '../../components';
 import { ConfirmModal } from '../../components/ui';
@@ -1029,7 +1029,7 @@ const CandidateProfile: React.FC = () => {
                                       await updateInterviewOutcomeMutation.mutateAsync({
                                         applicationId,
                                         interviewId: idToUse,
-                                        outcome: 'pass'
+                                        feedback: { outcome: 'pass' }
                                       });
                                       toast.success(`Round ${interview.roundNumber} marked as PASS`);
                                     } catch (error) {
@@ -1068,7 +1068,7 @@ const CandidateProfile: React.FC = () => {
                                       await updateInterviewOutcomeMutation.mutateAsync({
                                         applicationId,
                                         interviewId: idToUse,
-                                        outcome: 'fail'
+                                        feedback: { outcome: 'fail' }
                                       });
                                       toast.success(`Round ${interview.roundNumber} marked as FAIL`);
                                     } catch (error) {

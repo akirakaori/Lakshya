@@ -7,13 +7,13 @@ const recruiterApplicationService = require('../Services/recruiter-application-s
 const getJobApplications = async (req, res, next) => {
   try {
     const { jobId } = req.params;
-    const { status, sort, search, minScore, mustHave, missing, analysisStatus } = req.query;
+    const { status, sort, search, minScore, mustHave, missing, analysisStatus, page, limit } = req.query;
     const recruiterId = req.user.id;
 
     const result = await recruiterApplicationService.getJobApplications(
       jobId,
       recruiterId,
-      { status, sort, search, minScore, mustHave, missing, analysisStatus }
+      { status, sort, search, minScore, mustHave, missing, analysisStatus, page, limit }
     );
 
     res.status(200).json({

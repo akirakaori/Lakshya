@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState } from '../../components';
 import { 
   useRecruiterJobApplications, 
@@ -11,6 +11,7 @@ import axiosInstance from '../../services/axios-instance';
 import { toast } from 'react-toastify';
 import { getFileUrl, getInitials } from '../../Utils';
 import type { RecruiterApplication } from '../../services';
+import { PaginationControls, PageSizeSelect } from '../../components/pagination';
 
 interface Applicant {
   _id: string;
@@ -51,6 +52,12 @@ const JobApplications: React.FC = () => {
   const [appliedMissing, setAppliedMissing] = useState<string | undefined>(undefined);
   const [appliedAnalysisStatus, setAppliedAnalysisStatus] = useState<'analyzed' | 'not_analyzed' | undefined>(undefined);
   
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Get pagination from URL or defaults
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
+  
   // Queries and mutations
   const { data, isLoading, isFetching } = useRecruiterJobApplications(jobId || '', {
     status: activeTab,
@@ -60,6 +67,8 @@ const JobApplications: React.FC = () => {
     mustHave: appliedMustHave,
     missing: appliedMissing,
     analysisStatus: appliedAnalysisStatus,
+    page,
+    limit,
   });
   
   // Fetch application details for drawer (real-time query, not stale snapshot)
@@ -114,6 +123,21 @@ const JobApplications: React.FC = () => {
       newSet.add(id);
     }
     setSelectedApplications(newSet);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setSearchParams(prev => {
+      prev.set('page', newPage.toString());
+      return prev;
+    });
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setSearchParams(prev => {
+      prev.set('limit', newLimit.toString());
+      prev.set('page', '1'); // Reset to page 1
+      return prev;
+    });
   };
 
   const handleBulkStatusUpdate = async (status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer') => {
@@ -349,6 +373,10 @@ const JobApplications: React.FC = () => {
                 </select>
               </div>
             </div>
+            <PageSizeSelect 
+              value={limit} 
+              onChange={handleLimitChange}
+            />
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 className={`px-4 py-1.5 border rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
@@ -734,6 +762,17 @@ const JobApplications: React.FC = () => {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {data?.pagination && (
+          <div className="mt-6 flex justify-center">
+            <PaginationControls
+              pagination={data.pagination}
+              onPageChange={handlePageChange}
+              isFetching={isFetching}
+            />
           </div>
         )}
 

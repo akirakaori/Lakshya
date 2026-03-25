@@ -351,8 +351,16 @@ export const jobService = {
   },
 
   // Get jobs posted by the recruiter (recruiter only)
-  getMyJobs: async (): Promise<{ success: boolean; data: Job[] }> => {
-    const response = await axiosInstance.get('/jobs/my-jobs');
+  getMyJobs: async (filters?: { page?: number; limit?: number; search?: string }): Promise<JobsResponse> => {
+    const params = new URLSearchParams();
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.search) params.append('search', filters.search);
+
+    const queryString = params.toString();
+    const url = queryString ? `/jobs/my-jobs?${queryString}` : '/jobs/my-jobs';
+    
+    const response = await axiosInstance.get(url);
     return response.data;
   },
 

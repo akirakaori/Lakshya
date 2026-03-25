@@ -1,31 +1,80 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState } from '../../components';
 import { useMyJobs, useSoftDeleteJob, useToggleJobStatus } from '../../hooks';
 import { toast } from 'react-toastify';
 import type { Job } from '../../services';
+import { PaginationControls, PageSizeSelect } from '../../components/pagination';
 
 const ManageJobs: React.FC = () => {
-  const { data: jobsData, isLoading } = useMyJobs();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Get pagination from URL or defaults
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
+  const search = searchParams.get('search') || '';
+  const statusFilter = searchParams.get('status') || 'all';
+
+  const { data: jobsData, isLoading } = useMyJobs({ 
+    page, 
+    limit, 
+    search: search.trim() || undefined 
+  });
+
   const softDeleteJobMutation = useSoftDeleteJob();
   const toggleStatusMutation = useToggleJobStatus();
   
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const jobs = jobsData?.data || [];
+  const pagination = jobsData?.pagination;
 
-  // Filter jobs
+  // Since backend handles search and limit, we just need to handle status locally if not fully backend
+  // But our goal is backend-driven. Let's assume backend handles 'search' which includes title/location.
+  // For status, we might need backend to support it too, but for now we'll keep local filter OR 
+  // better: update the useMyJobs to handle status too if supported.
+  
+  const handlePageChange = (newPage: number) => {
+    setSearchParams(prev => {
+      prev.set('page', newPage.toString());
+      return prev;
+    });
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setSearchParams(prev => {
+      prev.set('limit', newLimit.toString());
+      prev.set('page', '1'); // Reset to page 1
+      return prev;
+    });
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchParams(prev => {
+      if (val) prev.set('search', val);
+      else prev.delete('search');
+      prev.set('page', '1');
+      return prev;
+    });
+  };
+
+  const handleStatusChange = (val: string) => {
+    setSearchParams(prev => {
+      if (val !== 'all') prev.set('status', val);
+      else prev.delete('status');
+      prev.set('page', '1');
+      return prev;
+    });
+  };
+
+  // Local filtering for status if backend doesn't support it yet
+  // Based on my service update, it doesn't support status yet, only search.
   const filteredJobs = jobs.filter((job: Job) => {
-    const matchesSearch = 
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = 
       statusFilter === 'all' || 
       (statusFilter === 'active' && job.isActive && !job.isDeleted) ||
       (statusFilter === 'inactive' && (!job.isActive || job.isDeleted));
-    return matchesSearch && matchesStatus;
+    return matchesStatus;
   });
 
   const handleToggleStatus = async (jobId: string, currentStatus: boolean) => {
@@ -106,20 +155,25 @@ const ManageJobs: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by job title or location..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-slate-900"
             >
               <option value="all">All Jobs</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
+            
+            <PageSizeSelect 
+              value={limit} 
+              onChange={handleLimitChange}
+            />
           </div>
         </div>
 
@@ -144,8 +198,7 @@ const ManageJobs: React.FC = () => {
               ) : (
                 <button
                   onClick={() => {
-                    setSearchTerm('');
-                    setStatusFilter('all');
+                    setSearchParams({});
                   }}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                 >
@@ -155,149 +208,162 @@ const ManageJobs: React.FC = () => {
             }
           />
         ) : (
-          /* Job Cards */
-          <div className="space-y-4">
-            {filteredJobs.map((job: Job) => (
-              <div key={job._id} className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{job.title}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            job.isDeleted
-                              ? 'bg-red-100 text-red-700'
-                              : job.isActive 
-                                ? 'bg-green-100 text-green-700' 
-                                : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300'
-                          }`}>
-                            {job.isDeleted ? 'Deleted' : job.isActive ? 'Active' : 'Inactive'}
-                          </span>
+          <>
+            {/* Job Cards */}
+            <div className="space-y-4">
+              {filteredJobs.map((job: Job) => (
+                <div key={job._id} className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500 dark:text-slate-400">
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            {job.location}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {job.type}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {formatSalary(job.salary)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Posted {formatDate(job.createdAt)}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {job.skillsRequired?.slice(0, 4).map((skill: string, index: number) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded text-xs"
-                            >
-                              {skill}
+                        <div>
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{job.title}</h3>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              job.isDeleted
+                                ? 'bg-red-100 text-red-700'
+                                : job.isActive 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300'
+                            }`}>
+                              {job.isDeleted ? 'Deleted' : job.isActive ? 'Active' : 'Inactive'}
                             </span>
-                          ))}
-                          {(job.skillsRequired?.length ?? 0) > 4 && (
-                            <span className="px-2 py-1 text-gray-500 dark:text-slate-400 text-xs">
-                              +{(job.skillsRequired?.length ?? 0) - 4} more
+                          </div>
+                          <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500 dark:text-slate-400">
+                            <span className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              {job.location}
                             </span>
-                          )}
+                            <span className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {job.type}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {formatSalary(job.salary)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              Posted {formatDate(job.createdAt)}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {job.skillsRequired?.slice(0, 4).map((skill: string, index: number) => (
+                              <span
+                                key={index}
+                                className="px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded text-xs"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                            {(job.skillsRequired?.length ?? 0) > 4 && (
+                              <span className="px-2 py-1 text-gray-500 dark:text-slate-400 text-xs">
+                                +{(job.skillsRequired?.length ?? 0) - 4} more
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 lg:flex-col lg:items-end">
-                    <Link
-                      to={`/recruiter/jobs/${job._id}/applications`}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
-                    >
-                      View Applications
-                    </Link>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleToggleStatus(job._id, job.isActive)}
-                        disabled={toggleStatusMutation.isPending || job.isDeleted}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
-                          job.isActive
-                            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
-                        title={job.isDeleted ? 'Cannot toggle deleted jobs' : ''}
-                      >
-                        {job.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 lg:flex-col lg:items-end">
                       <Link
-                        to={`/recruiter/jobs/${job._id}/edit`}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                          job.isDeleted
-                            ? 'bg-gray-50 dark:bg-slate-950 text-gray-400 dark:text-slate-500 cursor-not-allowed pointer-events-none'
-                            : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200'
-                        }`}
-                        title={job.isDeleted ? 'Cannot edit deleted jobs' : ''}
+                        to={`/recruiter/jobs/${job._id}/applications`}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
                       >
-                        Edit
+                        View Applications
                       </Link>
-                      <button
-                        onClick={() => setDeleteConfirmId(job._id)}
-                        disabled={job.isDeleted}
-                        className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        title={job.isDeleted ? 'Already deleted' : ''}
-                      >
-                        Delete
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleToggleStatus(job._id, job.isActive)}
+                          disabled={toggleStatusMutation.isPending || job.isDeleted}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+                            job.isActive
+                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                          title={job.isDeleted ? 'Cannot toggle deleted jobs' : ''}
+                        >
+                          {job.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <Link
+                          to={`/recruiter/jobs/${job._id}/edit`}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors ${
+                            job.isDeleted
+                              ? 'bg-gray-50 dark:bg-slate-950 text-gray-400 dark:text-slate-500 cursor-not-allowed pointer-events-none'
+                              : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700'
+                          }`}
+                          title={job.isDeleted ? 'Cannot edit deleted jobs' : ''}
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() => setDeleteConfirmId(job._id)}
+                          disabled={job.isDeleted}
+                          className="px-3 py-2 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={job.isDeleted ? 'Already deleted' : ''}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {pagination && (
+              <div className="mt-8 flex justify-center">
+                <PaginationControls
+                  pagination={pagination}
+                  onPageChange={handlePageChange}
+                />
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
 
         {/* Stats Summary */}
         {jobs.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{jobs.length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{jobsData?.pagination?.total || jobs.length}</p>
               <p className="text-sm text-gray-500 dark:text-slate-400">Total Jobs</p>
             </div>
+            {/* Note: These sub-stats are for the current page only unless backend returns them for total set */}
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
               <p className="text-2xl font-bold text-green-600">
                 {jobs.filter((j: Job) => j.isActive && !j.isDeleted).length}
               </p>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Active</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Active (this page)</p>
             </div>
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
               <p className="text-2xl font-bold text-gray-600 dark:text-slate-300">
                 {jobs.filter((j: Job) => !j.isActive && !j.isDeleted).length}
               </p>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Inactive</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Inactive (this page)</p>
             </div>
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
               <p className="text-2xl font-bold text-red-600">
                 {jobs.filter((j: Job) => j.isDeleted).length}
               </p>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Deleted</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Deleted (this page)</p>
             </div>
           </div>
         )}

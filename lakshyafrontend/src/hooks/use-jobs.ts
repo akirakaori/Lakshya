@@ -36,11 +36,11 @@ export const useJob = (jobId: string) => {
   });
 };
 
-// Get recruiter's jobs
-export const useMyJobs = () => {
+// Get recruiter's jobs (paginated)
+export const useMyJobs = (filters: { page?: number; limit?: number; search?: string } = {}) => {
   return useQuery({
-    queryKey: jobKeys.myJobs(),
-    queryFn: () => jobService.getMyJobs(),
+    queryKey: [...jobKeys.myJobs(), filters],
+    queryFn: () => jobService.getMyJobs(filters),
   });
 };
 

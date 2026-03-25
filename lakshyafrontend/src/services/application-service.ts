@@ -81,6 +81,8 @@ export interface RecruiterApplicationFilters {
   mustHave?: string;
   missing?: string;
   analysisStatus?: 'all' | 'analyzed' | 'not_analyzed';
+  page?: number;
+  limit?: number;
 }
 
 export interface ScheduleInterviewData {
@@ -94,6 +96,13 @@ export interface ScheduleInterviewData {
   linkOrLocation?: string;
   messageToCandidate?: string;
   internalNotes?: string;
+}
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
 }
 
 export interface RecruiterApplicationsResponse {
@@ -114,6 +123,7 @@ export interface RecruiterApplicationsResponse {
     };
     applications: RecruiterApplication[];
   };
+  pagination: PaginationMeta;
 }
 
 export interface RecruiterApplication extends Application {
@@ -129,13 +139,7 @@ export interface RecruiterApplication extends Application {
 export interface ApplicationsResponse {
   success: boolean;
   data: Application[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    pages?: number;
-  };
+  pagination: PaginationMeta;
 }
 
 export const applicationService = {
@@ -161,8 +165,8 @@ export const applicationService = {
     return response.data;
   },
 
-  // Get applications for a specific job (recruiter only)
-  getJobApplications: async (jobId: string): Promise<{ success: boolean; data: Application[] }> => {
+  // Get applications for a specific job (recruiter only) - LEGACY simple fetch
+  getJobApplicationsLegacy: async (jobId: string): Promise<{ success: boolean; data: Application[] }> => {
     const response = await axiosInstance.get(`/applications/job/${jobId}`);
     return response.data;
   },
@@ -319,6 +323,8 @@ export const applicationService = {
     if (filters?.mustHave && filters.mustHave.trim()) params.append('mustHave', filters.mustHave.trim());
     if (filters?.missing && filters.missing.trim()) params.append('missing', filters.missing.trim());
     if (filters?.analysisStatus && filters.analysisStatus !== 'all') params.append('analysisStatus', filters.analysisStatus);
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
     
     const queryString = params.toString();
     const url = queryString 
