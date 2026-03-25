@@ -57,7 +57,7 @@ const MyApplications: React.FC = () => {
       return null;
     }
 
-    const resolvedPages = pagination.pages ?? pagination.totalPages ?? 1;
+    const resolvedPages = pagination.pages ?? 1;
     return {
       total: pagination.total,
       page: pagination.page,

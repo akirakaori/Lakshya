@@ -1,0 +1,5 @@
+src/hooks/use-applications.ts(856,17): error TS6133: 'response' is declared but its value is never read.
+src/hooks/use-applications.ts(856,38): error TS6133: 'context' is declared but its value is never read.
+src/pages/job-seeker/my-applications.tsx(60,58): error TS2339: Property 'totalPages' does not exist on type 'PaginationMeta'.
+src/pages/recruiter/candidate-profile.tsx(1032,41): error TS2353: Object literal may only specify known properties, and 'outcome' does not exist in type '{ applicationId: string; interviewId: string; feedback: { outcome?: "pass" | "fail" | "pending" | undefined; feedback?: string | undefined; }; }'.
+src/pages/recruiter/candidate-profile.tsx(1071,41): error TS2353: Object literal may only specify known properties, and 'outcome' does not exist in type '{ applicationId: string; interviewId: string; feedback: { outcome?: "pass" | "fail" | "pending" | undefined; feedback?: string | undefined; }; }'.

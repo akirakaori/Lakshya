@@ -66,7 +66,7 @@ const notifyApplicantOnStatusUpdate = async ({ application, status, jobTitle }) 
       recipientId: notificationResult?.data?.recipientId,
     });
   } catch (notificationError) {
-    console.warn('⚠ Failed to create recruiter status notification:', notificationError.message);
+    console.warn('\u26a0 Failed to create recruiter status notification:', notificationError.message);
   }
 };
 
@@ -95,7 +95,12 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
     mustHave = '', 
     missing = '',
     analysisStatus = 'all',
+    page = 1,
+    limit = 10
   } = filters;
+
+  const parsedPage = Math.max(1, parseInt(page) || 1);
+  const parsedLimit = Math.max(1, parseInt(limit) || 10);
 
   console.log('📥 [RecruiterApplications] Incoming filters:', {
     status,
@@ -105,6 +110,8 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
     mustHave,
     missing,
     analysisStatus,
+    page: parsedPage,
+    limit: parsedLimit
   });
 
   // Validate job exists and recruiter owns it
@@ -203,16 +210,11 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
     applications = applications.filter((app) => app.analysisStatus === 'not_analyzed');
   }
 
-  // Debug logging for analysis-related fields per application
-  applications.forEach((app) => {
-    console.log('📄 [RecruiterApplications] Application analysis snapshot:', {
-      _id: app._id,
-      analysisStatus: app.analysisStatus,
-      matchScore: app.matchScore,
-      matchedSkillsLength: Array.isArray(app.matchedSkills) ? app.matchedSkills.length : 0,
-      matchAnalyzedAt: app.matchAnalyzedAt,
-    });
-  });
+  // Calculate stats BEFORE slicing
+  const totalAfterFilters = applications.length;
+  const totalPages = Math.ceil(totalAfterFilters / parsedLimit);
+  const startIndex = (parsedPage - 1) * parsedLimit;
+  const paginatedApplications = applications.slice(startIndex, startIndex + parsedLimit);
 
   // Calculate counts per status
   const counts = await ApplicationModel.aggregate([
@@ -243,7 +245,13 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
       companyName: job.companyName
     },
     counts: countMap,
-    applications
+    applications: paginatedApplications,
+    pagination: {
+      total: totalAfterFilters,
+      page: parsedPage,
+      limit: parsedLimit,
+      pages: totalPages
+    }
   };
 };
 
@@ -412,7 +420,7 @@ const getApplicationDetails = async (applicationId, recruiterId) => {
     throw { statusCode: 403, message: 'You are not authorized to view this application' };
   }
 
-  console.log(`📋 Recruiter viewing application: applicationId=${applicationId}, matchScore=${application.matchScore}, matchedSkills=${application.matchedSkills?.length || 0}`);
+  console.log(`\ud83d\udccb Recruiter viewing application: applicationId=${applicationId}, matchScore=${application.matchScore}, matchedSkills=${application.matchedSkills?.length || 0}`);
 
   return {
     application: {

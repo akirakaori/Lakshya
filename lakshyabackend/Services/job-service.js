@@ -209,14 +209,21 @@ const adminEditJob = async (jobId, updateData) => {
 };
 
 /**
- * Get all jobs posted by a recruiter
+ * Get all jobs posted by a recruiter (paginated)
  * @param {string} recruiterId - The recruiter's user ID
  * @param {object} options - Query options
  * @param {boolean} options.includeInactive - Whether to include inactive/deleted jobs
+ * @param {number} options.page - Page number (default 1)
+ * @param {number} options.limit - Items per page (default 10)
+ * @param {string} options.search - Search term for title/companyName
  */
 const getRecruiterJobs = async (recruiterId, options = {}) => {
   try {
-    const { includeInactive = true } = options;
+    const { includeInactive = true, search } = options;
+    const rawPage = parseInt(options.page, 10);
+    const rawLimit = parseInt(options.limit, 10);
+    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 10;
     
     const query = { createdBy: recruiterId };
     
@@ -226,12 +233,30 @@ const getRecruiterJobs = async (recruiterId, options = {}) => {
       query.isActive = true;
       query.isDeleted = false;
     }
+
+    // Search filter
+    if (search && search.trim()) {
+      query.$or = [
+        { title: { $regex: search.trim(), $options: 'i' } },
+        { companyName: { $regex: search.trim(), $options: 'i' } },
+        { location: { $regex: search.trim(), $options: 'i' } },
+      ];
+    }
     
+    const total = await JobModel.countDocuments(query);
+    const pages = total === 0 ? 1 : Math.ceil(total / limit);
+    const skip = (page - 1) * limit;
+
     const jobs = await JobModel.find(query)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate('createdBy', 'name email companyName');
     
-    return jobs;
+    return {
+      jobs,
+      pagination: { total, page, limit, pages }
+    };
   } catch (error) {
     throw error;
   }

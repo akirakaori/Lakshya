@@ -89,7 +89,7 @@ const getAllUsersService = async (filters = {}) => {
  * @throws {Error} - Error with statusCode and message properties
  */
 const getAllPostsService = async (filters = {}) => {
-  const { search, status, isActive, jobType, company, location, page = 1, limit = 50 } = filters;
+  const { search, status, isActive, jobType, company, location, page = 1, limit = 10 } = filters;
   
   // Build MongoDB query object
   const query = {};
@@ -139,7 +139,7 @@ const getAllPostsService = async (filters = {}) => {
   
   // Calculate pagination
   const skip = (page - 1) * limit;
-  const totalPages = Math.ceil(total / limit);
+  const pages = Math.ceil(total / limit);
   
   const jobs = await JobModel.find(query)
     .populate("createdBy", "name email role recruiter")
@@ -169,10 +169,12 @@ const getAllPostsService = async (filters = {}) => {
   return {
     success: true,
     posts: formattedPosts,
-    page,
-    limit,
-    total,
-    totalPages
+    pagination: {
+      total,
+      page,
+      limit,
+      pages
+    }
   };
 };
 

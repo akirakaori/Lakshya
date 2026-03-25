@@ -25,11 +25,20 @@ export const useMyApplications = (
   });
 };
 
-// Get applications for a job (recruiter)
+// Get applications for a job (recruiter - paginated)
+export const useRecruiterJobApplications = (jobId: string, filters: RecruiterApplicationFilters = {}) => {
+  return useQuery({
+    queryKey: [...applicationKeys.forJob(jobId), filters],
+    queryFn: () => applicationService.getRecruiterJobApplications(jobId, filters),
+    enabled: !!jobId,
+  });
+};
+
+// Get applications for a job (recruiter - legacy)
 export const useJobApplications = (jobId: string) => {
   return useQuery({
     queryKey: applicationKeys.forJob(jobId),
-    queryFn: () => applicationService.getJobApplications(jobId),
+    queryFn: () => applicationService.getJobApplicationsLegacy(jobId),
     enabled: !!jobId,
   });
 };
@@ -803,424 +812,62 @@ export const useUpdateApplicationNotes = () => {
   });
 };
 
-// ===== NEW RECRUITER ATS HOOKS =====
-
-// Get recruiter job applications with filtering and sorting
-export const useRecruiterJobApplications = (
-  jobId: string, 
-  filters?: RecruiterApplicationFilters
-) => {
-  return useQuery({
-    queryKey: [
-      'recruiter-job-applications', 
-      jobId, 
-      filters?.status, 
-      filters?.sort, 
-      filters?.search,
-      filters?.minScore,
-      filters?.mustHave,
-      filters?.missing,
-      filters?.analysisStatus
-    ],
-    queryFn: () => {
-      console.log('[RecruiterJobApplications] Fetch with filters:', filters);
-      return applicationService.getRecruiterJobApplications(jobId, filters);
-    },
-    enabled: !!jobId,
-  });
-};
-
-// Update application status (recruiter - new endpoint)
+// Update application status mutation (recruiter - new version)
 export const useUpdateRecruiterApplicationStatus = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ 
-      applicationId, 
-      status 
-    }: { 
-      applicationId: string; 
-      status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired'
-    }) => {
-      console.log('[RECRUITER STATUS][MUTATION] Executing mutation with payload:', {
-        applicationId,
-        status,
-      });
-      return applicationService.updateRecruiterApplicationStatus(applicationId, status);
+    mutationFn: ({ applicationId, status }: { applicationId: string; status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired' }) =>
+      applicationService.updateRecruiterApplicationStatus(applicationId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['recruiter-job-applications'] });
     },
-    onMutate: async (variables) => {
-      const { applicationId, status } = variables;
-      console.log('🔄 [OPTIMISTIC] Updating status to:', status);
-      
-      // Cancel outgoing refetches to avoid overwriting optimistic update
-      await queryClient.cancelQueries({ queryKey: ['recruiterApplication', applicationId] });
-      await queryClient.cancelQueries({ queryKey: ['recruiter-job-applications'] });
-      await queryClient.cancelQueries({ queryKey: ['applications'] }); // Cancel candidate queries too
-      
-      // Snapshot previous values for rollback
-      const previousDetail = queryClient.getQueryData(['recruiterApplication', applicationId]);
-      const previousLists = queryClient.getQueriesData({ queryKey: ['recruiter-job-applications'] });
-      const previousCandidateLists = queryClient.getQueriesData({ queryKey: ['applications', 'my'] });
-      
-      // Extract jobId from cached detail (needed for proper invalidation)
-      let jobId: string | null = null;
-      if (previousDetail && typeof previousDetail === 'object') {
-        const detail = previousDetail as any;
-        const app = detail?.data?.application;
-        if (app?.jobId) {
-          jobId = typeof app.jobId === 'string' ? app.jobId : app.jobId._id;
-        }
-      }
-      
-      // Optimistically update the detail cache
-      queryClient.setQueryData(['recruiterApplication', applicationId], (old: any) => {
-        if (!old?.data?.application) return old;
-        console.log('✨ [OPTIMISTIC] Updating recruiterApplication detail cache');
-        return {
-          ...old,
-          data: {
-            ...old.data,
-            application: {
-              ...old.data.application,
-              status: status
-            }
-          }
-        };
-      });
-      
-      // Optimistically update ALL list cache variants using setQueriesData
-      // This will update every cache that starts with ['recruiter-job-applications', jobId]
-      const updatedListCount = queryClient.setQueriesData(
-        { queryKey: ['recruiter-job-applications'] },
-        (old: any) => {
-          if (!old?.data?.applications) return old;
-          
-          // Check if this list contains the application we're updating
-          const hasApplication = old.data.applications.some((app: any) => app._id === applicationId);
-          if (!hasApplication) return old;
-          
-          console.log('✨ [OPTIMISTIC] Updating recruiter list cache variant');
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              applications: old.data.applications.map((app: any) =>
-                app._id === applicationId ? { ...app, status } : app
-              )
-            }
-          };
-        }
-      );
-      
-      console.log(`✨ [OPTIMISTIC] Updated ${updatedListCount} recruiter list cache variants`);
-      
-      // Optimistically update candidate-side caches
-      const updatedCandidateCount = queryClient.setQueriesData(
-        { queryKey: ['applications', 'my'] },
-        (old: any) => {
-          if (!old?.data) return old;
-          const applications = Array.isArray(old.data) ? old.data : [];
-          
-          const hasApplication = applications.some((app: any) => app._id === applicationId);
-          if (!hasApplication) return old;
-          
-          console.log('✨ [OPTIMISTIC] Updating candidate my-applications cache');
-          return {
-            ...old,
-            data: applications.map((app: any) =>
-              app._id === applicationId ? { ...app, status } : app
-            )
-          };
-        }
-      );
-      
-      console.log(`✨ [OPTIMISTIC] Updated ${updatedCandidateCount} candidate cache variants`);
-      
-      return { previousDetail, previousLists, previousCandidateLists, jobId };
+  });
+};
+
+// Bulk update application status mutation (recruiter)
+export const useBulkUpdateApplicationStatus = (jobId: string) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ applicationIds, status }: { applicationIds: string[]; status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired' }) =>
+      applicationService.bulkUpdateApplicationStatus(jobId, applicationIds, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...applicationKeys.forJob(jobId)] });
     },
-    onSuccess: (response, variables, context) => {
-      const { applicationId, status } = variables;
-      console.log('[RECRUITER STATUS][MUTATION] Server confirmed status update:', {
-        applicationId,
-        requestedStatus: status,
-        response,
-      });
-      console.log('✅ [STATUS UPDATE] Server confirmed');
+  });
+};
+
+// Update interview outcome (recruiter)
+export const useUpdateInterviewOutcome = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({
+      applicationId,
+      interviewId,
+      feedback
+    }: {
+      applicationId: string;
+      interviewId: string;
+      feedback: { outcome?: 'pass' | 'fail' | 'pending'; feedback?: string };
+    }) => applicationService.updateInterviewFeedback(applicationId, interviewId, feedback),
+    onSuccess: (_response, variables, _context) => {
+      const { applicationId } = variables;
+      console.log('✅ [INTERVIEW OUTCOME] Success');
       
-      // Invalidate to sync with server (updates counts, etc.)
+      // Invalidate specific application detail
       queryClient.invalidateQueries({ 
         queryKey: ['recruiterApplication', applicationId],
         exact: true 
       });
       
-      // Invalidate only the specific job's application lists
-      if (context?.jobId) {
-        queryClient.invalidateQueries({ 
-          queryKey: ['recruiter-job-applications', context.jobId]
-        });
-      } else {
-        // Fallback: invalidate all if jobId not found
-        queryClient.invalidateQueries({ 
-          queryKey: ['recruiter-job-applications']
-        });
-      }
-
-      // IMPORTANT: If status is hired/offer, invalidate candidate-side queries
-      // so they see the congratulations banner immediately
-      if (status === 'hired' || status === 'offer') {
-        console.log('🎉 [HIRED] Invalidating candidate queries for instant congratulations banner');
-        queryClient.invalidateQueries({ 
-          queryKey: ['applications', 'my']
-        });
-        queryClient.invalidateQueries({ 
-          queryKey: ['applications', 'detail', applicationId]
-        });
-      }
-      queryClient.invalidateQueries({
-        queryKey: ['notifications']
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['notifications', 'unread-count']
-      });
-      queryClient.refetchQueries({
-        queryKey: ['notifications'],
-        type: 'active'
-      });
-      queryClient.refetchQueries({
-        queryKey: ['notifications', 'unread-count'],
-        type: 'active'
-      });
-    },
-    onError: (_error, _variables, context) => {
-      console.error('[RECRUITER STATUS][MUTATION] Status update failed - rolling back:', {
-        error: _error,
-        variables: _variables,
-      });
-      console.error('❌ [STATUS UPDATE] Failed - rolling back');
-      
-      // Rollback optimistic updates
-      if (context?.previousDetail) {
-        queryClient.setQueryData(
-          ['recruiterApplication', _variables.applicationId],
-          context.previousDetail
-        );
-      }
-      
-      if (context?.previousLists) {
-        context.previousLists.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data);
-        });
-      }
-      
-      if (context?.previousCandidateLists) {
-        context.previousCandidateLists.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data);
-        });
-      }
-    },
-  });
-};
-
-// Bulk update application statuses (recruiter)
-export const useBulkUpdateApplicationStatus = (jobId: string) => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ 
-      applicationIds, 
-      status 
-    }: { 
-      applicationIds: string[]; 
-      status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'offer' | 'hired'
-    }) => applicationService.bulkUpdateApplicationStatus(jobId, applicationIds, status),
-    onMutate: async (variables) => {
-      const { applicationIds, status } = variables;
-      console.log('🔄 [BULK UPDATE] Optimistically updating', applicationIds.length, 'applications to', status);
-      
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['recruiter-job-applications', jobId] });
-      
-      // Snapshot previous values
-      const previousLists = queryClient.getQueriesData({ queryKey: ['recruiter-job-applications', jobId] });
-      
-      // Optimistically update all list cache variants for this jobId
-      queryClient.setQueriesData(
-        { queryKey: ['recruiter-job-applications', jobId] },
-        (old: any) => {
-          if (!old?.data?.applications) return old;
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              applications: old.data.applications.map((app: any) =>
-                applicationIds.includes(app._id) ? { ...app, status } : app
-              )
-            }
-          };
-        }
-      );
-      
-      console.log('✨ [BULK UPDATE] Cache updated immediately');
-      return { previousLists };
-    },
-    onSuccess: (_response, _variables, _context) => {
-      console.log('✅ [BULK UPDATE] Success');
-      // Invalidate all recruiter job applications queries for this job to sync counts
-      queryClient.invalidateQueries({ queryKey: ['recruiter-job-applications', jobId] });
-    },
-    onError: (error, _variables, context) => {
-      console.error('❌ [BULK UPDATE] Failed - rolling back:', error);
-      
-      // Rollback
-      if (context?.previousLists) {
-        context.previousLists.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data);
-        });
-      }
-    },
-  });
-};
-
-// Update interview outcome (recruiter - mark pass/fail)
-export const useUpdateInterviewOutcome = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ 
-      applicationId, 
-      interviewId, 
-      outcome,
-      feedback 
-    }: { 
-      applicationId: string; 
-      interviewId: string;
-      outcome: 'pass' | 'fail' | 'pending';
-      feedback?: string;
-    }) => {
-      console.log('🎯 [INTERVIEW OUTCOME] Updating interview', interviewId, 'to', outcome);
-      return applicationService.updateInterviewFeedback(applicationId, interviewId, { outcome, feedback });
-    },
-    onMutate: async (variables) => {
-      const { applicationId, interviewId, outcome } = variables;
-      console.log('🔄 [OPTIMISTIC] Updating interview outcome immediately');
-      
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['recruiterApplication', applicationId] });
-      await queryClient.cancelQueries({ queryKey: ['recruiter-job-applications'] });
-      
-      // Snapshot previous values
-      const previousDetail = queryClient.getQueryData(['recruiterApplication', applicationId]);
-      const previousLists = queryClient.getQueriesData({ queryKey: ['recruiter-job-applications'] });
-      
-      // Extract jobId
-      let jobId: string | null = null;
-      if (previousDetail && typeof previousDetail === 'object') {
-        const detail = previousDetail as any;
-        const app = detail?.data?.application;
-        if (app?.jobId) {
-          jobId = typeof app.jobId === 'string' ? app.jobId : app.jobId._id;
-        }
-      }
-      
-      // Optimistically update detail cache
-      queryClient.setQueryData(['recruiterApplication', applicationId], (old: any) => {
-        if (!old?.data?.application) return old;
-        const updatedInterviews = (old.data.application.interviews || []).map((interview: any) => {
-          if (interview._id === interviewId) {
-            return { ...interview, outcome };
-          }
-          return interview;
-        });
-        return {
-          ...old,
-          data: {
-            ...old.data,
-            application: {
-              ...old.data.application,
-              interviews: updatedInterviews
-            }
-          }
-        };
-      });
-      
-      // Optimistically update recruiter list caches (for outcome badges)
-      if (jobId) {
-        queryClient.setQueriesData(
-          { queryKey: ['recruiter-job-applications', jobId] },
-          (old: any) => {
-            if (!old?.data?.applications) return old;
-            return {
-              ...old,
-              data: {
-                ...old.data,
-                applications: old.data.applications.map((app: any) => {
-                  if (app._id === applicationId && app.interviews) {
-                    return {
-                      ...app,
-                      interviews: app.interviews.map((interview: any) =>
-                        interview._id === interviewId ? { ...interview, outcome } : interview
-                      )
-                    };
-                  }
-                  return app;
-                })
-              }
-            };
-          }
-        );
-      }
-      
-      console.log('✨ [OPTIMISTIC] Interview outcome updated in cache');
-      return { previousDetail, previousLists, jobId };
-    },
-    onSuccess: (_response, _variables, context) => {
-      console.log('✅ [INTERVIEW OUTCOME] Update confirmed by server');
-      
-      // Invalidate to ensure fresh data (especially for hire button eligibility)
+      // Invalidate lists
       queryClient.invalidateQueries({ 
-        queryKey: ['recruiterApplication', _variables.applicationId]
+        queryKey: ['recruiter-job-applications']
       });
-      
-      if (context?.jobId) {
-        queryClient.invalidateQueries({ 
-          queryKey: ['recruiter-job-applications', context.jobId]
-        });
-      }
-    },
-    onError: (error, _variables, context) => {
-      const axiosLikeError = error as {
-        response?: {
-          status?: number;
-          data?: {
-            message?: string;
-            [key: string]: unknown;
-          };
-        };
-        message?: string;
-      };
-
-      console.error('❌ [INTERVIEW OUTCOME] Failed - rolling back:', {
-        message: axiosLikeError?.message,
-        status: axiosLikeError?.response?.status,
-        backendMessage: axiosLikeError?.response?.data?.message,
-        backendData: axiosLikeError?.response?.data,
-      });
-      
-      // Rollback optimistic updates
-      if (context?.previousDetail) {
-        queryClient.setQueryData(
-          ['recruiterApplication', _variables.applicationId],
-          context.previousDetail
-        );
-      }
-      
-      if (context?.previousLists) {
-        context.previousLists.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data);
-        });
-      }
+      queryClient.invalidateQueries({ queryKey: applicationKeys.all });
     },
   });
 };
-
-
