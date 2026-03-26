@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 interface FooterProps {
   variant?: 'public' | 'dashboard';
@@ -7,8 +7,6 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = () => {
   const currentYear = new Date().getFullYear();
-
-  const navigate = useNavigate();
 
   return (
     <footer className="flex-shrink-0 border-t border-slate-800 bg-slate-950 text-slate-300">
