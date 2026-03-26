@@ -20,6 +20,11 @@ import ResetPassword from "./pages/reset-password";
 import NotificationsPage from "./pages/notifications";
 import PrivateRoute from "./components/private-route";
 
+// Public Pages
+import AboutPage from "./pages/about-page";
+import BlogPage from "./pages/blog-page";
+import ContactPage from "./pages/contact-page";
+
 // Job Seeker Pages
 import {
   JobSeekerDashboard,
@@ -69,6 +74,9 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup-choice" element={<SignupChoice />} />
             <Route path="/signup/:role" element={<Signup />} />
