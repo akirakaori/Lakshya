@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface FooterProps {
   variant?: 'public' | 'dashboard';
@@ -7,6 +7,8 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = () => {
   const currentYear = new Date().getFullYear();
+
+  const navigate = useNavigate();
 
   return (
     <footer className="flex-shrink-0 border-t border-slate-800 bg-slate-950 text-slate-300">
@@ -142,19 +144,19 @@ const Footer: React.FC<FooterProps> = () => {
             <h4 className="text-sm font-semibold mb-4 text-white">Company</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#about" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
-                  About Us
-                </a>
+                <Link to="/about" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                  About
+                </Link>
               </li>
               <li>
-                <a href="#contact" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
-                  Contact Us
-                </a>
-              </li>
-              <li>
-                <a href="#blog" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <Link to="/blog" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
                   Blog
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                  Contact
+                </Link>
               </li>
               <li>
                 <a href="#help" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
