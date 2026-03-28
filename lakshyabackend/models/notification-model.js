@@ -14,10 +14,12 @@ const notificationSchema = new mongoose.Schema(
       enum: [
         'application_submitted',
         'shortlisted',
+        'hired',
         'interview_scheduled',
         'rejected',
         'new_applicant',
         'application_withdrawn',
+        'application_withdraw',
       ],
       trim: true,
     },

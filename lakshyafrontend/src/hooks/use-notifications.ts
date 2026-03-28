@@ -14,6 +14,8 @@ export const useNotifications = (page = 1, limit = 10) => {
     queryKey: notificationKeys.notifications(page, limit),
     queryFn: () => notificationService.getNotifications(page, limit),
     enabled: isReady && isAuthenticated && !!user,
+    refetchInterval: 3000, 
+  refetchOnWindowFocus: true,
   });
 };
 
@@ -24,6 +26,7 @@ export const useUnreadNotificationCount = () => {
     queryKey: notificationKeys.unreadCount,
     queryFn: () => notificationService.getUnreadNotificationCount(),
     enabled: isReady && isAuthenticated && !!user,
+    refetchInterval: 3000, 
     refetchOnWindowFocus: true,
   });
 };

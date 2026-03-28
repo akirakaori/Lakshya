@@ -539,8 +539,17 @@ const withdrawApplication = async (applicationId, applicantId) => {
     application.status = 'withdrawn';
     await application.save();
 
+    
     if (job?.createdBy) {
       try {
+        await notificationService.createNotification({
+              recipientId: applicantId,
+              type: 'application_withdrawn',
+              title: 'Application Withdrawn',
+              message: `You withdrew your application for ${job.title || 'this job'}`,
+              relatedJobId: job._id,
+              relatedApplicationId: application._id,
+            });
         await notificationService.createNotification({
           recipientId: job.createdBy,
           type: 'application_withdrawn',

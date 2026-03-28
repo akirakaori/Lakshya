@@ -6,7 +6,7 @@ export type NotificationType =
   | 'interview_scheduled'
   | 'rejected'
   | 'new_applicant'
-  | 'application_withdrawn';
+  | 'application_withdrawn' | 'application_withdraw';
 
 export interface NotificationItem {
   _id: string;
