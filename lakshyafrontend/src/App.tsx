@@ -27,6 +27,7 @@ import PrivateRoute from "./components/private-route";
 import AboutPage from "./pages/about-page";
 import BlogPage from "./pages/blog-page";
 import ContactPage from "./pages/contact-page";
+import { HowItWorksPage } from "./pages/how-it-works-page";
 
 
 // Job Seeker Pages
@@ -241,6 +242,7 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
 <Route path="/contact" element={<ContactPage />} />
 <Route path="/blog" element={<BlogPage />} />
+<Route path="/how-it-works" element={<HowItWorksPage />} />
 
             {/* Legacy Recruiter Dashboard Route */}
             <Route

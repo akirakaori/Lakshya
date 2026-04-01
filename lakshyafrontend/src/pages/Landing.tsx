@@ -199,13 +199,13 @@ function Landing() {
             >
               Find Jobs
             </a>
-            <a
-              href="#employers"
+            <Link
+              to="/how-it-works"
               className="cursor-pointer select-none text-sm text-gray-600 transition-colors hover:text-primary dark:text-slate-300 dark:hover:text-indigo-300"
               draggable="false"
             >
-              For Employers
-            </a>
+              How It Works
+            </Link>
             <Link
               to="/about"
               className="cursor-pointer select-none text-sm text-gray-600 transition-colors hover:text-primary dark:text-slate-300 dark:hover:text-indigo-300"
