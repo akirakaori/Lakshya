@@ -709,15 +709,7 @@ function AdminDashboard() {
                                 </td>
                                 <td className='text-center text-sm font-semibold app-heading'>{recruiter.jobsPosted}</td>
                                 <td className='text-center'>
-                                  <div className='flex items-center justify-center gap-2'>
-                                    <div className='max-w-[60px] flex-1 rounded-full bg-slate-200 h-1.5 dark:bg-slate-800'>
-                                      <div 
-                                        className='bg-blue-600 h-1.5 rounded-full' 
-                                        style={{ width: `${Math.min((recruiter.applicationsReceived / 5000) * 100, 100)}%` }}
-                                      ></div>
-                                    </div>
-                                    <span className='text-sm font-semibold app-heading'>{recruiter.applicationsReceived.toLocaleString()}</span>
-                                  </div>
+                                  <span className='text-sm font-semibold app-heading'>{recruiter.applicationsReceived.toLocaleString()}</span>
                                 </td>
                                 <td className='text-center'>
                                   <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${
