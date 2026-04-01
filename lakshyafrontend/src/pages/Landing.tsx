@@ -206,13 +206,13 @@ function Landing() {
             >
               For Employers
             </a>
-            <a
-              href="#scoring"
+            <Link
+              to="/about"
               className="cursor-pointer select-none text-sm text-gray-600 transition-colors hover:text-primary dark:text-slate-300 dark:hover:text-indigo-300"
               draggable="false"
             >
-              About AI Scoring
-            </a>
+              About Lakshya
+            </Link>
           </div>
 
           {/* Auth Buttons - Right */}

@@ -22,34 +22,19 @@ const RecruiterDashboard: React.FC = () => {
   // Get applications count - this is simplified, ideally we'd fetch aggregate data
   const recentJobs = jobs.slice(0, 5);
 
-  const formatRelativeTime = (dateString: string) => {
-    const now = Date.now();
-    const eventTime = new Date(dateString).getTime();
-    const diffMs = now - eventTime;
+  const formatActivityTime = (dateString: string) => {
+    const parsedDate = new Date(dateString);
 
-    if (!Number.isFinite(diffMs) || diffMs < 0) {
-      return new Date(dateString).toLocaleDateString();
+    if (Number.isNaN(parsedDate.getTime())) {
+      return 'Invalid date';
     }
 
-    const minute = 60 * 1000;
-    const hour = 60 * minute;
-    const day = 24 * hour;
-
-    if (diffMs < minute) return 'Just now';
-    if (diffMs < hour) {
-      const value = Math.floor(diffMs / minute);
-      return `${value} minute${value > 1 ? 's' : ''} ago`;
-    }
-    if (diffMs < day) {
-      const value = Math.floor(diffMs / hour);
-      return `${value} hour${value > 1 ? 's' : ''} ago`;
-    }
-    if (diffMs < day * 7) {
-      const value = Math.floor(diffMs / day);
-      return `${value} day${value > 1 ? 's' : ''} ago`;
-    }
-
-    return new Date(dateString).toLocaleDateString();
+    return parsedDate.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   };
 
   const getActivityIcon = (type: RecruiterRecentActivityType) => {
@@ -331,7 +316,7 @@ const RecruiterDashboard: React.FC = () => {
                             <p className="text-sm text-gray-900 dark:text-slate-100 leading-5">{activity.title}</p>
                             <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{activity.description}</p>
                             <div className="mt-1.5 flex items-center gap-3 text-xs">
-                              <span className="text-gray-500 dark:text-slate-400">{formatRelativeTime(activity.createdAt)}</span>
+                              <span className="text-gray-500 dark:text-slate-400">{formatActivityTime(activity.createdAt)}</span>
                               {activity.relatedJobId && (
                                 <Link
                                   to={`/recruiter/jobs/${activity.relatedJobId}/applications`}
