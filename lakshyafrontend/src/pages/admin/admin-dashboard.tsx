@@ -378,15 +378,19 @@ function AdminDashboard() {
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} flex flex-col bg-gradient-to-b from-indigo-950 via-indigo-900 to-indigo-950 text-white shadow-2xl transition-all duration-300`}>
 
         <div className='p-6 flex items-center justify-between border-b border-indigo-700'>
-          {isSidebarOpen && (
-            <div onClick={() => navigate("/landing")}
-            className='flex items-center space-x-3 cursor-pointer hover:opacity-80 transition'>
-              <div className='admin-subpanel flex h-10 w-10 items-center justify-center rounded-lg'>
-                <span className='text-2xl'>💼</span>
-              </div>
-              <h1 className='text-xl font-bold'>Lakshya</h1>
+          <button
+            onClick={() => navigate('/AdminDashboard')}
+            className={`flex cursor-pointer items-center hover:opacity-80 transition ${
+              isSidebarOpen ? 'space-x-3' : 'w-full justify-center'
+            }`}
+            type='button'
+            aria-label='Go to Admin Dashboard'
+          >
+            <div className='admin-subpanel flex h-10 w-10 items-center justify-center rounded-lg'>
+              <span className='text-2xl'>💼</span>
             </div>
-          )}
+            {isSidebarOpen && <h1 className='text-xl font-bold'>Lakshya</h1>}
+          </button>
         </div>
 
         <nav className='flex-1 p-4 space-y-2'>

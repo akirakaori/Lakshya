@@ -10,9 +10,10 @@ import { ThemeToggle } from '../ui';
 
 interface NavbarProps {
   title?: string;
+  onToggleSidebar?: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ title }) => {
+const Navbar: React.FC<NavbarProps> = ({ title, onToggleSidebar }) => {
   const { user, logout } = useAuth();
   const { data: profileData } = useProfile();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -51,7 +52,17 @@ const Navbar: React.FC<NavbarProps> = ({ title }) => {
 
   return (
     <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-6 py-4 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-950/95">
-      <div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+          aria-label="Toggle sidebar"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
         {title && <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h1>}
       </div>
       

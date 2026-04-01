@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -56,7 +57,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     await onConfirm();
   };
 
-  return (
+  const modalContent = (
     <div
       className="app-modal-overlay animate-fadeIn"
       onClick={handleOverlayClick}
@@ -113,6 +114,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return modalContent;
+  return createPortal(modalContent, document.body);
 };
 
 export default ConfirmModal;

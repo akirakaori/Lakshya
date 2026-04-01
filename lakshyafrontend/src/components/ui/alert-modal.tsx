@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface AlertModalProps {
   isOpen: boolean;
@@ -94,7 +95,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
     ),
   };
 
-  return (
+  const modalContent = (
     <div
       className="app-modal-overlay animate-fadeIn"
       onClick={handleOverlayClick}
@@ -138,6 +139,9 @@ const AlertModal: React.FC<AlertModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return modalContent;
+  return createPortal(modalContent, document.body);
 };
 
 export default AlertModal;
