@@ -26,7 +26,7 @@ export const useLogin = () => {
             navigate('/recruiter/dashboard');
             break;
           case 'admin':
-            navigate('/admin/dashboard');
+            navigate('/AdminDashboard');
             break;
           default:
             navigate('/');

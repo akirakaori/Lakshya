@@ -379,12 +379,12 @@ function AdminDashboard() {
 
         <div className='p-6 flex items-center justify-between border-b border-indigo-700'>
           <button
-            onClick={() => navigate('/AdminDashboard')}
+            onClick={() => navigate('/')}
             className={`flex cursor-pointer items-center hover:opacity-80 transition ${
               isSidebarOpen ? 'space-x-3' : 'w-full justify-center'
             }`}
             type='button'
-            aria-label='Go to Admin Dashboard'
+            aria-label='Go to Home'
           >
             <div className='admin-subpanel flex h-10 w-10 items-center justify-center rounded-lg'>
               <span className='text-2xl'>💼</span>

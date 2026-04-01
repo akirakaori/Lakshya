@@ -29,6 +29,8 @@ function Landing() {
 
   // In-view hooks for animation triggers
   const { ref: heroRef, inView: heroInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: aboutRef, inView: aboutInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: blogRef, inView: blogInView } = useInView({ triggerOnce: true, threshold: 0.1 });
   const { ref: jobsRef, inView: jobsInView } = useInView({ triggerOnce: true, threshold: 0.1 });
   const { ref: howItWorksRef, inView: howItWorksInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: statsRef, inView: statsInView } = useInView({ triggerOnce: true, threshold: 0.2 });
@@ -307,12 +309,25 @@ function Landing() {
       </section>
 
       {/* About Preview Section */}
-      <section id="about-preview" className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="mb-12 text-center text-2xl font-bold text-gray-900 select-none md:text-3xl dark:text-slate-100">
+      <section id="about-preview" ref={aboutRef} className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
+        <motion.div
+          className="max-w-7xl mx-auto"
+          variants={staggerContainer}
+          initial="hidden"
+          animate={aboutInView ? "visible" : "hidden"}
+        >
+          <motion.h2
+            variants={fadeUp}
+            className="mb-12 text-center text-2xl font-bold text-gray-900 select-none md:text-3xl dark:text-slate-100"
+          >
             About Lakshya
-          </h2>
-          <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-800">
+          </motion.h2>
+          <motion.div
+            variants={fadeUp}
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.25 }}
+            className="rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-800"
+          >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="">
                 <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-slate-100">Lakshya — Career Intelligence</h3>
@@ -329,30 +344,45 @@ function Landing() {
                 </Link>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Blog Preview Section */}
-      <section id="blog-preview" className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="mb-12 text-center text-2xl font-bold text-gray-900 select-none md:text-3xl dark:text-slate-100">
+      <section id="blog-preview" ref={blogRef} className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
+        <motion.div
+          className="max-w-7xl mx-auto"
+          variants={staggerContainer}
+          initial="hidden"
+          animate={blogInView ? "visible" : "hidden"}
+        >
+          <motion.h2
+            variants={fadeUp}
+            className="mb-12 text-center text-2xl font-bold text-gray-900 select-none md:text-3xl dark:text-slate-100"
+          >
             From the Blog
-          </h2>
+          </motion.h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 items-start">
             {blogPosts.slice(0, 3).map((post) => (
-              <BlogCard key={post.id} title={post.title} excerpt={post.excerpt} category={post.category} href="/blog" />
+              <motion.div
+                key={post.id}
+                variants={fadeUp}
+                whileHover={{ y: -6 }}
+                transition={{ duration: 0.25 }}
+              >
+                <BlogCard title={post.title} excerpt={post.excerpt} category={post.category} href="/blog" />
+              </motion.div>
             ))}
-            <div className="col-span-full flex justify-end mt-2">
+            <motion.div variants={fadeUp} className="col-span-full flex justify-end mt-2">
               <Link
                 to="/blog"
                 className="inline-flex items-center gap-2 rounded-md bg-white border border-gray-200 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors dark:bg-slate-900 dark:border-slate-800 dark:text-indigo-300"
               >
                 View All →
               </Link>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Browse Jobs Section */}
