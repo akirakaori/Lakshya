@@ -253,7 +253,7 @@ export const HowItWorksPage: React.FC = () => {
           <h2 className="text-3xl font-bold">Ready to Start Your Journey?</h2>
           <p className="mx-auto mt-4 max-w-2xl text-indigo-100">
             Explore opportunities, build your profile, and use Lakshya to move closer to the career
-            path you want it.
+            path you want.
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4">
