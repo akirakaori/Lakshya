@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Footer, PageSizeSelect, PaginationControls, type PaginationMeta } from "../components";
 import BlogCard from "../components/blog-card";
-import SectionWrapper from "../components/section-wrapper";
 import { blogPosts } from "../data/blog-data";
 import { getLandingData, searchPublicJobs } from "../services/landing-service";
 import { useAuth } from "../context/auth-context";
@@ -308,44 +307,53 @@ function Landing() {
       </section>
 
       {/* About Preview Section */}
-      <SectionWrapper id="about-preview" title={"About Lakshya"}>
-        <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-800">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="">
-              <h3 className="text-sm font-semibold mb-1 text-gray-900 dark:text-slate-100">Lakshya — Career Intelligence</h3>
-              <p className="text-xs text-gray-600 dark:text-slate-400">
-                Lakshya is an AI-powered career intelligence platform that helps job seekers and recruiters make smarter decisions.
-              </p>
+      <section id="about-preview" className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="mb-12 text-center text-2xl font-bold text-gray-900 select-none md:text-3xl dark:text-slate-100">
+            About Lakshya
+          </h2>
+          <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="">
+                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-slate-100">Lakshya — Career Intelligence</h3>
+                <p className="text-sm text-gray-600 dark:text-slate-400">
+                  Lakshya is an AI-powered career intelligence platform that helps job seekers and recruiters make smarter decisions.
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <Link
+                  to="/about"
+                  className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 hover:scale-105 hover:shadow-lg transition-all duration-200"
+                >
+                  Learn More →
+                </Link>
+              </div>
             </div>
-            <div className="flex-shrink-0">
+          </div>
+        </div>
+      </section>
+
+      {/* Blog Preview Section */}
+      <section id="blog-preview" className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="mb-12 text-center text-2xl font-bold text-gray-900 select-none md:text-3xl dark:text-slate-100">
+            From the Blog
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 items-start">
+            {blogPosts.slice(0, 3).map((post) => (
+              <BlogCard key={post.id} title={post.title} excerpt={post.excerpt} category={post.category} href="/blog" />
+            ))}
+            <div className="col-span-full flex justify-end mt-2">
               <Link
-                to="/about"
-                className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 hover:scale-105 hover:shadow-lg transition-all duration-200"
+                to="/blog"
+                className="inline-flex items-center gap-2 rounded-md bg-white border border-gray-200 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors dark:bg-slate-900 dark:border-slate-800 dark:text-indigo-300"
               >
-                Learn More →
+                View All →
               </Link>
             </div>
           </div>
         </div>
-      </SectionWrapper>
-
-      {/* Blog Preview Section */}
-      <SectionWrapper id="blog-preview" title={"From the Blog"}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 items-start">
-          {blogPosts.slice(0, 3).map((post) => (
-            <BlogCard key={post.id} title={post.title} excerpt={post.excerpt} category={post.category} href="/blog" />
-          ))}
-
-          <div className="col-span-full flex justify-end mt-2">
-            <Link
-              to="/blog"
-              className="inline-flex items-center gap-2 rounded-md bg-white border border-gray-200 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors dark:bg-slate-900 dark:border-slate-800 dark:text-indigo-300"
-            >
-              View All →
-            </Link>
-          </div>
-        </div>
-      </SectionWrapper>
+      </section>
 
       {/* Browse Jobs Section */}
       <section id="jobs" ref={jobsRef} className="bg-gray-50 px-4 py-16 md:px-8 md:py-20 dark:bg-slate-900">
@@ -779,4 +787,3 @@ function Landing() {
 }
 
 export default Landing;
-

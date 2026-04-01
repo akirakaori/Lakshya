@@ -8,6 +8,7 @@ import RefreshHandler from "./refresh-handler";
 import { AuthProvider } from "./context/auth-context";
 import { ThemeProvider } from "./context/theme-context";
 import ProtectedRoute from "./routes/protected-route";
+import { useNotificationSocket } from './hooks/use-notification-socket';
 
 // Auth Pages
 import Login from "./pages/Login";
@@ -20,10 +21,13 @@ import ResetPassword from "./pages/reset-password";
 import NotificationsPage from "./pages/notifications";
 import PrivateRoute from "./components/private-route";
 
-// Public Pages
+
+
+//about us , blog and contact us pages
 import AboutPage from "./pages/about-page";
 import BlogPage from "./pages/blog-page";
 import ContactPage from "./pages/contact-page";
+
 
 // Job Seeker Pages
 import {
@@ -48,12 +52,18 @@ import {
 // Admin Pages
 import { AdminProfile, AdminDashboard } from "./pages/admin";
 
+function NotificationSocketBridge() {
+  useNotificationSocket();
+  return null;
+}
+
 function App() {
   const [, setIsAuthenticated] = useState(false);
 
   return (
     <ThemeProvider>
       <AuthProvider>
+        <NotificationSocketBridge />
         <div className="App min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] transition-colors duration-300">
           <RefreshHandler setIsAuthenticated={setIsAuthenticated} />
           {/* Global Toast Container */}
@@ -74,9 +84,6 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/blog" element={<BlogPage />} />
-            <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup-choice" element={<SignupChoice />} />
             <Route path="/signup/:role" element={<Signup />} />
@@ -231,6 +238,10 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/about" element={<AboutPage />} />
+<Route path="/contact" element={<ContactPage />} />
+<Route path="/blog" element={<BlogPage />} />
+
             {/* Legacy Recruiter Dashboard Route */}
             <Route
               path="/RecruiterDashboard"

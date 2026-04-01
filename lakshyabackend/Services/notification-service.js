@@ -1,4 +1,18 @@
 const NotificationModel = require('../models/notification-model');
+const { emitToUser } = require('../socket/socket-server');
+
+const emitUnreadCountUpdated = async (userId) => {
+  const unreadCount = await NotificationModel.countDocuments({
+    recipientId: userId,
+    isRead: false,
+  });
+
+  emitToUser(userId, 'notification:count-updated', {
+    unreadCount,
+  });
+
+  return unreadCount;
+};
 
 const createNotification = async ({
   recipientId,
@@ -25,6 +39,12 @@ const createNotification = async ({
       message,
       relatedJobId,
       relatedApplicationId,
+    });
+
+    const unreadCount = await emitUnreadCountUpdated(recipientId);
+    emitToUser(recipientId, 'notification:new', {
+      notification,
+      unreadCount,
     });
 
     return {
@@ -124,6 +144,12 @@ const markNotificationAsRead = async (notificationId, userId) => {
       throw error;
     }
 
+    const unreadCount = await emitUnreadCountUpdated(userId);
+    emitToUser(userId, 'notification:read', {
+      notificationId,
+      unreadCount,
+    });
+
     return {
       success: true,
       message: 'Notification marked as read',
@@ -145,6 +171,12 @@ const markAllNotificationsAsRead = async (userId) => {
         $set: { isRead: true },
       }
     );
+
+    await emitUnreadCountUpdated(userId);
+    emitToUser(userId, 'notification:read-all', {
+      modifiedCount: result.modifiedCount,
+      unreadCount: 0,
+    });
 
     return {
       success: true,

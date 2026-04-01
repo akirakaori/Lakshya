@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -25,13 +26,30 @@ require('./models/database');
 
 // Import queue service
 const { initializeQueue } = require('./Services/resume-parse-queue');
+const { initializeSocket, parseAllowedOrigins } = require('./socket/socket-server');
 
 const app = express();
 const port = process.env.PORT || 3000;
+const server = http.createServer(app);
+
+const frontendOriginConfig = process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '';
+const allowedOrigins = parseAllowedOrigins(frontendOriginConfig);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+};
 
 // Middlewares
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors(corsOptions));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -88,9 +106,12 @@ app.use(errorHandler);
   try {
     // Initialize queue service (Redis or in-memory fallback)
     await initializeQueue();
+
+    // Initialize Socket.IO after all middleware/routes are attached.
+    initializeSocket(server, allowedOrigins);
     
     // Start server
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`✓ Server is running on port ${port}`);
       console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
     });
