@@ -27,6 +27,9 @@ export type {
   RecruiterApplicationFilters,
   RecruiterApplicationsResponse,
   RecruiterApplication,
+  RecruiterRecentActivityType,
+  RecruiterRecentActivityItem,
+  RecruiterRecentActivityResponse,
   Interview,
   ScheduleInterviewData
 } from './application-service';

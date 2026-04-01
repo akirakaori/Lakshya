@@ -21,6 +21,13 @@ router.post(
  * @desc Get all applications for a specific job with filtering and sorting
  */
 router.get(
+  "/dashboard/recent-activity",
+  authenticate,
+  authorizeRoles(ROLES.RECRUITER),
+  recruiterApplicationController.getRecentRecruiterActivity
+);
+
+router.get(
   "/jobs/:jobId/applications",
   authenticate,
   authorizeRoles(ROLES.RECRUITER),

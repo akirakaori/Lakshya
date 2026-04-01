@@ -135,9 +135,31 @@ const getApplicationDetails = async (req, res, next) => {
   }
 };
 
+/**
+ * @route GET /api/recruiter/dashboard/recent-activity
+ * @desc Get recent recruiter activity from real jobs/applications data
+ */
+const getRecentRecruiterActivity = async (req, res, next) => {
+  try {
+    const recruiterId = req.user.id;
+    const { page, limit } = req.query;
+
+    const result = await recruiterApplicationService.getRecruiterRecentActivity(recruiterId, { page, limit });
+
+    res.status(200).json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getJobApplications,
   updateApplicationStatus,
   bulkUpdateApplicationStatus,
-  getApplicationDetails
+  getApplicationDetails,
+  getRecentRecruiterActivity,
 };

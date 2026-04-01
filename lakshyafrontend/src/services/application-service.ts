@@ -126,6 +126,32 @@ export interface RecruiterApplicationsResponse {
   pagination: PaginationMeta;
 }
 
+export type RecruiterRecentActivityType =
+  | 'application_received'
+  | 'shortlisted'
+  | 'interview_scheduled'
+  | 'rejected'
+  | 'hired'
+  | 'job_created'
+  | 'job_updated'
+  | 'job_deactivated';
+
+export interface RecruiterRecentActivityItem {
+  id: string;
+  type: RecruiterRecentActivityType;
+  title: string;
+  description: string;
+  createdAt: string;
+  relatedJobId?: string;
+  relatedApplicationId?: string;
+}
+
+export interface RecruiterRecentActivityResponse {
+  success: boolean;
+  data: RecruiterRecentActivityItem[];
+  pagination: PaginationMeta;
+}
+
 export interface RecruiterApplication extends Application {
   matchScore?: number;
   matchedSkills?: string[];
@@ -338,6 +364,12 @@ export const applicationService = {
     });
     
     const response = await axiosInstance.get(url);
+    return response.data;
+  },
+
+  // Get recruiter recent activity (recruiter dashboard)
+  getRecruiterRecentActivity: async (limit = 10, page = 1): Promise<RecruiterRecentActivityResponse> => {
+    const response = await axiosInstance.get(`/recruiter/dashboard/recent-activity?limit=${limit}&page=${page}`);
     return response.data;
   },
 

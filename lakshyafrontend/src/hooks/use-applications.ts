@@ -9,6 +9,7 @@ export const applicationKeys = {
   my: (filters?: ApplicationFilters) => [...applicationKeys.all, 'my', filters] as const,
   forJob: (jobId: string) => [...applicationKeys.all, 'job', jobId] as const,
   detail: (id: string) => [...applicationKeys.all, 'detail', id] as const,
+  recruiterRecentActivity: (limit: number, page: number) => [...applicationKeys.all, 'recruiter-recent-activity', limit, page] as const,
 };
 
 // Get my applications (job seeker)
@@ -31,6 +32,14 @@ export const useRecruiterJobApplications = (jobId: string, filters: RecruiterApp
     queryKey: [...applicationKeys.forJob(jobId), filters],
     queryFn: () => applicationService.getRecruiterJobApplications(jobId, filters),
     enabled: !!jobId,
+  });
+};
+
+// Get recruiter recent activity feed (dashboard)
+export const useRecruiterRecentActivity = (limit = 10, page = 1) => {
+  return useQuery({
+    queryKey: applicationKeys.recruiterRecentActivity(limit, page),
+    queryFn: () => applicationService.getRecruiterRecentActivity(limit, page),
   });
 };
 

@@ -29,6 +29,7 @@ export {
   useUpdateInterviewRound,
   useUpdateApplicationNotes,
   useRecruiterJobApplications,
+  useRecruiterRecentActivity,
   useUpdateRecruiterApplicationStatus,
   useBulkUpdateApplicationStatus,
   useUpdateInterviewOutcome,

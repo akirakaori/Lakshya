@@ -455,9 +455,185 @@ const getApplicationDetails = async (applicationId, recruiterId) => {
   };
 };
 
+/**
+ * Get recruiter-specific recent activity feed derived from real jobs + applications.
+ */
+const getRecruiterRecentActivity = async (recruiterId, options = {}) => {
+  const rawPage = parseInt(options.page, 10);
+  const rawLimit = parseInt(options.limit, 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 50) : 10;
+
+  const jobs = await JobModel.find({ createdBy: recruiterId })
+    .select('_id title status isActive isDeleted createdAt updatedAt')
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  if (!jobs.length) {
+    return {
+      data: [],
+      pagination: {
+        total: 0,
+        page,
+        limit,
+        pages: 0,
+      },
+    };
+  }
+
+  const jobIdList = jobs.map((job) => job._id);
+  const jobTitleById = new Map(jobs.map((job) => [job._id.toString(), job.title]));
+
+  const applications = await ApplicationModel.find({ jobId: { $in: jobIdList } })
+    .select('_id jobId applicant status interviews createdAt updatedAt')
+    .populate('applicant', 'fullName name')
+    .sort({ updatedAt: -1 })
+    .limit(limit * 4)
+    .lean();
+
+  const activities = [];
+
+  for (const application of applications) {
+    const jobId = application.jobId ? application.jobId.toString() : null;
+    if (!jobId) continue;
+
+    const jobTitle = jobTitleById.get(jobId) || 'your job post';
+    const applicantName =
+      (application.applicant && (application.applicant.fullName || application.applicant.name)) ||
+      'a candidate';
+
+    if (application.status === 'applied') {
+      activities.push({
+        id: `application_received:${application._id.toString()}:${new Date(application.createdAt).getTime()}`,
+        type: 'application_received',
+        title: `New application received for ${jobTitle}`,
+        description: `${applicantName} applied to ${jobTitle}`,
+        createdAt: application.createdAt,
+        relatedJobId: application.jobId,
+        relatedApplicationId: application._id,
+      });
+      continue;
+    }
+
+    if (application.status === 'shortlisted') {
+      activities.push({
+        id: `shortlisted:${application._id.toString()}:${new Date(application.updatedAt).getTime()}`,
+        type: 'shortlisted',
+        title: `Candidate shortlisted for ${jobTitle}`,
+        description: `${applicantName} was shortlisted`,
+        createdAt: application.updatedAt,
+        relatedJobId: application.jobId,
+        relatedApplicationId: application._id,
+      });
+      continue;
+    }
+
+    if (application.status === 'interview') {
+      const hasInterviewSchedule = Array.isArray(application.interviews) && application.interviews.length > 0;
+      activities.push({
+        id: `interview_scheduled:${application._id.toString()}:${new Date(application.updatedAt).getTime()}`,
+        type: 'interview_scheduled',
+        title: `Interview scheduled for ${jobTitle}`,
+        description: hasInterviewSchedule
+          ? `${application.interviews.length} interview round(s) set for ${applicantName}`
+          : `Interview stage started for ${applicantName}`,
+        createdAt: application.updatedAt,
+        relatedJobId: application.jobId,
+        relatedApplicationId: application._id,
+      });
+      continue;
+    }
+
+    if (application.status === 'rejected') {
+      activities.push({
+        id: `rejected:${application._id.toString()}:${new Date(application.updatedAt).getTime()}`,
+        type: 'rejected',
+        title: `Candidate rejected for ${jobTitle}`,
+        description: `${applicantName} was marked as rejected`,
+        createdAt: application.updatedAt,
+        relatedJobId: application.jobId,
+        relatedApplicationId: application._id,
+      });
+      continue;
+    }
+
+    if (application.status === 'hired') {
+      activities.push({
+        id: `hired:${application._id.toString()}:${new Date(application.updatedAt).getTime()}`,
+        type: 'hired',
+        title: `Candidate hired for ${jobTitle}`,
+        description: `${applicantName} was marked as hired`,
+        createdAt: application.updatedAt,
+        relatedJobId: application.jobId,
+        relatedApplicationId: application._id,
+      });
+    }
+  }
+
+  for (const job of jobs) {
+    activities.push({
+      id: `job_created:${job._id.toString()}:${new Date(job.createdAt).getTime()}`,
+      type: 'job_created',
+      title: `Job post created: ${job.title}`,
+      description: 'A new job post was created',
+      createdAt: job.createdAt,
+      relatedJobId: job._id,
+    });
+
+    const createdTime = new Date(job.createdAt).getTime();
+    const updatedTime = new Date(job.updatedAt).getTime();
+    const wasUpdatedAfterCreate = updatedTime - createdTime > 1000;
+
+    if (!wasUpdatedAfterCreate) {
+      continue;
+    }
+
+    if (job.isDeleted || !job.isActive || job.status === 'closed') {
+      activities.push({
+        id: `job_deactivated:${job._id.toString()}:${updatedTime}`,
+        type: 'job_deactivated',
+        title: `Job post deactivated: ${job.title}`,
+        description: 'This job post is no longer active',
+        createdAt: job.updatedAt,
+        relatedJobId: job._id,
+      });
+      continue;
+    }
+
+    activities.push({
+      id: `job_updated:${job._id.toString()}:${updatedTime}`,
+      type: 'job_updated',
+      title: `Job post updated: ${job.title}`,
+      description: 'A job post was updated',
+      createdAt: job.updatedAt,
+      relatedJobId: job._id,
+    });
+  }
+
+  const sortedActivities = activities.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  const total = sortedActivities.length;
+  const pages = total > 0 ? Math.ceil(total / limit) : 0;
+  const startIndex = (page - 1) * limit;
+  const pagedActivities = sortedActivities.slice(startIndex, startIndex + limit);
+
+  return {
+    data: pagedActivities,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages,
+    },
+  };
+};
+
 module.exports = {
   getJobApplications,
   updateApplicationStatus,
   bulkUpdateApplicationStatus,
-  getApplicationDetails
+  getApplicationDetails,
+  getRecruiterRecentActivity,
 };
