@@ -309,7 +309,7 @@ function Landing() {
       </section>
 
       {/* About Preview Section */}
-      <section id="about-preview" ref={aboutRef} className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
+      <section id="about-preview" ref={aboutRef} className="bg-white px-4 py-10 md:px-8 md:py-12 dark:bg-slate-950">
         <motion.div
           className="max-w-7xl mx-auto"
           variants={staggerContainer}
@@ -349,7 +349,7 @@ function Landing() {
       </section>
 
       {/* Blog Preview Section */}
-      <section id="blog-preview" ref={blogRef} className="bg-white px-4 py-16 md:px-8 md:py-20 dark:bg-slate-950">
+      <section id="blog-preview" ref={blogRef} className="bg-white px-4 py-10 md:px-8 md:py-12 dark:bg-slate-950">
         <motion.div
           className="max-w-7xl mx-auto"
           variants={staggerContainer}
