@@ -209,7 +209,7 @@ const BrowseJobs: React.FC = () => {
 
   // Public Navbar render helper (for non-authenticated users)
   const renderPublicNavbar = () => (
-    <nav className="sticky top-0 z-50 w-full border-b border-white/50 dark:border-slate-800/50">
+    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-row justify-between items-center gap-8">
         {/* Logo - Left */}
         <Link to="/" className="flex-shrink-0 flex items-center hover:opacity-80 transition-opacity">
@@ -412,7 +412,7 @@ const BrowseJobs: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {renderPublicNavbar()}
-      <div className="mx-auto max-w-7xl px-4 py-6">
+      <div className="mx-auto max-w-7xl px-4 pb-6 pt-24">
         {renderJobContent()}
       </div>
       <Footer variant="public" />
