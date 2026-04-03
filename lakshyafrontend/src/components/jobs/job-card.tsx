@@ -61,6 +61,9 @@ const JobCard: React.FC<JobCardProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const isSaved = useIsJobSaved(job._id);
+  const isJobSeeker = user?.role === 'job_seeker';
+  const detailsPath = isJobSeeker ? `/job-seeker/jobs/${job._id}` : `/jobs/${job._id}`;
+  const applyPath = isJobSeeker ? `/job-seeker/jobs/${job._id}` : `/jobs/${job._id}?action=apply`;
   const saveJobMutation = useSaveJob();
   const removeSavedJobMutation = useRemoveSavedJob();
 
@@ -130,7 +133,7 @@ const JobCard: React.FC<JobCardProps> = ({
   if (variant === 'compact') {
     return (
       <Link
-        to={`/job-seeker/jobs/${job._id}`}
+        to={detailsPath}
         className={`block rounded-lg border p-4 transition-all hover:shadow-md ${
           hasActiveApplication
             ? 'border-green-300 ring-1 ring-green-200 bg-gradient-to-br from-green-50/50 via-white to-white dark:border-green-500/40 dark:ring-green-500/20 dark:from-green-500/10 dark:via-slate-900 dark:to-slate-900'
@@ -309,7 +312,7 @@ const JobCard: React.FC<JobCardProps> = ({
               </Link>
             ) : (
               <Link
-                to={`/job-seeker/jobs/${job._id}`}
+                to={applyPath}
                 className="w-full rounded-xl border border-green-500 px-4 py-2.5 text-center text-sm font-semibold text-green-700 transition hover:bg-green-50 dark:border-green-500/40 dark:text-green-300 dark:hover:bg-green-500/10"
               >
                 {isWithdrawnApplication ? 'Reapply' : 'Apply Now'}
@@ -317,7 +320,7 @@ const JobCard: React.FC<JobCardProps> = ({
             )}
 
             <Link
-              to={`/job-seeker/jobs/${job._id}`}
+              to={detailsPath}
               className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               View Details
