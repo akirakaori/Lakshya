@@ -31,7 +31,7 @@ const Profile: React.FC = () => {
   const { parseStatus, startPolling } = useResumeParsePolling({
     onParseComplete: (summary) => {
       console.log('Resume parsing + autofill completed:', summary);
-      toast.success('âœ¨ Resume parsed and profile auto-filled successfully!', {
+      toast.success('Resume parsed and profile auto-filled successfully!', {
         autoClose: 5000
       });
     },
@@ -752,7 +752,7 @@ const Profile: React.FC = () => {
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                          <span className="font-medium">Parsed âœ“</span>
+                          <span className="font-medium">Parsed</span>
                           {parseStatus.summary && (
                             <span className="text-xs">
                               ({parseStatus.summary.skillsAdded} skills added)

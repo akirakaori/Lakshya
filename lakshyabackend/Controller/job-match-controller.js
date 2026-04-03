@@ -1,4 +1,5 @@
 const { getOrComputeMatch, getBatchMatchScores, getCachedMatchWithOutdatedFlag, computeAndUpsertMatch } = require('../Services/job-match-service');
+const ApplicationModel = require('../models/application-model');
 
 /**
  * GET /api/job-seeker/jobs/:jobId/match
@@ -77,6 +78,27 @@ const analyzeJobMatch = async (req, res) => {
     }
 
     const analysis = await computeAndUpsertMatch(userId, jobId);
+
+    try {
+      await ApplicationModel.updateOne(
+        { jobId, applicant: userId },
+        {
+          $set: {
+            matchScore: analysis.matchScore,
+            matchedSkills: analysis.matchedSkills || [],
+            missingSkills: analysis.missingSkills || [],
+            matchAnalyzedAt: analysis.analyzedAt || null,
+            hasMatchAnalysis: true,
+            analysisStatus: 'analyzed',
+            suggestionSource: analysis.suggestionSource || null,
+            profileUpdatedAtUsed: analysis.profileUpdatedAtUsed || null,
+            resumeParsedAtUsed: analysis.resumeParsedAtUsed || null,
+          },
+        }
+      );
+    } catch (syncError) {
+      console.warn('⚠ Failed to sync match analysis snapshot to application:', syncError.message);
+    }
     
     console.log(`✅ Match analysis computed for user=${userId} job=${jobId}, score=${analysis.matchScore}`);
 

@@ -421,6 +421,17 @@ const getApplicationDetails = async (applicationId, recruiterId) => {
   }
 
   console.log(`\ud83d\udccb Recruiter viewing application: applicationId=${applicationId}, matchScore=${application.matchScore}, matchedSkills=${application.matchedSkills?.length || 0}`);
+  
+  const hasAnyAnalysisSnapshot =
+    application.hasMatchAnalysis === true ||
+    (typeof application.matchScore === 'number' && application.matchScore > 0) ||
+    (Array.isArray(application.matchedSkills) && application.matchedSkills.length > 0) ||
+    !!application.matchAnalyzedAt;
+
+  let normalizedAnalysisStatus = application.analysisStatus;
+  if (normalizedAnalysisStatus !== 'analyzed' && normalizedAnalysisStatus !== 'not_analyzed') {
+    normalizedAnalysisStatus = hasAnyAnalysisSnapshot ? 'analyzed' : 'not_analyzed';
+  }
 
   return {
     application: {
@@ -436,6 +447,8 @@ const getApplicationDetails = async (applicationId, recruiterId) => {
       matchedSkills: application.matchedSkills || [],
       missingSkills: application.missingSkills || [],
       matchAnalyzedAt: application.matchAnalyzedAt,
+      hasMatchAnalysis: hasAnyAnalysisSnapshot,
+      analysisStatus: normalizedAnalysisStatus,
       experienceYears: application.experienceYears || 0,
       // Interview data (both legacy and new multi-round)
       interview: application.interview,

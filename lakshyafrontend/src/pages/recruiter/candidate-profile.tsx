@@ -47,6 +47,8 @@ interface ApplicationSnapshot {
   matchedSkills: string[];
   missingSkills: string[];
   matchAnalyzedAt?: string;
+  hasMatchAnalysis?: boolean;
+  analysisStatus?: 'analyzed' | 'not_analyzed';
   experienceYears: number;
   interviews?: Interview[];
 }
@@ -365,10 +367,11 @@ const CandidateProfile: React.FC = () => {
   };
 
   // Use REAL match snapshot data (frozen at apply time)
-  const matchScore = application?.matchScore || 0;
+  const matchScore = typeof application?.matchScore === 'number' ? application.matchScore : 0;
   const matchedSkills = application?.matchedSkills || [];
   const missingSkills = application?.missingSkills || [];
   const matchAnalyzedAt = application?.matchAnalyzedAt;
+  const isAnalyzed = application?.analysisStatus === 'analyzed' || application?.hasMatchAnalysis === true;
 
   if (isLoading) {
     return (
@@ -580,7 +583,7 @@ const CandidateProfile: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">AI Match Analysis</h2>
               <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">Snapshot at time of application</p>
               
-              {matchScore > 0 ? (
+              {isAnalyzed ? (
                 <>
                   <div className="text-center mb-6">
                     <div className="relative w-32 h-32 mx-auto">

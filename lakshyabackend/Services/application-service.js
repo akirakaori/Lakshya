@@ -248,15 +248,39 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
     // Determine whether a match analysis already exists for this user + job
     let hasMatchAnalysis = false;
     let analysisStatus = 'not_analyzed';
+    let analysisSnapshot = null;
     try {
-      const existingAnalysis = await JobMatchAnalysis.findOne({ userId: applicantId, jobId });
+      const existingAnalysis = await JobMatchAnalysis.findOne({ userId: applicantId, jobId }).lean();
       hasMatchAnalysis = !!existingAnalysis;
       if (hasMatchAnalysis) {
         analysisStatus = 'analyzed';
+        analysisSnapshot = existingAnalysis;
       }
     } catch (analysisErr) {
       console.warn('⚠ Failed to check existing match analysis for application:', analysisErr.message);
     }
+
+    const applyAnalysisSnapshot = (target) => {
+      if (!target) return;
+
+      if (analysisSnapshot) {
+        target.matchScore = typeof analysisSnapshot.matchScore === 'number' ? analysisSnapshot.matchScore : 0;
+        target.matchedSkills = Array.isArray(analysisSnapshot.matchedSkills) ? analysisSnapshot.matchedSkills : [];
+        target.missingSkills = Array.isArray(analysisSnapshot.missingSkills) ? analysisSnapshot.missingSkills : [];
+        target.matchAnalyzedAt = analysisSnapshot.analyzedAt || null;
+        target.suggestionSource = analysisSnapshot.suggestionSource || null;
+        target.profileUpdatedAtUsed = analysisSnapshot.profileUpdatedAtUsed || null;
+        target.resumeParsedAtUsed = analysisSnapshot.resumeParsedAtUsed || null;
+      } else {
+        target.matchScore = 0;
+        target.matchedSkills = [];
+        target.missingSkills = [];
+        target.matchAnalyzedAt = null;
+        target.suggestionSource = null;
+        target.profileUpdatedAtUsed = null;
+        target.resumeParsedAtUsed = null;
+      }
+    };
 
     let application;
 
@@ -275,6 +299,7 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
       existingApplication.withdrawnBy = null;
       existingApplication.hasMatchAnalysis = hasMatchAnalysis;
       existingApplication.analysisStatus = analysisStatus;
+      applyAnalysisSnapshot(existingApplication);
       application = existingApplication;
     } else {
       // Create application without triggering any resume analysis
@@ -287,6 +312,7 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
         hasMatchAnalysis,
         analysisStatus,
       });
+      applyAnalysisSnapshot(application);
     }
 
     await application.save();

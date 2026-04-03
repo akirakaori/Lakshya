@@ -599,6 +599,8 @@ const JobApplications: React.FC = () => {
                   const initials = applicant ? getInitials(applicant.fullName || applicant.name || 'U') : 'U';
                   const isSelected = selectedApplications.has(application._id);
                   const isWithdrawn = application.status === 'withdrawn' || application.isWithdrawn;
+                  const isAnalyzed = application.analysisStatus === 'analyzed' || application.hasMatchAnalysis === true;
+                  const matchScoreValue = typeof application.matchScore === 'number' ? application.matchScore : 0;
 
                   console.log('[RecruiterTable] Application row:', {
                     id: application._id,
@@ -641,18 +643,22 @@ const JobApplications: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                            (application.matchScore || 0) >= 85 
-                              ? 'bg-green-100 text-green-700' 
-                              : (application.matchScore || 0) >= 70
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300'
-                          }`}>
-                            {application.matchScore || 0}%
-                          </span>
+                          {isAnalyzed ? (
+                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              matchScoreValue >= 85 
+                                ? 'bg-green-100 text-green-700' 
+                                : matchScoreValue >= 70
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300'
+                            }`}>
+                              {matchScoreValue}%
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400 dark:text-slate-500">Not analyzed</span>
+                          )}
                         </td>
                         <td className="px-4 py-4">
-                          {application.analysisStatus === 'analyzed' ? (
+                          {isAnalyzed ? (
                             <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                               AI Analyzed
                             </span>
@@ -790,6 +796,8 @@ const JobApplications: React.FC = () => {
           
           const viewingDetails = drawerData?.data?.application;
           const applicant = drawerData?.data?.candidate;
+          const detailsAnalyzed = viewingDetails?.analysisStatus === 'analyzed' || viewingDetails?.hasMatchAnalysis === true;
+          const detailsMatchScore = typeof viewingDetails?.matchScore === 'number' ? viewingDetails.matchScore : 0;
           
           if (!viewingDetails || !applicant) {
             return (
@@ -831,7 +839,9 @@ const JobApplications: React.FC = () => {
                   <div className="grid grid-cols-3 gap-4 mb-6">
                     <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-4 border border-indigo-200">
                       <div className="text-sm text-indigo-600 font-medium mb-1">Match Score</div>
-                      <div className="text-2xl font-bold text-indigo-900">{viewingDetails.matchScore || 0}%</div>
+                      <div className="text-2xl font-bold text-indigo-900">
+                        {detailsAnalyzed ? `${detailsMatchScore}%` : 'Not analyzed'}
+                      </div>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
                       <div className="text-sm text-green-600 font-medium mb-1">Matched Skills</div>
