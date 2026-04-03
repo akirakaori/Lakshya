@@ -51,7 +51,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, variant, ti
           isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'
         }`}
       >
-        <Navbar title={title} onToggleSidebar={handleToggleSidebar} />
+        <Navbar
+          title={title}
+          onToggleSidebar={handleToggleSidebar}
+          showLogo={variant === 'admin'}
+        />
         <div className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
           <main className="min-h-screen p-6">
             {children}

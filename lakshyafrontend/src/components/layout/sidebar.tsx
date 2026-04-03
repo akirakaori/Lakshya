@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import lakshyaLogo from '../../assets/lakhsya-logo.svg';
 import { useAuth } from '../../context/auth-context';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmModal } from '../ui';
@@ -69,10 +70,8 @@ const Sidebar: React.FC<SidebarProps> = ({ variant, isCollapsed, isMobileOpen, o
           className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}
           onClick={onCloseMobile}
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 shadow-lg shadow-indigo-950/30">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 shadow-lg shadow-indigo-950/30">
+            <img src={lakshyaLogo} alt="Lakshya Logo" className="h-6 w-auto" />
           </div>
           {!isCollapsed && <span className="text-xl font-bold text-indigo-300">Lakshya</span>}
         </Link>

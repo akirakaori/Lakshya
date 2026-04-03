@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/api-client';
 import { Footer, PageSizeSelect, PaginationControls, ConfirmModal, type PaginationMeta } from '../../components';
 import ThemeToggle from '../../components/ui/theme-toggle';
+import lakshyaLogo from '../../assets/lakhsya-logo.svg';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface User {
@@ -387,7 +388,7 @@ function AdminDashboard() {
             aria-label='Go to Home'
           >
             <div className='admin-subpanel flex h-10 w-10 items-center justify-center rounded-lg'>
-              <span className='text-2xl'>💼</span>
+              <img src={lakshyaLogo} alt='Lakshya Logo' className='h-7 w-auto' />
             </div>
             {isSidebarOpen && <h1 className='text-xl font-bold'>Lakshya</h1>}
           </button>

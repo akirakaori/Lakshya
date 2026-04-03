@@ -1,6 +1,7 @@
 ﻿import { Link, useNavigate } from 'react-router-dom';
 import { Footer } from '../components';
 import ThemeToggle from '../components/ui/theme-toggle';
+import lakshyaLogo from '../assets/lakhsya-logo.svg';
 
 function SignupChoice() {
   const navigate = useNavigate();
@@ -9,10 +10,8 @@ function SignupChoice() {
     <div className="app-auth-shell">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 pt-6">
         <Link to="/" className="inline-flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-lg shadow-indigo-500/20">
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 shadow-lg shadow-indigo-500/20">
+            <img src={lakshyaLogo} alt="Lakshya Logo" className="h-8 w-auto" />
           </div>
           <div>
             <p className="app-heading text-lg font-semibold">Lakshya</p>
@@ -26,10 +25,8 @@ function SignupChoice() {
         <div className="w-full max-w-4xl">
           <div className="mb-8 text-center">
             <div className="mb-4 inline-flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
-                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+                <img src={lakshyaLogo} alt="Lakshya Logo" className="h-7 w-auto" />
               </div>
               <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Lakshya</span>
             </div>

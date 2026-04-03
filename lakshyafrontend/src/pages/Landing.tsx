@@ -11,6 +11,7 @@ import { motion, type Variants } from "framer-motion";
 import CountUp from "react-countup";
 import { useInView } from "react-intersection-observer";
 import { ThemeToggle } from "../components/ui";
+import lakshyaLogo from "../assets/lakhsya-logo.svg";
 
 function Landing() {
   const navigate = useNavigate();
@@ -171,24 +172,21 @@ function Landing() {
       onDragStart={(e) => e.preventDefault()}
     >
       {/* Navbar */}
-      <nav className="sticky top-0 left-0 z-50 w-full border-b border-gray-100 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
+      <nav className="sticky top-0 left-0 z-50 w-full border-b border-gray-100/50 dark:border-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-row justify-between items-center gap-8">
           {/* Logo - Left */}
-          <div className="flex items-center space-x-3">
-            <motion.div
-              whileHover={{ scale: 1.05, y: -2 }}
-              transition={{ duration: 0.2 }}
-              className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-shadow"
-            >
-              <span className="text-xl" aria-hidden="true">💼</span>
-            </motion.div>
-            <span
-              className="cursor-default select-none text-xl font-bold text-gray-800 dark:text-slate-100"
-              draggable="false"
-            >
-              Lakshya
-            </span>
-          </div>
+          <Link to="/" className="flex-shrink-0 flex items-center hover:opacity-80 transition-opacity">
+          
+            <img
+              src={lakshyaLogo}
+              alt="Lakshya Logo"
+              className="h-9 w-auto"
+            />
+       <span className="ml-[2px] mb-[5px] text-2xl font-semibold tracking-tight text-black dark:text-white">
+  Lakshya
+</span>
+          </Link>
+          
 
           {/* Nav Links - Center */}
           <div className="hidden md:flex flex-row items-center gap-8 flex-1 justify-center">

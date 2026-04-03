@@ -7,13 +7,15 @@ import { getFileUrl, getInitials } from '../../Utils';
 import { useQueryClient } from '@tanstack/react-query';
 import NotificationDropdown from '../notification-dropdown';
 import { ThemeToggle } from '../ui';
+import lakshyaLogo from '../../assets/lakhsya-logo.svg';
 
 interface NavbarProps {
   title?: string;
   onToggleSidebar?: () => void;
+  showLogo?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ title, onToggleSidebar }) => {
+const Navbar: React.FC<NavbarProps> = ({ title, onToggleSidebar, showLogo = true }) => {
   const { user, logout } = useAuth();
   const { data: profileData } = useProfile();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -51,8 +53,17 @@ const Navbar: React.FC<NavbarProps> = ({ title, onToggleSidebar }) => {
                       '/job-seeker/profile';
 
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-6 py-4 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-950/95">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200/50 px-6 py-4 transition-colors duration-300 dark:border-slate-800/50">
+      <div className="flex items-center gap-4">
+        {showLogo && (
+          <Link to="/" className="flex-shrink-0 flex items-center hover:opacity-80 transition-opacity">
+            <img
+              src={lakshyaLogo}
+              alt="Lakshya Logo"
+              className="h-8 w-auto"
+            />
+          </Link>
+        )}
         <button
           type="button"
           onClick={onToggleSidebar}

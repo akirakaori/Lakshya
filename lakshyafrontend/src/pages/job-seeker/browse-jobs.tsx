@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { DashboardLayout, JobCard, JobFilter, LoadingSpinner, EmptyState, ActiveFilters, Footer, PageSizeSelect, PaginationControls, type PaginationMeta } from '../../components';
 import { useJobs, useJobMatchScores, useMyApplications } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import type { Application, JobFilters } from '../../services';
 import ThemeToggle from '../../components/ui/theme-toggle';
+import lakshyaLogo from '../../assets/lakhsya-logo.svg';
 
 // Default filters
 const DEFAULT_FILTERS: JobFilters = {
@@ -208,17 +209,16 @@ const BrowseJobs: React.FC = () => {
 
   // Public Navbar render helper (for non-authenticated users)
   const renderPublicNavbar = () => (
-    <nav className="sticky top-0 z-50 w-full border-b border-white/70 bg-white/85 backdrop-blur-xl dark:border-slate-800/90 dark:bg-slate-950/80">
+    <nav className="sticky top-0 z-50 w-full border-b border-white/50 dark:border-slate-800/50">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-row justify-between items-center gap-8">
         {/* Logo - Left */}
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
-            <span className="text-xl">💼</span>
-          </div>
-          <span className="text-xl font-bold text-gray-800 dark:text-slate-100 cursor-default select-none">
-            Lakshya
-          </span>
-        </div>
+        <Link to="/" className="flex-shrink-0 flex items-center hover:opacity-80 transition-opacity">
+          <img
+            src={lakshyaLogo}
+            alt="Lakshya Logo"
+            className="h-9 w-auto"
+          />
+        </Link>
         
         {/* Auth Buttons - Right */}
         <div className="flex flex-row items-center gap-3">

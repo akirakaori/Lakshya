@@ -8,10 +8,11 @@ import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
 import type { Job } from '../../services';
 import { getCategoryMeta } from '../../constants/jobCategories';
+import { ThemeToggle } from '../../components/ui';
+import lakshyaLogo from '../../assets/lakhsya-logo.svg';
 import DOMPurify from 'dompurify';
 import { normalizeRichContent } from '../../utils/rich-text';
 import { getStatusBadgeClass, getStatusLabel } from '../../utils/applicationStatus';
-import ThemeToggle from '../../components/ui/theme-toggle';
 
 import type { Config as DOMPurifyConfig } from 'dompurify';
 
@@ -655,12 +656,13 @@ const JobDetails: React.FC = () => {
   ) : (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.08),_transparent_22%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_42%,_#f8fafc_100%)] px-4 py-8 dark:bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_22%),linear-gradient(180deg,_#020617_0%,_#0f172a_44%,_#020617_100%)]">
       {/* Public Navbar */}
-      <nav className="mx-auto mb-8 flex max-w-7xl items-center justify-between rounded-2xl border border-white/70 bg-white/85 px-4 py-3 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80">
-        <Link to="/" className="inline-flex items-center space-x-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <span className="text-xl">💼</span>
-          </div>
-          <span className="text-xl font-bold text-gray-800 dark:text-slate-100">Lakshya</span>
+      <nav className="mx-auto mb-8 flex max-w-7xl items-center justify-between border-b border-white/50 px-4 py-3 dark:border-slate-800/50">
+        <Link to="/" className="flex-shrink-0 flex items-center hover:opacity-80 transition-opacity">
+          <img
+            src={lakshyaLogo}
+            alt="Lakshya Logo"
+            className="h-8 w-auto"
+          />
         </Link>
         <div className="flex items-center gap-3">
           <ThemeToggle />

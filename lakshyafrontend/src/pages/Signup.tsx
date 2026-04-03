@@ -7,6 +7,7 @@ import { authApi } from '../api/api-client';
 import { Footer } from '../components';
 import { AlertModal } from '../components/ui';
 import ThemeToggle from '../components/ui/theme-toggle';
+import lakshyaLogo from '../assets/lakhsya-logo.svg';
 
 type SignupFormData = {
   name: string;
@@ -101,10 +102,8 @@ function Signup() {
     <div className="app-auth-shell">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 pt-6">
         <Link to="/" className="inline-flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-lg shadow-indigo-500/20">
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 shadow-lg shadow-indigo-500/20">
+            <img src={lakshyaLogo} alt="Lakshya Logo" className="h-8 w-auto" />
           </div>
           <div>
             <p className="app-heading text-lg font-semibold">Lakshya</p>
@@ -118,10 +117,8 @@ function Signup() {
         <div className="w-full max-w-md">
           <div className="app-auth-card space-y-6">
             <div className="space-y-2 text-center">
-              <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
+              <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-lg shadow-indigo-500/20">
+                <img src={lakshyaLogo} alt="Lakshya Logo" className="h-9 w-auto" />
               </div>
               <h2 className="app-heading text-2xl font-bold">Lakshya</h2>
               <Link to="/" className="app-auth-link inline-block text-sm">

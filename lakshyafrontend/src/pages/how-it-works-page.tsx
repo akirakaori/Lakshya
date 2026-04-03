@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import lakshyaLogo from '../assets/lakhsya-logo.svg';
 
 const steps = [
   {
@@ -121,8 +122,8 @@ export const HowItWorksPage: React.FC = () => {
       <header className="border-b border-gray-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-8">
           <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
-              <span className="text-lg">💼</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 shadow-sm">
+              <img src={lakshyaLogo} alt="Lakshya Logo" className="h-7 w-auto" />
             </div>
             <div>
               <p className="text-lg font-bold text-gray-900 dark:text-slate-100">Lakshya</p>
