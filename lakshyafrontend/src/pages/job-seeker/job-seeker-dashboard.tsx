@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner } from '../../components';
 import { useAuth } from '../../context/auth-context';
 import { useMyApplications, useSavedJobs } from '../../hooks';
-import { getStatusBadgeClass, getStatusLabel } from '../../utils/applicationStatus';
+import { getStatusLabel } from '../../utils/applicationStatus';
 import { getInterviewDisplayStatus } from '../../utils/interview-status';
 import type { Application, Interview, Job } from '../../services';
 
@@ -15,12 +15,45 @@ const formatDate = (dateString: string) => {
   });
 };
 
+
+const getDashboardStatusClass = (status: string) => {
+  switch (status) {
+    case 'applied':
+      return 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100';
+    case 'shortlisted':
+      return 'border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100';
+    case 'interview':
+      return 'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100';
+    case 'offer':
+      return 'border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100';
+    case 'hired':
+      return 'border border-green-200 bg-green-50 text-green-700 hover:bg-green-100';
+    case 'withdrawn':
+    case 'rejected':
+      return 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-100';
+    default:
+      return 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100';
+  }
+};
+
 const JobSeekerDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [activeRecentId, setActiveRecentId] = useState<string | null>(null);
 
-  const { data: recentApplicationsResponse, isLoading: recentApplicationsLoading } = useMyApplications({ page: 1, limit: 5 });
-  const { data: totalApplicationsResponse, isLoading: totalApplicationsLoading } = useMyApplications({ page: 1, limit: 1 });
-  const { data: savedJobsResponse, isLoading: savedJobsLoading } = useSavedJobs({ page: 1, limit: 1 });
+  const { data: recentApplicationsResponse, isLoading: recentApplicationsLoading } = useMyApplications({
+    page: 1,
+    limit: 5,
+  });
+
+  const { data: totalApplicationsResponse, isLoading: totalApplicationsLoading } = useMyApplications({
+    page: 1,
+    limit: 1,
+  });
+
+  const { data: savedJobsResponse, isLoading: savedJobsLoading } = useSavedJobs({
+    page: 1,
+    limit: 1,
+  });
 
   const { data: interviewApplicationsResponse, isLoading: interviewApplicationsLoading } = useMyApplications({
     page: 1,
@@ -28,13 +61,45 @@ const JobSeekerDashboard: React.FC = () => {
     status: 'interview',
   });
 
-  const { data: appliedStatusResponse, isLoading: appliedStatusLoading } = useMyApplications({ page: 1, limit: 1, status: 'applied' });
-  const { data: shortlistedStatusResponse, isLoading: shortlistedStatusLoading } = useMyApplications({ page: 1, limit: 1, status: 'shortlisted' });
-  const { data: interviewStatusResponse, isLoading: interviewStatusLoading } = useMyApplications({ page: 1, limit: 1, status: 'interview' });
-  const { data: rejectedStatusResponse, isLoading: rejectedStatusLoading } = useMyApplications({ page: 1, limit: 1, status: 'rejected' });
-  const { data: hiredStatusResponse, isLoading: hiredStatusLoading } = useMyApplications({ page: 1, limit: 1, status: 'hired' });
+  const { data: appliedStatusResponse, isLoading: appliedStatusLoading } = useMyApplications({
+    page: 1,
+    limit: 1,
+    status: 'applied',
+  });
 
-  const recentApplications = useMemo<Application[]>(() => recentApplicationsResponse?.data ?? [], [recentApplicationsResponse?.data]);
+  const { data: shortlistedStatusResponse, isLoading: shortlistedStatusLoading } = useMyApplications({
+    page: 1,
+    limit: 1,
+    status: 'shortlisted',
+  });
+
+  const { data: interviewStatusResponse, isLoading: interviewStatusLoading } = useMyApplications({
+    page: 1,
+    limit: 1,
+    status: 'interview',
+  });
+
+  const { data: rejectedStatusResponse, isLoading: rejectedStatusLoading } = useMyApplications({
+    page: 1,
+    limit: 1,
+    status: 'rejected',
+  });
+
+  const { data: hiredStatusResponse, isLoading: hiredStatusLoading } = useMyApplications({
+    page: 1,
+    limit: 1,
+    status: 'hired',
+  });
+
+  const recentApplications = useMemo<Application[]>(
+    () => recentApplicationsResponse?.data ?? [],
+    [recentApplicationsResponse?.data]
+  );
+  const today = new Date().toLocaleDateString('en-US', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+});
 
   const totalApplications = totalApplicationsResponse?.pagination?.total ?? 0;
   const savedJobsCount = savedJobsResponse?.pagination?.total ?? 0;
@@ -55,11 +120,11 @@ const JobSeekerDashboard: React.FC = () => {
   }, [interviewApplicationsResponse?.data]);
 
   const statusSummary = [
-    { label: 'Applied', count: appliedStatusResponse?.pagination?.total ?? 0, tone: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300' },
-    { label: 'Shortlisted', count: shortlistedStatusResponse?.pagination?.total ?? 0, tone: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
-    { label: 'Interview', count: interviewStatusResponse?.pagination?.total ?? 0, tone: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300' },
-    { label: 'Rejected', count: rejectedStatusResponse?.pagination?.total ?? 0, tone: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300' },
-    { label: 'Hired', count: hiredStatusResponse?.pagination?.total ?? 0, tone: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' },
+    { label: 'Applied', count: appliedStatusResponse?.pagination?.total ?? 0 },
+    { label: 'Shortlisted', count: shortlistedStatusResponse?.pagination?.total ?? 0 },
+    { label: 'Interview', count: interviewStatusResponse?.pagination?.total ?? 0 },
+    { label: 'Rejected', count: rejectedStatusResponse?.pagination?.total ?? 0 },
+    { label: 'Hired', count: hiredStatusResponse?.pagination?.total ?? 0 },
   ];
 
   const isLoading =
@@ -78,128 +143,227 @@ const JobSeekerDashboard: React.FC = () => {
       title: 'Applied Jobs',
       value: totalApplications,
       helper: totalApplications === 0 ? 'Start applying to track progress' : 'Total applications submitted',
-      iconPath: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
-      iconStyle: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+    },
+    {
+      title: 'Interviews',
+      value: upcomingInterviews,
+      helper: upcomingInterviews === 0 ? 'No upcoming interviews scheduled' : 'Scheduled or in-progress rounds',
     },
     {
       title: 'Saved Jobs',
       value: savedJobsCount,
       helper: savedJobsCount === 0 ? 'No saved jobs yet' : 'Jobs bookmarked for later',
-      iconPath: 'M5 5v16l7-4 7 4V5a2 2 0 00-2-2H7a2 2 0 00-2 2z',
-      iconStyle: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
     },
     {
-      title: 'Upcoming Interviews',
-      value: upcomingInterviews,
-      helper: upcomingInterviews === 0 ? 'No upcoming interviews scheduled' : 'Scheduled or in-progress rounds',
-      iconPath: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-      iconStyle: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+      title: 'Hired',
+      value: hiredStatusResponse?.pagination?.total ?? 0,
+      helper:
+        (hiredStatusResponse?.pagination?.total ?? 0) === 0
+          ? 'No hired applications yet'
+          : 'Successful applications',
     },
   ];
 
   return (
     <DashboardLayout variant="job-seeker" title="Dashboard">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 overflow-hidden rounded-[1.75rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(37,99,235,0.95),_rgba(79,70,229,0.92)_52%,_rgba(14,165,233,0.85)_100%)] px-6 py-8 text-white shadow-[0_24px_70px_rgba(37,99,235,0.2)] dark:border-slate-800/80">
-          <h1 className="text-2xl font-bold text-white">
-            Hello {user?.name?.split(' ')[0]}, ready to find your target?
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-blue-50">
-            Here is your live job search overview powered by your actual profile activity.
-          </p>
-        </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-8 flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
+  <div>
+    <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+      {today}
+    </p>
+    <h1 className="mt-1.5 text-[26px] font-semibold tracking-tight text-slate-900">
+      {user?.name ? `Good to see you, ${user.name.split(' ')[0]}.` : 'My Dashboard'}
+    </h1>
+    <p className="mt-1 text-sm text-slate-500">
+      Here's an overview of your job search activity.
+    </p>
+  </div>
+
+  <Link
+    to="/job-seeker/browse-jobs"
+    className="inline-flex h-10 items-center gap-1.5 border border-[#3b4bb8] bg-[#3b4bb8] px-4 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94]"
+  >
+    Browse Jobs
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-75">
+      <path d="M2.5 6.5H10.5M10.5 6.5L7.5 3.5M10.5 6.5L7.5 9.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </Link>
+</div>
 
         {isLoading ? (
           <LoadingSpinner text="Loading your dashboard..." />
         ) : (
           <>
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {statCards.map((card) => (
-                <div key={card.title} className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-slate-400">{card.title}</p>
-                      <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-slate-100">{card.value}</p>
-                      <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">{card.helper}</p>
-                    </div>
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${card.iconStyle}`}>
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={card.iconPath} />
-                      </svg>
-                    </div>
-                  </div>
+                <div
+                  key={card.title}
+                  className="border border-slate-200 bg-white px-5 py-4 transition-colors hover:bg-slate-50"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    {card.title}
+                  </p>
+                  <p className="mt-2 text-4xl font-semibold leading-none tracking-tight text-[#3b4bb8]">
+                    {String(card.value).padStart(2, '0')}
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500">{card.helper}</p>
                 </div>
               ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-                <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-slate-100">Recent Applications</h3>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+              <section className="lg:col-span-8 border border-slate-200 bg-white">
+                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                  <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+                    Recent Applications
+                  </h2>
+                  <Link
+                    to="/job-seeker/my-applications"
+                    className="text-sm font-medium text-[#3b4bb8] hover:text-[#2e3a94]"
+                  >
+                    View All
+                  </Link>
+                </div>
 
                 {recentApplications.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <p className="text-gray-500 dark:text-slate-400">No applications yet</p>
-                    <Link to="/job-seeker/browse-jobs" className="mt-2 inline-block font-medium text-indigo-600 hover:text-indigo-700">
-                      Browse Jobs ?
+                  <div className="px-5 py-10 text-center">
+                    <p className="text-sm text-slate-500">No applications yet</p>
+                    <Link
+                      to="/job-seeker/browse-jobs"
+                      className="mt-3 inline-flex text-sm font-medium text-[#3b4bb8] hover:text-[#2e3a94]"
+                    >
+                      Browse Jobs
                     </Link>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="divide-y divide-slate-200 overflow-visible py-2">
                     {recentApplications.map((application) => {
                       const job = typeof application.jobId === 'object' ? (application.jobId as Job) : null;
+                      const isActive = activeRecentId === application._id;
 
                       return (
-                        <div key={application._id} className="flex items-center justify-between border-b border-gray-100 py-3 last:border-0 dark:border-slate-800">
-                          <div>
-                            <h4 className="font-medium text-gray-900 dark:text-slate-100">{job?.title || 'Job'}</h4>
-                            <p className="text-sm text-gray-500 dark:text-slate-400">{job?.companyName || 'Company'}</p>
-                            <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">Applied on {formatDate(application.createdAt)}</p>
+                        <div
+                          key={application._id}
+                          onClick={() => setActiveRecentId(isActive ? null : application._id)}
+                          className={`group relative mx-2 cursor-pointer overflow-visible rounded-md border transition-all duration-200 ease-out ${
+                            isActive
+                              ? '-translate-y-[1px] border-blue-200 bg-white shadow-sm ring-1 ring-blue-100 z-10'
+                              : 'border-transparent bg-white hover:bg-slate-50 hover:border-slate-200'
+                          }`}
+                        >
+                          {isActive && (
+                            <span className="absolute left-0 top-0 h-full w-[3px] rounded-l-md bg-[#3b4bb8]" />
+                          )}
+
+                          <div className="px-5 py-4">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.8fr_auto_auto] md:items-center">
+                              <div className="min-w-0">
+                                <h3 className="truncate text-[15px] font-semibold text-slate-900">
+                                  {job?.title || 'Job Title'}
+                                </h3>
+                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
+                                  <span>{job?.companyName || 'Company'}</span>
+                                  {job?.location && <span>{job.location}</span>}
+                                </div>
+                              </div>
+
+                              <div className="text-sm text-slate-500">
+                                Applied {formatDate(application.createdAt)}
+                              </div>
+
+                              <div>
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-1 text-[11px] font-medium transition-colors ${getDashboardStatusClass(
+                                    application.status
+                                  )}`}
+                                >
+                                  {getStatusLabel(application.status)}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <span className={`rounded px-2 py-1 text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
-                            {getStatusLabel(application.status)}
-                          </span>
                         </div>
                       );
                     })}
                   </div>
                 )}
+              </section>
 
-                <Link to="/job-seeker/my-applications" className="mt-4 block text-center font-medium text-indigo-600 hover:text-indigo-700">
-                  View All Applications
-                </Link>
-              </div>
+              <aside className="lg:col-span-4 space-y-6">
+                <section className="border border-slate-200 bg-white">
+                  <div className="border-b border-slate-200 px-5 py-4">
+                    <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+                      Pipeline Status
+                    </h2>
+                  </div>
 
-              <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-                <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-slate-100">Application Status Summary</h3>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {statusSummary.map((item) => (
-                    <div key={item.label} className="rounded-xl border border-gray-100 bg-slate-50/70 px-3 py-3 dark:border-slate-800 dark:bg-slate-950">
-                      <p className="text-xs text-gray-500 dark:text-slate-400">{item.label}</p>
-                      <div className="mt-2 flex items-center justify-between">
-                        <p className="text-xl font-bold text-gray-900 dark:text-slate-100">{item.count}</p>
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${item.tone}`}>{item.label}</span>
+                  <div className="space-y-3 p-4">
+                    {statusSummary.map((item) => (
+                      <div
+                        key={item.label}
+                        className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 transition-colors hover:bg-slate-50"
+                      >
+                        <span className="text-sm font-medium text-slate-700">{item.label}</span>
+                        <span className="inline-flex min-w-[36px] items-center justify-center border border-slate-200 bg-slate-50 px-2 py-1 text-sm font-semibold text-slate-700">
+                          {String(item.count).padStart(2, '0')}
+                        </span>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </section>
 
-                <h3 className="mt-6 text-lg font-semibold text-gray-900 dark:text-slate-100">Quick Actions</h3>
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Link to="/job-seeker/browse-jobs" className="rounded-lg border border-indigo-200 px-4 py-3 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-50 dark:border-indigo-500/30 dark:text-indigo-300 dark:hover:bg-indigo-500/10">
-                    Browse Jobs
+                <section className="border border-slate-200 bg-white">
+                  <div className="border-b border-slate-200 px-5 py-4">
+                    <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+                      Quick Actions
+                    </h2>
+                  </div>
+
+                  <div className="space-y-3 p-4">
+                    <Link
+                      to="/job-seeker/browse-jobs"
+                      className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                    >
+                      <span>Browse Jobs</span>
+                    </Link>
+
+                    <Link
+                      to="/job-seeker/my-applications"
+                      className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                    >
+                      <span>My Applications</span>
+                    </Link>
+
+                    <Link
+                      to="/job-seeker/saved-jobs"
+                      className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                    >
+                      <span>Saved Jobs</span>
+                    </Link>
+
+                    <Link
+                      to="/job-seeker/profile"
+                      className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                    >
+                      <span>Update Profile</span>
+                    </Link>
+                  </div>
+                </section>
+
+                <section className="border border-slate-200 bg-[#3b4bb8] px-5 py-5 text-white">
+                  <h3 className="text-base font-semibold">Improve Your Resume</h3>
+                  <p className="mt-2 text-sm text-indigo-100">
+                    See how your profile aligns with roles and improve your application quality.
+                  </p>
+                  <Link
+                    to="/job-seeker/my-applications"
+                    className="mt-4 inline-flex border border-white/20 bg-white px-4 py-2 text-sm font-medium text-[#3b4bb8] hover:bg-slate-100"
+                  >
+                    Go to Applications
                   </Link>
-                  <Link to="/job-seeker/my-applications" className="rounded-lg border border-indigo-200 px-4 py-3 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-50 dark:border-indigo-500/30 dark:text-indigo-300 dark:hover:bg-indigo-500/10">
-                    My Applications
-                  </Link>
-                  <Link to="/job-seeker/saved-jobs" className="rounded-lg border border-indigo-200 px-4 py-3 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-50 dark:border-indigo-500/30 dark:text-indigo-300 dark:hover:bg-indigo-500/10">
-                    Saved Jobs
-                  </Link>
-                  <Link to="/job-seeker/profile" className="rounded-lg border border-indigo-200 px-4 py-3 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-50 dark:border-indigo-500/30 dark:text-indigo-300 dark:hover:bg-indigo-500/10">
-                    Update Profile
-                  </Link>
-                </div>
-              </div>
+                </section>
+              </aside>
             </div>
           </>
         )}

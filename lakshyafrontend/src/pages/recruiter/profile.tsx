@@ -9,7 +9,7 @@ const RecruiterProfile: React.FC = () => {
   const updateProfileMutation = useUpdateProfile();
   const changePasswordMutation = useChangePassword();
   const uploadImageMutation = useUploadProfileImage();
-  
+
   const { isEditing, enterEditMode, exitEditMode, guardAction } = useEditMode();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,7 +35,6 @@ const RecruiterProfile: React.FC = () => {
     confirmPassword: '',
   });
 
-  // Initialize form data when profile loads
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -74,7 +73,7 @@ const RecruiterProfile: React.FC = () => {
 
   const handleSave = async () => {
     if (!guardAction('save')) return;
-    
+
     try {
       await updateProfileMutation.mutateAsync(formData);
       toast.success('Profile updated successfully!');
@@ -89,18 +88,16 @@ const RecruiterProfile: React.FC = () => {
       if (e.target) e.target.value = '';
       return;
     }
-    
+
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       toast.error('Please upload a valid image file (JPG, PNG, or WebP)');
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image size must be less than 5MB');
       return;
@@ -116,7 +113,7 @@ const RecruiterProfile: React.FC = () => {
 
   const handlePasswordChange = async () => {
     if (!guardAction('change password')) return;
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -125,7 +122,7 @@ const RecruiterProfile: React.FC = () => {
       toast.error('Password must be at least 6 characters');
       return;
     }
-    
+
     try {
       await changePasswordMutation.mutateAsync({
         oldPassword: passwordData.currentPassword,
@@ -153,85 +150,94 @@ const RecruiterProfile: React.FC = () => {
 
   return (
     <DashboardLayout variant="recruiter" title="Profile">
-      <div className="max-w-4xl mx-auto">
-        {/* Read-only mode banner */}
+      <div className="mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6 lg:px-8">
         {!isEditing && (
-          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
-            <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mb-4 flex items-center gap-3 border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            <svg className="h-5 w-5 flex-shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-sm text-blue-800">
-              <span className="font-medium">Read-only mode.</span> Click "Edit Profile" to make changes.
+            <p>
+              <span className="font-medium">Read-only mode.</span> Click &quot;Edit Profile&quot; to make changes.
             </p>
           </div>
         )}
-        {/* Profile Header */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden mb-6">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-32"></div>
-          <div className="px-6 pb-6">
-            <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-12">
-              {/* Avatar */}
-              <div className="relative">
-                <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-full border-4 border-white shadow-lg overflow-hidden">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={displayName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
-                      <span className="text-3xl font-bold text-indigo-600">
-                        {initials}
-                      </span>
-                    </div>
-                  )}
+
+        <div className="mb-6 border border-slate-200 bg-white">
+          <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+              <div className="flex min-w-0 items-start gap-4">
+                <div className="relative">
+                  <div className="h-20 w-20 overflow-hidden border border-slate-300 bg-slate-100">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={displayName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-slate-200">
+                        <span className="text-xl font-semibold text-slate-700">{initials}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (!isEditing) {
+                        toast.info('Please click "Edit Profile" to upload photo');
+                        return;
+                      }
+                      fileInputRef.current?.click();
+                    }}
+                    disabled={!isEditing}
+                    className="absolute -bottom-2 -right-2 inline-flex h-8 w-8 items-center justify-center border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    title={isEditing ? 'Upload profile photo' : 'Enable edit mode to upload photo'}
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.232-6.232a2.5 2.5 0 113.536 3.536L12.536 16.536a4 4 0 01-1.789 1.05L7 19l1.414-3.747A4 4 0 019 13z" />
+                    </svg>
+                  </button>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
                 </div>
-                <button
-                  onClick={() => {
-                    if (!isEditing) {
-                      toast.info('Please click "Edit Profile" to upload photo');
-                      return;
-                    }
-                    fileInputRef.current?.click();
-                  }}
-                  disabled={!isEditing}
-                  className="absolute bottom-0 right-0 p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={isEditing ? "Upload profile photo" : "Enable edit mode to upload photo"}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                />
+
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    Recruiter Profile
+                  </p>
+                  <h1 className="mt-1 truncate text-2xl font-semibold text-slate-900">
+                    {displayName}
+                  </h1>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {formData.recruiter.position || 'Recruiter'} at {formData.companyName || 'Company'}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
+                    <span>{profile?.email || '-'}</span>
+                    <span>{profile?.phone || profile?.number || '-'}</span>
+                    <span>{profile?.location || formData.location || '-'}</span>
+                  </div>
+                </div>
               </div>
-              
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{displayName}</h1>
-                <p className="text-gray-600 dark:text-slate-300">
-                  {formData.recruiter.position || 'Recruiter'} at {formData.companyName || 'Company'}
-                </p>
-              </div>
-              <div className="flex gap-2">
+
+              <div className="flex shrink-0 gap-2">
                 {isEditing ? (
                   <>
                     <button
                       onClick={exitEditMode}
-                      className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
+                      className="inline-flex items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSave}
                       disabled={updateProfileMutation.isPending}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                      className="inline-flex items-center justify-center border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94] disabled:opacity-50"
                     >
                       {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
                     </button>
@@ -239,7 +245,7 @@ const RecruiterProfile: React.FC = () => {
                 ) : (
                   <button
                     onClick={enterEditMode}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                    className="inline-flex items-center justify-center border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94]"
                   >
                     Edit Profile
                   </button>
@@ -249,47 +255,51 @@ const RecruiterProfile: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Main Info */}
-          <div className="md:col-span-2 space-y-6">
-            {/* Personal Information */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Personal Information</h2>
-              <div className="space-y-4">
+        <div className="grid w-full gap-6 lg:grid-cols-12">
+          <div className="space-y-6 lg:col-span-8">
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Personal Information</h2>
+              </div>
+
+              <div className="space-y-5 p-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Full Name</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Full Name</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-slate-100">{profile?.fullName || profile?.name || '-'}</p>
+                    <p className="text-sm text-slate-900">{profile?.fullName || profile?.name || '-'}</p>
                   )}
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email</label>
-                  <p className="text-gray-900 dark:text-slate-100">{profile?.email || '-'}</p>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                  <p className="text-sm text-slate-900 break-words">{profile?.email || '-'}</p>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Phone</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Phone</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-slate-100">{profile?.phone || profile?.number || '-'}</p>
+                    <p className="text-sm text-slate-900">{profile?.phone || profile?.number || '-'}</p>
                   )}
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Position/Title</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Position / Title</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -297,14 +307,15 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.recruiter.position}
                       onChange={handleInputChange}
                       placeholder="e.g., Senior HR Manager"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-slate-100">{profile?.recruiter?.position || '-'}</p>
+                    <p className="text-sm text-slate-900">{profile?.recruiter?.position || '-'}</p>
                   )}
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Department</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Department</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -312,21 +323,23 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.recruiter.department}
                       onChange={handleInputChange}
                       placeholder="e.g., Human Resources"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-slate-100">{profile?.recruiter?.department || '-'}</p>
+                    <p className="text-sm text-slate-900">{profile?.recruiter?.department || '-'}</p>
                   )}
                 </div>
               </div>
-            </div>
+            </section>
 
-            {/* Company Information */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Company Information</h2>
-              <div className="space-y-4">
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Company Information</h2>
+              </div>
+
+              <div className="space-y-5 p-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Company Name</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Company Name</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -334,14 +347,15 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.companyName}
                       onChange={handleInputChange}
                       placeholder="e.g., Tech Corp Inc."
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-slate-100">{profile?.companyName || '-'}</p>
+                    <p className="text-sm text-slate-900">{profile?.companyName || '-'}</p>
                   )}
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Location</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Location</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -349,14 +363,15 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.location}
                       onChange={handleInputChange}
                       placeholder="e.g., Kathmandu, Nepal"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-slate-100">{profile?.location || '-'}</p>
+                    <p className="text-sm text-slate-900">{profile?.location || '-'}</p>
                   )}
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Company Website</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Company Website</label>
                   {isEditing ? (
                     <input
                       type="url"
@@ -364,16 +379,16 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.recruiter.companyWebsite}
                       onChange={handleInputChange}
                       placeholder="https://www.company.com"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-slate-100">
+                    <p className="text-sm text-slate-900 break-words">
                       {profile?.recruiter?.companyWebsite ? (
-                        <a 
-                          href={profile.recruiter.companyWebsite} 
-                          target="_blank" 
+                        <a
+                          href={profile.recruiter.companyWebsite}
+                          target="_blank"
                           rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-700"
+                          className="font-medium text-[#3b4bb8] hover:text-[#2e3a94]"
                         >
                           {profile.recruiter.companyWebsite}
                         </a>
@@ -381,37 +396,39 @@ const RecruiterProfile: React.FC = () => {
                     </p>
                   )}
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Company Description</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Company Description</label>
                   {isEditing ? (
                     <textarea
                       name="recruiter.companyDescription"
                       value={formData.recruiter.companyDescription}
                       onChange={handleInputChange}
-                      rows={4}
+                      rows={5}
                       placeholder="Tell candidates about your company..."
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full resize-none border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-600 dark:text-slate-300 whitespace-pre-wrap">
+                    <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
                       {profile?.recruiter?.companyDescription || 'No description added.'}
                     </p>
                   )}
                 </div>
               </div>
-            </div>
+            </section>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Account Stats */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Account Stats</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 dark:text-slate-300">Member Since</span>
-                  <span className="font-medium text-gray-900 dark:text-slate-100">
-                    {profile?.createdAt 
+          <div className="space-y-6 lg:col-span-4">
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Account Overview</h2>
+              </div>
+
+              <div className="space-y-4 p-5">
+                <div className="flex items-center justify-between border border-slate-200 bg-slate-50 px-4 py-3">
+                  <span className="text-sm text-slate-600">Member Since</span>
+                  <span className="text-sm font-medium text-slate-900">
+                    {profile?.createdAt
                       ? new Date(profile.createdAt).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short'
@@ -419,96 +436,109 @@ const RecruiterProfile: React.FC = () => {
                       : '-'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 dark:text-slate-300">Account Status</span>
-                  <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+
+                <div className="flex items-center justify-between border border-slate-200 bg-slate-50 px-4 py-3">
+                  <span className="text-sm text-slate-600">Account Status</span>
+                  <span className="inline-flex border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                     Active
                   </span>
                 </div>
+
+                <div className="flex items-center justify-between border border-slate-200 bg-slate-50 px-4 py-3">
+                  <span className="text-sm text-slate-600">Recruiter Type</span>
+                  <span className="text-sm font-medium text-slate-900">Employer</span>
+                </div>
               </div>
-            </div>
+            </section>
 
-            {/* Security */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Security</h2>
-              <button
-                onClick={() => {
-                  if (!isEditing) {
-                    toast.info('Please click "Edit Profile" to change password');
-                    return;
-                  }
-                  setShowPasswordModal(true);
-                }}
-                disabled={!isEditing}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Change Password
-              </button>
-            </div>
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Security</h2>
+              </div>
 
-            {/* Help */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Need Help?</h2>
-              <p className="text-gray-600 dark:text-slate-300 text-sm mb-4">
-                Contact our support team if you have any questions about recruiting on our platform.
-              </p>
-              <a
-                href="mailto:support@lakshya.com"
-                className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
-              >
-                Contact Support
-              </a>
-            </div>
+              <div className="p-5">
+                <button
+                  onClick={() => {
+                    if (!isEditing) {
+                      toast.info('Please click "Edit Profile" to change password');
+                      return;
+                    }
+                    setShowPasswordModal(true);
+                  }}
+                  disabled={!isEditing}
+                  className="w-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Change Password
+                </button>
+              </div>
+            </section>
+
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Need Help?</h2>
+              </div>
+
+              <div className="p-5">
+                <p className="mb-4 text-sm leading-6 text-slate-600">
+                  Contact our support team if you have questions about managing your recruiter account.
+                </p>
+                <a
+                  href="mailto:support@lakshya.com"
+                  className="text-sm font-medium text-[#3b4bb8] hover:text-[#2e3a94]"
+                >
+                  Contact Support
+                </a>
+              </div>
+            </section>
           </div>
         </div>
       </div>
 
-      {/* Password Modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50" onClick={() => setShowPasswordModal(false)} />
-          <div className="relative bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4">Change Password</h2>
+          <div className="relative z-10 w-full max-w-md border border-slate-200 bg-white p-6">
+            <h2 className="mb-4 text-xl font-semibold text-slate-900">Change Password</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Current Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Current Password</label>
                 <input
                   type="password"
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">New Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">New Password</label>
                 <input
                   type="password"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Confirm New Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Confirm New Password</label>
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                 />
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setShowPasswordModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
+                className="flex-1 border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handlePasswordChange}
                 disabled={changePasswordMutation.isPending}
-                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="flex-1 border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94] disabled:opacity-50"
               >
                 {changePasswordMutation.isPending ? 'Changing...' : 'Change Password'}
               </button>
@@ -521,4 +551,3 @@ const RecruiterProfile: React.FC = () => {
 };
 
 export default RecruiterProfile;
-

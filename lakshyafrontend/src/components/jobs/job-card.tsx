@@ -2,7 +2,6 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Application } from '../../services';
 import type { Job } from '../../services/job-service';
-import { getCategoryMeta } from '../../constants/jobCategories';
 import { getPreviewText } from '../../utils/richText';
 import { useAuth } from '../../context/auth-context';
 import { useIsJobSaved, useSaveJob, useRemoveSavedJob } from '../../hooks';
@@ -18,13 +17,13 @@ interface JobCardProps {
 }
 
 const statusBadgeStyles: Record<string, string> = {
-  applied: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
-  shortlisted: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
-  interview: 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300',
-  rejected: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
-  offer: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300',
-  hired: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
-  withdrawn: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
+  applied: 'border border-[#E5E7EB] bg-[#F9FAFB] text-[#374151]',
+  shortlisted: 'border border-[#E5E7EB] bg-[#F9FAFB] text-[#374151]',
+  interview: 'border border-[#E5E7EB] bg-[#F9FAFB] text-[#374151]',
+  rejected: 'border border-[#E5E7EB] bg-[#FEF2F2] text-[#991B1B]',
+  offer: 'border border-[#E5E7EB] bg-[#F9FAFB] text-[#374151]',
+  hired: 'border border-[#E5E7EB] bg-[#F9FAFB] text-[#374151]',
+  withdrawn: 'border border-[#E5E7EB] bg-[#F9FAFB] text-[#374151]',
 };
 
 const statusLabels: Record<string, string> = {
@@ -68,10 +67,8 @@ const JobCard: React.FC<JobCardProps> = ({
   const removeSavedJobMutation = useRemoveSavedJob();
 
   const getMatchScoreColor = (score: number) => {
-    if (score >= 90) return 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300';
-    if (score >= 75) return 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300';
-    if (score >= 60) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300';
-    return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200';
+    if (score >= 90) return 'border border-[#E5E7EB] bg-[#EFF6FF] text-[#1D4ED8]';
+    return 'border border-[#E5E7EB] bg-[#F9FAFB] text-[#374151]';
   };
 
   const salaryDisplay = formatSalary(job.salary, job.salaryVisible);
@@ -82,6 +79,10 @@ const JobCard: React.FC<JobCardProps> = ({
   const appliedBadgeClass = statusBadgeStyles[normalizedStatus] || statusBadgeStyles.applied;
   const appliedStatusLabel = statusLabels[normalizedStatus] || 'Applied';
   const skillsToShow = (job.skillsRequired?.length ? job.skillsRequired : job.skills) || [];
+  const baseTagClass = 'mb-[6px] mr-[6px] inline-flex items-center gap-1.5 border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-1 text-[12px] font-medium text-[#374151]';
+  const neutralTagClass = baseTagClass;
+  const jobTypeTagClass = 'mb-[6px] mr-[6px] inline-flex items-center gap-1.5 border border-[#E5E7EB] bg-[#EFF6FF] px-2 py-1 text-[12px] font-medium text-[#1D4ED8]';
+  const salaryTagClass = 'mb-[6px] mr-[6px] inline-flex items-center gap-1.5 border border-[#E5E7EB] bg-[#F0FDF4] px-2 py-1 text-[12px] font-medium text-[#166534]';
 
   const postedTimeAgo = React.useMemo(() => {
     if (!job.createdAt) return null;
@@ -134,29 +135,23 @@ const JobCard: React.FC<JobCardProps> = ({
     return (
       <Link
         to={detailsPath}
-        className={`block rounded-lg border p-4 transition-all hover:shadow-md ${
-          hasActiveApplication
-            ? 'border-green-300 ring-1 ring-green-200 bg-gradient-to-br from-green-50/50 via-white to-white dark:border-green-500/40 dark:ring-green-500/20 dark:from-green-500/10 dark:via-slate-900 dark:to-slate-900'
-            : isWithdrawnApplication
-              ? 'border-amber-300 ring-1 ring-amber-200 bg-gradient-to-br from-amber-50/50 via-white to-white dark:border-amber-500/40 dark:ring-amber-500/20 dark:from-amber-500/10 dark:via-slate-900 dark:to-slate-900'
-              : 'border-gray-200 bg-white hover:border-blue-200 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500/50'
-        }`}
+        className="block border border-[#E5E7EB] bg-white p-4 transition-colors hover:border-[#D1D5DB]"
       >
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="font-semibold text-gray-900 hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-300">{job.title}</h3>
-            <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">{job.companyName}</p>
+            <h3 className="text-[16px] font-semibold text-[#111827] hover:text-[#2563EB]">{job.title}</h3>
+            <p className="mt-1 text-[13px] font-normal text-[#6B7280]">{job.companyName}</p>
           </div>
           {showMatchScore && matchScore !== undefined && (
-            <span className={`rounded-full px-2 py-1 text-sm ${getMatchScoreColor(matchScore)}`}>
+            <span className={`mr-[6px] mb-[6px] px-2 py-1 text-[12px] font-medium ${getMatchScoreColor(matchScore)}`}>
               {matchScore}%
             </span>
           )}
         </div>
-        <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">{job.location}</p>
+        <p className="mt-2 text-[13px] font-normal text-[#6B7280]">{job.location}</p>
         {hasApplicationHistory && (
-          <span className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${appliedBadgeClass}`}>
-            <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" aria-hidden="true"></span>
+          <span className={`mt-3 inline-flex items-center gap-1.5 px-2 py-1 text-[12px] font-medium ${appliedBadgeClass}`}>
+            <span className="h-1.5 w-1.5 bg-current opacity-80" aria-hidden="true"></span>
             {appliedStatusLabel}
           </span>
         )}
@@ -166,39 +161,31 @@ const JobCard: React.FC<JobCardProps> = ({
 
   return (
     <div
-      className={`group overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:shadow-md dark:bg-slate-900 ${
-        hasActiveApplication
-          ? 'border-green-300 ring-1 ring-green-200 bg-gradient-to-br from-green-50/40 via-white to-white dark:border-green-500/40 dark:ring-green-500/20 dark:from-green-500/10 dark:via-slate-900 dark:to-slate-900'
-          : isWithdrawnApplication
-            ? 'border-amber-300 ring-1 ring-amber-200 bg-gradient-to-br from-amber-50/40 via-white to-white dark:border-amber-500/40 dark:ring-amber-500/20 dark:from-amber-500/10 dark:via-slate-900 dark:to-slate-900'
-            : 'border-slate-200 hover:border-blue-200 dark:border-slate-800 dark:hover:border-blue-500/40'
-      }`}
+      className="group border border-[#E5E7EB] bg-white transition-colors hover:border-[#D1D5DB]"
     >
-      <div className={`h-1 w-full ${hasActiveApplication ? 'bg-gradient-to-r from-green-500 to-emerald-500' : isWithdrawnApplication ? 'bg-gradient-to-r from-amber-500 to-yellow-500' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`}></div>
-
-      <div className="p-6">
+      <div className="p-5">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 dark:border-blue-500/20 dark:from-blue-500/10 dark:to-indigo-500/10">
-            <span className="text-lg font-bold text-blue-600 dark:text-blue-300">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center border border-[#E5E7EB] bg-white">
+            <span className="text-lg font-bold text-[#2563EB]">
               {job.companyName?.charAt(0) || 'C'}
             </span>
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-1 text-lg font-semibold leading-6 text-slate-900 transition group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-300">
+            <h3 className="line-clamp-1 text-[17px] font-semibold leading-6 text-[#111827] transition group-hover:text-[#2563EB]">
               {job.title}
             </h3>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{job.companyName}</p>
+            <p className="mt-1 text-[13px] font-normal text-[#6B7280]">{job.companyName}</p>
           </div>
 
           <button
             type="button"
             onClick={handleToggleSave}
             title={isSaved ? 'Saved' : 'Save Job'}
-            className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+            className={`inline-flex shrink-0 items-center justify-center gap-1.5 border px-3 py-1.5 text-[12px] font-medium transition-colors ${
               isSaved
-                ? 'border-yellow-300 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-300 dark:hover:bg-yellow-500/20'
-                : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800'
+                ? 'border-[#D1D5DB] bg-[#F9FAFB] text-[#374151] hover:bg-slate-100'
+                : 'border-[#D1D5DB] bg-white text-[#6B7280] hover:bg-slate-50'
             }`}
           >
             {!isSaved && (
@@ -215,8 +202,8 @@ const JobCard: React.FC<JobCardProps> = ({
           </button>
         </div>
 
-        <div className="mt-4 space-y-2.5">
-          <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center gap-1.5 text-[13px] font-normal text-[#6B7280]">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -224,81 +211,70 @@ const JobCard: React.FC<JobCardProps> = ({
             <span className="line-clamp-1">{job.location}</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <div className="flex flex-wrap items-center gap-[6px] text-[12px] font-normal text-[#6B7280]">
             {postedTimeAgo && <span>Posted {postedTimeAgo}</span>}
-            {job.remoteType && <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-slate-500 dark:bg-slate-800 dark:text-slate-300">{job.remoteType}</span>}
+            {job.remoteType && <span className={neutralTagClass}>{job.remoteType}</span>}
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-[6px]">
           {hasApplicationHistory && (
-            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${appliedBadgeClass}`}>
-              <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" aria-hidden="true"></span>
+            <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-[12px] font-medium ${appliedBadgeClass}`}>
+              <span className="h-1.5 w-1.5 bg-current opacity-80" aria-hidden="true"></span>
               {appliedStatusLabel}
             </span>
           )}
           {job.jobType && (
-            <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+            <span className={jobTypeTagClass}>
               {job.jobType}
             </span>
           )}
           {job.experienceLevel && (
-            <span className="inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700 dark:bg-purple-500/15 dark:text-purple-300">
+            <span className={neutralTagClass}>
               {job.experienceLevel}
             </span>
           )}
           {salaryDisplay && (
-            <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+            <span className={salaryTagClass}>
               {salaryDisplay}
             </span>
           )}
         </div>
 
         {skillsToShow.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-[6px]">
             {skillsToShow.slice(0, 3).map((skill, index) => (
               <span
                 key={`${skill}-${index}`}
-                className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                className={neutralTagClass}
               >
                 {skill}
               </span>
             ))}
             {skillsToShow.length > 3 && (
-              <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
+              <span className={neutralTagClass}>
                 +{skillsToShow.length - 3} more
               </span>
             )}
           </div>
         )}
 
-        <p className="mt-4 line-clamp-2 text-sm leading-6 text-gray-600 dark:text-slate-300">
+        <p className="mt-4 line-clamp-2 text-[14px] font-normal leading-6 text-[#4B5563]">
           {getPreviewText(job.description, 130)}
         </p>
 
-        <div className="mt-6 space-y-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+        <div className="mt-5 space-y-3 border-t border-[#E5E7EB] pt-4">
           <div className="flex items-center justify-between gap-3">
             {showMatchScore && matchScore !== undefined ? (
-              <div className={`rounded-full px-3 py-1.5 text-xs font-semibold ${getMatchScoreColor(matchScore)}`}>
+              <div className={`mr-[6px] mb-[6px] px-2 py-1 text-[12px] font-medium ${getMatchScoreColor(matchScore)}`}>
                 {matchScore}% Match
               </div>
             ) : (
-              <span className="text-xs text-slate-400 dark:text-slate-500">No match score yet</span>
+              <span className="text-[12px] font-normal text-[#6B7280]">No match score yet</span>
             )}
 
             {job.category && (
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-                  getCategoryMeta(job.category).bgClass
-                } ${
-                  getCategoryMeta(job.category).colorClass
-                } ${
-                  getCategoryMeta(job.category).borderClass
-                }`}
-              >
-                <span>{getCategoryMeta(job.category).icon}</span>
-                <span>{job.category}</span>
-              </span>
+              <span className={neutralTagClass}>{job.category}</span>
             )}
           </div>
 
@@ -306,14 +282,14 @@ const JobCard: React.FC<JobCardProps> = ({
             {hasActiveApplication ? (
               <Link
                 to="/job-seeker/my-applications"
-                className="w-full rounded-xl border border-green-300 bg-green-50 px-4 py-2.5 text-center text-sm font-semibold text-green-700 transition hover:bg-green-100 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-300 dark:hover:bg-green-500/20"
+                className="w-full border border-[#2563EB] bg-white px-4 py-2.5 text-center text-[14px] font-medium text-[#2563EB] transition-colors hover:bg-blue-50"
               >
                 View Application
               </Link>
             ) : (
               <Link
                 to={applyPath}
-                className="w-full rounded-xl border border-green-500 px-4 py-2.5 text-center text-sm font-semibold text-green-700 transition hover:bg-green-50 dark:border-green-500/40 dark:text-green-300 dark:hover:bg-green-500/10"
+                className="w-full border border-[#2563EB] bg-white px-4 py-2.5 text-center text-[14px] font-medium text-[#2563EB] transition-colors hover:bg-blue-50"
               >
                 {isWithdrawnApplication ? 'Reapply' : 'Apply Now'}
               </Link>
@@ -321,7 +297,7 @@ const JobCard: React.FC<JobCardProps> = ({
 
             <Link
               to={detailsPath}
-              className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
+              className="w-full border border-[#2563EB] bg-[#2563EB] px-4 py-2.5 text-center text-[14px] font-medium text-white transition-colors hover:bg-blue-700"
             >
               View Details
             </Link>

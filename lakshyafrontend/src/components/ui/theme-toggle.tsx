@@ -11,9 +11,8 @@ const ThemeToggle: React.FC = () => {
       onClick={toggleTheme}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="group relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-indigo-400/60 dark:hover:text-indigo-300"
+      className="inline-flex h-11 w-11 items-center justify-center border border-[#D1D5DB] bg-white text-slate-600 transition-colors duration-200 hover:border-[#2563EB] hover:text-[#2563EB] focus:outline-none focus:ring-0"
     >
-      <span className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500/0 via-indigo-500/0 to-indigo-500/0 transition-all duration-300 group-hover:from-indigo-500/10 group-hover:via-sky-500/10 group-hover:to-cyan-500/10" />
       <span className="relative block h-5 w-5">
         <svg
           className={`absolute inset-0 h-5 w-5 transition-all duration-300 ${

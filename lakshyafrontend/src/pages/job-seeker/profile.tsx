@@ -1,11 +1,11 @@
 ﻿import React, { useState, useRef } from 'react';
 import { DashboardLayout, LoadingSpinner } from '../../components';
-import { 
-  useProfile, 
-  useUpdateProfile, 
-  useUploadResume, 
-  useChangePassword, 
-  useUploadProfileImage, 
+import {
+  useProfile,
+  useUpdateProfile,
+  useUploadResume,
+  useChangePassword,
+  useUploadProfileImage,
   useEditMode,
   useResumeParsePolling
 } from '../../hooks';
@@ -20,14 +20,13 @@ const Profile: React.FC = () => {
   const uploadResumeMutation = useUploadResume();
   const changePasswordMutation = useChangePassword();
   const uploadProfileImageMutation = useUploadProfileImage();
-  
+
   const { isEditing, enterEditMode, exitEditMode, guardAction } = useEditMode();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  // Resume parsing status polling
   const { parseStatus, startPolling } = useResumeParsePolling({
     onParseComplete: (summary) => {
       console.log('Resume parsing + autofill completed:', summary);
@@ -67,17 +66,12 @@ const Profile: React.FC = () => {
 
   const [newSkill, setNewSkill] = useState('');
 
-  // Track if form has been initialized to prevent race conditions
   const [formInitialized, setFormInitialized] = React.useState(false);
-  
-  // Track if user has modified form data (dirty flag)
   const [isDirty, setIsDirty] = React.useState(false);
 
-  // Initialize form data when profile loads (only once or after successful save)
-  // IMPORTANT: Depends on profileData?.data to update when cache refreshes
   React.useEffect(() => {
     const latestProfile = profileData?.data;
-    
+
     if (!latestProfile) return;
 
     const mapProfileToForm = () => ({
@@ -94,46 +88,42 @@ const Profile: React.FC = () => {
       },
     });
 
-    console.log('ðŸ”„ formData sync check:');
+    console.log('🔄 formData sync check:');
     console.log('  isEditing:', isEditing, '| isDirty:', isDirty, '| formInitialized:', formInitialized);
     console.log('  Server skills:', latestProfile.jobSeeker?.skills?.length || 0);
     console.log('  Current formData skills:', formData.jobSeeker.skills.length);
 
     setFormData(prev => {
-      // NOT in edit mode -> always replace with latest server data
       if (!isEditing) {
-        console.log('  âœ… Not editing - syncing from server');
+        console.log('  ✅ Not editing - syncing from server');
         if (!formInitialized) setFormInitialized(true);
         return mapProfileToForm();
       }
 
-      // In edit mode BUT user hasn't modified anything -> safe to replace
       if (!isDirty) {
-        console.log('  âœ… Editing but not dirty - syncing from server');
+        console.log('  ✅ Editing but not dirty - syncing from server');
         return mapProfileToForm();
       }
 
-      // Edge case: formData is completely empty (shouldn't happen but be safe)
-      const isFormEmpty = !prev.fullName && !prev.phone && 
-                          prev.jobSeeker.skills.length === 0 &&
-                          !prev.jobSeeker.title && !prev.jobSeeker.bio &&
-                          !prev.jobSeeker.experience && !prev.jobSeeker.education;
-      
+      const isFormEmpty = !prev.fullName && !prev.phone &&
+        prev.jobSeeker.skills.length === 0 &&
+        !prev.jobSeeker.title && !prev.jobSeeker.bio &&
+        !prev.jobSeeker.experience && !prev.jobSeeker.education;
+
       if (isFormEmpty) {
-        console.log('  âš ï¸  FormData is empty - forcing sync from server');
+        console.log('  ⚠️  FormData is empty - forcing sync from server');
         return mapProfileToForm();
       }
 
-      // In edit mode AND user has modified -> merge only EMPTY fields (preserve user edits)
-      console.log('  âš ï¸  Editing and dirty - merging only missing fields');
+      console.log('  ⚠️  Editing and dirty - merging only missing fields');
       const merged = {
         fullName: prev.fullName || latestProfile.fullName || latestProfile.name || '',
         phone: prev.phone || latestProfile.phone || latestProfile.number || '',
         jobSeeker: {
           title: prev.jobSeeker.title || latestProfile.jobSeeker?.title || '',
           bio: prev.jobSeeker.bio || latestProfile.jobSeeker?.bio || '',
-          skills: prev.jobSeeker.skills.length > 0 
-            ? prev.jobSeeker.skills 
+          skills: prev.jobSeeker.skills.length > 0
+            ? prev.jobSeeker.skills
             : (latestProfile.jobSeeker?.skills || []),
           experience: prev.jobSeeker.experience || latestProfile.jobSeeker?.experience || '',
           education: prev.jobSeeker.education || latestProfile.jobSeeker?.education || '',
@@ -152,8 +142,8 @@ const Profile: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setIsDirty(true); // Mark form as dirty when user makes changes
-    
+    setIsDirty(true);
+
     if (name.startsWith('jobSeeker.')) {
       const field = name.split('.')[1];
       setFormData(prev => ({
@@ -173,7 +163,7 @@ const Profile: React.FC = () => {
 
   const addSkill = () => {
     if (newSkill.trim() && !formData.jobSeeker.skills.includes(newSkill.trim())) {
-      setIsDirty(true); // Mark form as dirty when adding skills
+      setIsDirty(true);
       setFormData(prev => ({
         ...prev,
         jobSeeker: {
@@ -186,7 +176,7 @@ const Profile: React.FC = () => {
   };
 
   const removeSkill = (skillToRemove: string) => {
-    setIsDirty(true); // Mark form as dirty when removing skills
+    setIsDirty(true);
     setFormData(prev => ({
       ...prev,
       jobSeeker: {
@@ -196,17 +186,12 @@ const Profile: React.FC = () => {
     }));
   };
 
-  // Custom handler for entering edit mode
   const handleEnterEditMode = () => {
-    console.log('âœï¸ Entering edit mode - syncing with latest profile data');
-    
-    // Reset dirty flag
+    console.log('✏️ Entering edit mode - syncing with latest profile data');
+
     setIsDirty(false);
-    
-    // IMPORTANT: Force form re-initialization to pull latest data from server
     setFormInitialized(false);
-    
-    // Sync formData with latest profile data
+
     if (profile) {
       setFormData({
         fullName: profile.fullName || profile.name || '',
@@ -223,19 +208,15 @@ const Profile: React.FC = () => {
       });
       console.log('  Synced skills count:', profile.jobSeeker?.skills?.length || 0);
     }
-    
-    // Enter edit mode
+
     enterEditMode();
   };
 
-  // Custom handler for canceling edit mode
   const handleCancelEdit = () => {
-    console.log('âŒ Canceling edit - resetting to server data');
-    
-    // Reset dirty flag
+    console.log('❌ Canceling edit - resetting to server data');
+
     setIsDirty(false);
-    
-    // Revert formData to latest profile data
+
     if (profile) {
       setFormData({
         fullName: profile.fullName || profile.name || '',
@@ -251,34 +232,28 @@ const Profile: React.FC = () => {
         },
       });
     }
-    
-    // Exit edit mode
+
     exitEditMode();
   };
 
   const handleSave = async () => {
     if (!guardAction('save')) return;
-    
+
     try {
       console.log('Saving profile with data:', formData);
       const response = await updateProfileMutation.mutateAsync(formData);
       console.log('Profile update response:', response);
-      
-      // Update auth context with new name
+
       updateUser({
         name: formData.fullName,
         fullName: formData.fullName,
       });
-      
+
       toast.success('Profile updated successfully!');
-      
-      // Reset dirty flag after successful save
+
       setIsDirty(false);
-      
-      // Exit edit mode - form will NOT reset because formInitialized is true
       exitEditMode();
-      
-      // Force re-initialize form with updated data after cache updates
+
       setTimeout(() => {
         setFormInitialized(false);
       }, 100);
@@ -295,7 +270,7 @@ const Profile: React.FC = () => {
       if (e.target) e.target.value = '';
       return;
     }
-    
+
     const file = e.target.files?.[0];
     if (file) {
       if (file.type !== 'application/pdf') {
@@ -306,18 +281,16 @@ const Profile: React.FC = () => {
         toast.error('File size must be less than 5MB');
         return;
       }
-      
+
       try {
         console.log('Uploading resume:', file.name, file.size);
         const response = await uploadResumeMutation.mutateAsync(file);
         console.log('Resume upload response:', response);
-        
-        // Show success message
+
         toast.success('Resume uploaded! Parsing in progress...', {
           autoClose: 3000
         });
-        
-        // Start polling for parse status
+
         console.log('Starting resume parse polling...');
         startPolling();
       } catch (err: any) {
@@ -326,8 +299,7 @@ const Profile: React.FC = () => {
         console.error('Resume upload error:', err);
         console.error('Error response:', err.response?.data);
       }
-      
-      // Reset file input
+
       if (e.target) {
         e.target.value = '';
       }
@@ -336,7 +308,7 @@ const Profile: React.FC = () => {
 
   const handlePasswordChange = async () => {
     if (!guardAction('change password')) return;
-    
+
     if (!passwordData.currentPassword) {
       toast.error('Please enter your current password');
       return;
@@ -349,7 +321,7 @@ const Profile: React.FC = () => {
       toast.error('Password must be at least 6 characters');
       return;
     }
-    
+
     try {
       await changePasswordMutation.mutateAsync({
         oldPassword: passwordData.currentPassword,
@@ -368,23 +340,20 @@ const Profile: React.FC = () => {
       if (e.target) e.target.value = '';
       return;
     }
-    
+
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
       toast.error('Please upload a JPG or PNG image');
       return;
     }
 
-    // Validate file size (2MB max)
     if (file.size > 2 * 1024 * 1024) {
       toast.error('Image size must be less than 2MB');
       return;
     }
 
-    // Show preview
     const previewUrl = URL.createObjectURL(file);
     setAvatarPreview(previewUrl);
 
@@ -392,15 +361,13 @@ const Profile: React.FC = () => {
       console.log('Uploading avatar:', file.name, file.size);
       const response = await uploadProfileImageMutation.mutateAsync(file);
       console.log('Avatar upload response:', response);
-      
+
       toast.success('Profile photo updated successfully!');
-      
-      // Update auth context with new avatar URL
+
       if (response?.data?.profileImageUrl) {
         updateUser({ profileImageUrl: response.data.profileImageUrl });
       }
-      
-      // Clean up preview after short delay to show success
+
       setTimeout(() => {
         URL.revokeObjectURL(previewUrl);
         setAvatarPreview(null);
@@ -410,19 +377,16 @@ const Profile: React.FC = () => {
       toast.error(errorMessage);
       console.error('Avatar upload error:', err);
       console.error('Error response:', err.response?.data);
-      
-      // Clean up preview immediately on error
+
       URL.revokeObjectURL(previewUrl);
       setAvatarPreview(null);
     }
-    
-    // Reset file input to allow re-uploading the same file
+
     if (e.target) {
       e.target.value = '';
     }
   };
 
-  // Cleanup avatar preview on unmount
   React.useEffect(() => {
     return () => {
       if (avatarPreview) {
@@ -431,7 +395,6 @@ const Profile: React.FC = () => {
     };
   }, [avatarPreview]);
 
-  // Handle modal body overflow
   React.useEffect(() => {
     if (showPasswordModal) {
       document.body.style.overflow = 'hidden';
@@ -451,8 +414,7 @@ const Profile: React.FC = () => {
     );
   }
 
-  // Debug: Compare server data vs form state
-  console.log('ðŸ“Š Profile Render Debug:');
+  console.log('📊 Profile Render Debug:');
   console.log('  Server profile skills:', profile?.jobSeeker?.skills?.length || 0);
   console.log('  FormData skills:', formData.jobSeeker.skills.length);
   console.log('  IsEditing:', isEditing);
@@ -462,89 +424,102 @@ const Profile: React.FC = () => {
 
   return (
     <DashboardLayout variant="job-seeker" title="Profile">
-      <div className="max-w-4xl mx-auto w-full px-4 pb-10">
-        {/* Read-only mode banner */}
+      <div className="mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6 lg:px-8">
         {!isEditing && (
-          <div className="app-info-banner mb-4 flex items-center gap-3">
-            <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mb-4 flex items-center gap-3 border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            <svg className="h-5 w-5 flex-shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-sm text-blue-800">
-              <span className="font-medium">Read-only mode.</span> Click "Edit Profile" to make changes.
+            <p>
+              <span className="font-medium">Read-only mode.</span> Click “Edit Profile” to make changes.
             </p>
           </div>
         )}
-        {/* Profile Header */}
-        <div className="app-surface rounded-xl overflow-hidden mb-6 w-full">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-32"></div>
-          <div className="px-6 pb-6">
-            <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-12 w-full min-w-0">
-              {/* Avatar with upload */}
-              <div className="relative">
-                <input
-                  type="file"
-                  ref={avatarInputRef}
-                  accept="image/png,image/jpeg"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                />
-                <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-full border-4 border-white shadow-lg overflow-hidden">
-                  {avatarPreview || profile?.profileImageUrl ? (
-                    <img
-                      src={avatarPreview || getFileUrl(profile?.profileImageUrl) || undefined}
-                      alt={profile?.fullName || 'Profile'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-indigo-100">
-                      <span className="text-3xl font-bold text-indigo-600">
-                        {getInitials(profile?.fullName || profile?.name)}
-                      </span>
-                    </div>
-                  )}
+
+        <div className="mb-6 border border-slate-200 bg-white">
+          <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+              <div className="flex min-w-0 items-start gap-4">
+                <div className="relative">
+                  <input
+                    type="file"
+                    ref={avatarInputRef}
+                    accept="image/png,image/jpeg"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+
+                  <div className="h-20 w-20 overflow-hidden border border-slate-300 bg-slate-100">
+                    {avatarPreview || profile?.profileImageUrl ? (
+                      <img
+                        src={avatarPreview || getFileUrl(profile?.profileImageUrl) || undefined}
+                        alt={profile?.fullName || 'Profile'}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-slate-200">
+                        <span className="text-xl font-semibold text-slate-700">
+                          {getInitials(profile?.fullName || profile?.name)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (!isEditing) {
+                        toast.info('Please click "Edit Profile" to upload photo');
+                        return;
+                      }
+                      avatarInputRef.current?.click();
+                    }}
+                    disabled={uploadProfileImageMutation.isPending || !isEditing}
+                    className="absolute -bottom-2 -right-2 inline-flex h-8 w-8 items-center justify-center border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    title={isEditing ? 'Upload photo' : 'Enable edit mode to upload photo'}
+                  >
+                    {uploadProfileImageMutation.isPending ? (
+                      <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.232-6.232a2.5 2.5 0 113.536 3.536L12.536 16.536a4 4 0 01-1.789 1.05L7 19l1.414-3.747A4 4 0 019 13z" />
+                      </svg>
+                    )}
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    if (!isEditing) {
-                      toast.info('Please click "Edit Profile" to upload photo');
-                      return;
-                    }
-                    avatarInputRef.current?.click();
-                  }}
-                  disabled={uploadProfileImageMutation.isPending || !isEditing}
-                  className="absolute bottom-0 right-0 w-8 h-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full flex items-center justify-center shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={isEditing ? "Upload photo" : "Enable edit mode to upload photo"}
-                >
-                  {uploadProfileImageMutation.isPending ? (
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
-                </button>
+
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    Profile
+                  </p>
+                  <h1 className="mt-1 truncate text-2xl font-semibold text-slate-900">
+                    {profile?.fullName || profile?.name || 'User'}
+                  </h1>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {formData.jobSeeker.title || 'Job Seeker'}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
+                    <span>{profile?.email || '-'}</span>
+                    <span>{profile?.phone || profile?.number || '-'}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 truncate">{profile?.fullName || profile?.name || 'User'}</h1>
-                <p className="app-body-text truncate">{formData.jobSeeker.title || 'Job Seeker'}</p>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
+
+              <div className="flex shrink-0 gap-2">
                 {isEditing ? (
                   <>
                     <button
                       onClick={handleCancelEdit}
-                      className="app-secondary-button"
+                      className="inline-flex items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSave}
                       disabled={updateProfileMutation.isPending}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                      className="inline-flex items-center justify-center border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94] disabled:opacity-50"
                     >
                       {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
                     </button>
@@ -552,7 +527,7 @@ const Profile: React.FC = () => {
                 ) : (
                   <button
                     onClick={handleEnterEditMode}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                    className="inline-flex items-center justify-center border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94]"
                   >
                     Edit Profile
                   </button>
@@ -562,47 +537,51 @@ const Profile: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 w-full">
-          {/* Main Info */}
-          <div className="md:col-span-2 space-y-6 min-w-0 w-full">
-            {/* Personal Information */}
-            <div className="app-surface rounded-xl p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Personal Information</h2>
-              <div className="space-y-4">
+        <div className="grid w-full gap-6 lg:grid-cols-12">
+          <div className="space-y-6 lg:col-span-8">
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Personal Information</h2>
+              </div>
+
+              <div className="space-y-5 p-5">
                 <div>
-                  <label className="app-label mb-1 block text-sm font-medium">Full Name</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Full Name</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      className="app-input"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-slate-100 break-words">{profile?.fullName || profile?.name || '-'}</p>
+                    <p className="text-sm text-slate-900">{profile?.fullName || profile?.name || '-'}</p>
                   )}
                 </div>
+
                 <div>
-                  <label className="app-label mb-1 block text-sm font-medium">Email</label>
-                  <p className="text-gray-900 dark:text-slate-100 break-words">{profile?.email || '-'}</p>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                  <p className="text-sm text-slate-900 break-words">{profile?.email || '-'}</p>
                 </div>
+
                 <div>
-                  <label className="app-label mb-1 block text-sm font-medium">Phone</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Phone</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="app-input"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-slate-100">{profile?.phone || profile?.number || '-'}</p>
+                    <p className="text-sm text-slate-900">{profile?.phone || profile?.number || '-'}</p>
                   )}
                 </div>
+
                 <div>
-                  <label className="app-label mb-1 block text-sm font-medium">Professional Title</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Professional Title</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -610,245 +589,288 @@ const Profile: React.FC = () => {
                       value={formData.jobSeeker.title}
                       onChange={handleInputChange}
                       placeholder="e.g. Senior Software Engineer"
-                      className="app-input"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-slate-100">{profile?.jobSeeker?.title || '-'}</p>
+                    <p className="text-sm text-slate-900">{profile?.jobSeeker?.title || '-'}</p>
                   )}
                 </div>
               </div>
-            </div>
+            </section>
 
-            {/* Bio */}
-            <div className="app-surface rounded-xl p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Professional Summary</h2>
-              {isEditing ? (
-                <textarea
-                  name="jobSeeker.bio"
-                  value={formData.jobSeeker.bio}
-                  onChange={handleInputChange}
-                  rows={4}
-                  placeholder="Tell recruiters about yourself..."
-                  className="app-input resize-none"
-                />
-              ) : (
-                <p className="app-body-text whitespace-pre-wrap break-words">{profile?.jobSeeker?.bio || 'No bio added yet.'}</p>
-              )}
-            </div>
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Professional Summary</h2>
+              </div>
 
-            {/* Skills */}
-            <div className="app-surface rounded-xl p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Skills</h2>
-              {isEditing && (
-                <div className="flex gap-2 mb-4">
-                  <input
-                    type="text"
-                    value={newSkill}
-                    onChange={(e) => setNewSkill(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addSkill()}
-                    placeholder="Add a skill..."
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              <div className="p-5">
+                {isEditing ? (
+                  <textarea
+                    name="jobSeeker.bio"
+                    value={formData.jobSeeker.bio}
+                    onChange={handleInputChange}
+                    rows={5}
+                    placeholder="Tell recruiters about yourself..."
+                    className="w-full resize-none border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                   />
-                  <button
-                    onClick={addSkill}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                  >
-                    Add
-                  </button>
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {(isEditing ? formData.jobSeeker.skills : profile?.jobSeeker?.skills || []).map((skill, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm"
-                  >
-                    {skill}
-                    {isEditing && (
-                      <button
-                        onClick={() => removeSkill(skill)}
-                        className="ml-1 text-indigo-500 hover:text-indigo-700"
-                      >
-                        &times;
-                      </button>
-                    )}
-                  </span>
-                ))}
-                {(!isEditing && (!profile?.jobSeeker?.skills || profile.jobSeeker.skills.length === 0)) && (
-                  <p className="text-gray-500 dark:text-slate-400">No skills added yet.</p>
+                ) : (
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                    {profile?.jobSeeker?.bio || 'No bio added yet.'}
+                  </p>
                 )}
               </div>
-            </div>
+            </section>
 
-            {/* Experience & Education */}
-            <div className="app-surface rounded-xl p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Experience & Education</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="app-label mb-1 block text-sm font-medium">Experience</label>
-                  {isEditing ? (
-                    <textarea
-                      name="jobSeeker.experience"
-                      value={formData.jobSeeker.experience}
-                      onChange={handleInputChange}
-                      rows={3}
-                      placeholder="Describe your work experience..."
-                      className="app-input resize-none"
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Technical Stack</h2>
+              </div>
+
+              <div className="p-5">
+                {isEditing && (
+                  <div className="mb-4 flex gap-2">
+                    <input
+                      type="text"
+                      value={newSkill}
+                      onChange={(e) => setNewSkill(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+                      placeholder="Add a skill..."
+                      className="flex-1 border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
-                  ) : (
-                    <p className="app-body-text whitespace-pre-wrap break-words">{profile?.jobSeeker?.experience || 'No experience added.'}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="app-label mb-1 block text-sm font-medium">Education</label>
-                  {isEditing ? (
-                    <textarea
-                      name="jobSeeker.education"
-                      value={formData.jobSeeker.education}
-                      onChange={handleInputChange}
-                      rows={3}
-                      placeholder="Describe your education..."
-                      className="app-input resize-none"
-                    />
-                  ) : (
-                    <p className="app-body-text whitespace-pre-wrap break-words">{profile?.jobSeeker?.education || 'No education added.'}</p>
+                    <button
+                      onClick={addSkill}
+                      className="inline-flex items-center justify-center border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94]"
+                    >
+                      Add
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  {(isEditing ? formData.jobSeeker.skills : profile?.jobSeeker?.skills || []).map((skill, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-700"
+                    >
+                      {skill}
+                      {isEditing && (
+                        <button
+                          onClick={() => removeSkill(skill)}
+                          className="ml-1 text-slate-500 hover:text-slate-700"
+                        >
+                          &times;
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                  {!isEditing && (!profile?.jobSeeker?.skills || profile.jobSeeker.skills.length === 0) && (
+                    <p className="text-sm text-slate-500">No skills added yet.</p>
                   )}
                 </div>
               </div>
-            </div>
+            </section>
+
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Experience</h2>
+              </div>
+
+              <div className="p-5">
+                {isEditing ? (
+                  <textarea
+                    name="jobSeeker.experience"
+                    value={formData.jobSeeker.experience}
+                    onChange={handleInputChange}
+                    rows={6}
+                    placeholder="Describe your work experience..."
+                    className="w-full resize-none border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {formData.jobSeeker.experience ? (
+                      <div className="relative pl-6 before:absolute before:left-0 before:top-0 before:h-full before:w-[2px] before:bg-slate-200">
+                        <div className="absolute -left-[5px] top-1 h-3 w-3 rounded-full border-2 border-[#3b4bb8] bg-white"></div>
+                        <div className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                          {profile?.jobSeeker?.experience}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500 italic">No experience added yet.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Education</h2>
+              </div>
+
+              <div className="p-5">
+                {isEditing ? (
+                  <textarea
+                    name="jobSeeker.education"
+                    value={formData.jobSeeker.education}
+                    onChange={handleInputChange}
+                    rows={6}
+                    placeholder="Describe your education..."
+                    className="w-full resize-none border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {formData.jobSeeker.education ? (
+                      <div className="relative pl-6 before:absolute before:left-0 before:top-0 before:h-full before:w-[2px] before:bg-slate-200">
+                        <div className="absolute -left-[5px] top-1 h-3 w-3 rounded-full border-2 border-[#3b4bb8] bg-white"></div>
+                        <div className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                          {profile?.jobSeeker?.education}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500 italic">No education added yet.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6 min-w-0 w-full">
-            {/* Resume */}
-            <div className="app-surface rounded-xl p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Resume</h2>
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept=".pdf"
-                onChange={handleResumeUpload}
-                className="hidden"
-              />
-              {profile?.jobSeeker?.resumeUrl ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-green-600">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-sm font-medium">Resume uploaded</span>
-                  </div>
-                  
-                  {/* Parse Status Badge */}
-                  {parseStatus && (
-                    <div className={`flex items-center gap-2 p-2 rounded-lg text-sm ${
-                      parseStatus.status === 'done' ? 'bg-green-50 text-green-700' :
-                      parseStatus.status === 'failed' ? 'bg-red-50 text-red-700' :
-                      parseStatus.status === 'processing' ? 'bg-blue-50 text-blue-700' :
-                      'bg-yellow-50 text-yellow-700'
-                    }`}>
-                      {parseStatus.status === 'done' && (
-                        <>
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          <span className="font-medium">Parsed</span>
-                          {parseStatus.summary && (
-                            <span className="text-xs">
-                              ({parseStatus.summary.skillsAdded} skills added)
-                            </span>
-                          )}
-                        </>
-                      )}
-                      {parseStatus.status === 'queued' && (
-                        <>
-                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          <span className="font-medium">Queued for parsing...</span>
-                        </>
-                      )}
-                      {parseStatus.status === 'processing' && (
-                        <>
-                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          <span className="font-medium">Parsing resume...</span>
-                        </>
-                      )}
-                      {parseStatus.status === 'failed' && (
-                        <>
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                          </svg>
-                          <span className="font-medium">Parsing failed</span>
-                          {parseStatus.error && (
-                            <span className="text-xs">({parseStatus.error})</span>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Note: Autofill happens automatically after resume parsing */}
-                  {/* Manual autofill button removed - autofill is now automatic */}
-                  
-                  <a
-                    href={profileData?.signedResumeUrl || getFileUrl(profile.jobSeeker.resumeUrl) || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-indigo-600 hover:text-indigo-700 text-sm"
-                  >
-                    View Resume
-                  </a>
-                  <button
-                    onClick={() => {
-                      if (!isEditing) {
-                        toast.info('Please click "Edit Profile" to update resume');
-                        return;
-                      }
-                      fileInputRef.current?.click();
-                    }}
-                    disabled={uploadResumeMutation.isPending || !isEditing}
-                    className="w-full px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {uploadResumeMutation.isPending ? 'Uploading...' : 'Update Resume'}
-                  </button>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-8 h-8 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <p className="text-gray-500 dark:text-slate-400 text-sm mb-4">No resume uploaded</p>
-                  <button
-                    onClick={() => {
-                      if (!isEditing) {
-                        toast.info('Please click "Edit Profile" to upload resume');
-                        return;
-                      }
-                      fileInputRef.current?.click();
-                    }}
-                    disabled={uploadResumeMutation.isPending || !isEditing}
-                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {uploadResumeMutation.isPending ? 'Uploading...' : 'Upload Resume'}
-                  </button>
-                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">PDF, max 5MB</p>
-                </div>
-              )}
-            </div>
+          <div className="space-y-6 lg:col-span-4">
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Resume Asset</h2>
+              </div>
 
-            {/* Preferences */}
-            <div className="app-surface rounded-xl p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Job Preferences</h2>
-              <div className="space-y-4">
+              <div className="space-y-4 p-5">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".pdf"
+                  onChange={handleResumeUpload}
+                  className="hidden"
+                />
+
+                {profile?.jobSeeker?.resumeUrl ? (
+                  <>
+                    <div className="flex items-center justify-between border border-slate-200 bg-slate-50 px-3 py-3">
+                      <div className="flex items-center gap-2 text-sm text-slate-700">
+                        <svg className="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="font-medium">Resume uploaded</span>
+                      </div>
+                      <span className="text-xs font-medium text-emerald-600">DONE</span>
+                    </div>
+
+                    {parseStatus && (
+                      <div
+                        className={`border px-3 py-3 text-sm ${
+                          parseStatus.status === 'done'
+                            ? 'border-green-200 bg-green-50 text-green-700'
+                            : parseStatus.status === 'failed'
+                            ? 'border-red-200 bg-red-50 text-red-700'
+                            : parseStatus.status === 'processing'
+                            ? 'border-blue-200 bg-blue-50 text-blue-700'
+                            : 'border-amber-200 bg-amber-50 text-amber-700'
+                        }`}
+                      >
+                        {parseStatus.status === 'done' && (
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Parsed</span>
+                            {parseStatus.summary && (
+                              <span className="text-xs">
+                                ({parseStatus.summary.skillsAdded} skills added)
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {parseStatus.status === 'queued' && (
+                          <div className="flex items-center gap-2">
+                            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span className="font-medium">Queued for parsing...</span>
+                          </div>
+                        )}
+                        {parseStatus.status === 'processing' && (
+                          <div className="flex items-center gap-2">
+                            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span className="font-medium">Parsing resume...</span>
+                          </div>
+                        )}
+                        {parseStatus.status === 'failed' && (
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Parsing failed</span>
+                            {parseStatus.error && (
+                              <span className="text-xs">({parseStatus.error})</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <a
+                      href={profileData?.signedResumeUrl || getFileUrl(profile.jobSeeker.resumeUrl) || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-sm font-medium text-[#3b4bb8] hover:text-[#2e3a94]"
+                    >
+                      View Resume
+                    </a>
+
+                    <button
+                      onClick={() => {
+                        if (!isEditing) {
+                          toast.info('Please click "Edit Profile" to update resume');
+                          return;
+                        }
+                        fileInputRef.current?.click();
+                      }}
+                      disabled={uploadResumeMutation.isPending || !isEditing}
+                      className="w-full border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {uploadResumeMutation.isPending ? 'Uploading...' : 'Update Document'}
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center border border-slate-200 bg-slate-50">
+                      <svg className="h-6 w-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <p className="mb-4 text-sm text-slate-500">No resume uploaded</p>
+                    <button
+                      onClick={() => {
+                        if (!isEditing) {
+                          toast.info('Please click "Edit Profile" to upload resume');
+                          return;
+                        }
+                        fileInputRef.current?.click();
+                      }}
+                      disabled={uploadResumeMutation.isPending || !isEditing}
+                      className="w-full border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {uploadResumeMutation.isPending ? 'Uploading...' : 'Upload Document'}
+                    </button>
+                    <p className="mt-2 text-xs text-slate-400">PDF, max 5MB</p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Career Preferences</h2>
+              </div>
+
+              <div className="space-y-5 p-5">
                 <div>
-                  <label className="app-label mb-1 block text-sm font-medium">Preferred Location</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Preferred Location</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -856,14 +878,15 @@ const Profile: React.FC = () => {
                       value={formData.jobSeeker.preferredLocation}
                       onChange={handleInputChange}
                       placeholder="e.g. Remote, New York"
-                      className="app-input"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="app-body-text">{profile?.jobSeeker?.preferredLocation || '-'}</p>
+                    <p className="text-sm text-slate-700">{profile?.jobSeeker?.preferredLocation || '-'}</p>
                   )}
                 </div>
+
                 <div>
-                  <label className="app-label mb-1 block text-sm font-medium">Expected Salary</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Expected Salary</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -871,82 +894,85 @@ const Profile: React.FC = () => {
                       value={formData.jobSeeker.expectedSalary}
                       onChange={handleInputChange}
                       placeholder="e.g. $80,000 - $100,000"
-                      className="app-input"
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="app-body-text">{profile?.jobSeeker?.expectedSalary || '-'}</p>
+                    <p className="text-sm text-slate-700">{profile?.jobSeeker?.expectedSalary || '-'}</p>
                   )}
                 </div>
               </div>
-            </div>
+            </section>
 
-            {/* Security */}
-            <div className="app-surface rounded-xl p-6 w-full">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Security</h2>
-              <button
-                onClick={() => {
-                  if (!isEditing) {
-                    toast.info('Please click "Edit Profile" to change password');
-                    return;
-                  }
-                  setShowPasswordModal(true);
-                }}
-                disabled={!isEditing}
-                className="app-secondary-button w-full disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Change Password
-              </button>
-            </div>
+            <section className="border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900">Security</h2>
+              </div>
+
+              <div className="p-5">
+                <button
+                  onClick={() => {
+                    if (!isEditing) {
+                      toast.info('Please click "Edit Profile" to change password');
+                      return;
+                    }
+                    setShowPasswordModal(true);
+                  }}
+                  disabled={!isEditing}
+                  className="w-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Change Password
+                </button>
+              </div>
+            </section>
           </div>
         </div>
       </div>
 
-      {/* Password Modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="fixed inset-0 bg-black/50" onClick={() => setShowPasswordModal(false)} />
-          <div className="app-modal-panel relative p-6 w-full max-w-md my-8 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4">Change Password</h2>
+          <div className="relative z-10 my-8 max-h-[90vh] w-full max-w-md overflow-y-auto border border-slate-200 bg-white p-6">
+            <h2 className="mb-4 text-xl font-semibold text-slate-900">Change Password</h2>
             <div className="space-y-4">
               <div>
-                <label className="app-label mb-1 block text-sm font-medium">Current Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Current Password</label>
                 <input
                   type="password"
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  className="app-input"
+                  className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                 />
               </div>
               <div>
-                <label className="app-label mb-1 block text-sm font-medium">New Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">New Password</label>
                 <input
                   type="password"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                  className="app-input"
+                  className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                 />
               </div>
               <div>
-                <label className="app-label mb-1 block text-sm font-medium">Confirm New Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Confirm New Password</label>
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="app-input"
+                  className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                 />
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setShowPasswordModal(false)}
-                className="app-secondary-button flex-1"
+                className="flex-1 border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handlePasswordChange}
                 disabled={changePasswordMutation.isPending}
-                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="flex-1 border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94] disabled:opacity-50"
               >
                 {changePasswordMutation.isPending ? 'Changing...' : 'Change Password'}
               </button>
@@ -959,6 +985,3 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
-
-
-

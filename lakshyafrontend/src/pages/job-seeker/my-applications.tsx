@@ -1,18 +1,33 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { DashboardLayout, LoadingSpinner, EmptyState, PaginationControls, PageSizeSelect, ConfirmModal, type PaginationMeta } from '../../components';
+import {
+  DashboardLayout,
+  LoadingSpinner,
+  EmptyState,
+  PaginationControls,
+  PageSizeSelect,
+  ConfirmModal,
+  type PaginationMeta
+} from '../../components';
 import { useMyApplications, useJobMatchScores, useWithdrawApplication } from '../../hooks';
 import type { Application, Job, Interview } from '../../services';
-import { getStatusLabel, getStatusBadgeClass } from '../../utils/applicationStatus';
+import { getStatusLabel } from '../../utils/applicationStatus';
 import { handleError, handleSuccess } from '../../Utils';
-import { formatInterviewTimeRange, getInterviewDisplayStatusMeta, getInterviewOutcomeMeta } from '../../utils/interview-status';
+import {
+  formatInterviewTimeRange,
+  getInterviewDisplayStatusMeta,
+  getInterviewOutcomeMeta
+} from '../../utils/interview-status';
 
 const MyApplications: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'withdrawn'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'withdrawn'
+  >('all');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedAppId, setExpandedAppId] = useState<string | null>(null);
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null);
 
   const page = useMemo(() => {
@@ -32,7 +47,6 @@ const MyApplications: React.FC = () => {
     setSearchParams(params, { replace: true });
   };
 
-  // Debounce search input
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
@@ -40,12 +54,11 @@ const MyApplications: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch applications with backend filtering
   const { data: response, isLoading } = useMyApplications({
     q: debouncedSearch,
     status: statusFilter,
     page,
-    limit,
+    limit
   });
 
   const applications = useMemo<Application[]>(() => response?.data ?? [], [response?.data]);
@@ -53,59 +66,47 @@ const MyApplications: React.FC = () => {
   const withdrawMutation = useWithdrawApplication();
 
   const paginationMeta = useMemo<PaginationMeta | null>(() => {
-    if (!pagination) {
-      return null;
-    }
+    if (!pagination) return null;
 
-    const resolvedPages = pagination.pages ?? 1;
     return {
       total: pagination.total,
       page: pagination.page,
       limit: pagination.limit,
-      pages: resolvedPages,
+      pages: pagination.pages ?? 1
     };
   }, [pagination]);
-
-  // Debug: Log when applications data updates
-  React.useEffect(() => {
-    console.log('📊 My Applications data updated - Count:', applications.length);
-  }, [applications.length]);
 
   React.useEffect(() => {
     updatePaginationParams(1, limit);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, statusFilter]);
 
-  // Extract all job IDs for batch match score fetch
   const jobIds = useMemo(() => {
     return applications
-      .map(app => {
-        const job = typeof app.jobId === 'object' ? app.jobId as Job : null;
+      .map((app) => {
+        const job = typeof app.jobId === 'object' ? (app.jobId as Job) : null;
         return typeof app.jobId === 'string' ? app.jobId : job?._id;
       })
       .filter((id): id is string => !!id);
   }, [applications]);
 
-  // Fetch match scores for all jobs in batch
   const { data: matchScoresResponse } = useJobMatchScores(jobIds.length > 0 ? jobIds : undefined);
   const matchScores = matchScoresResponse?.data || {};
 
-  // Calculate stats
   const stats = useMemo(() => {
     const allApps = applications;
     return {
       total: paginationMeta?.total ?? allApps.length,
-      pending: allApps.filter(a => a.status === 'applied').length,
-      shortlisted: allApps.filter(a => a.status === 'shortlisted').length,
-      interview: allApps.filter(a => a.status === 'interview').length,
-      rejected: allApps.filter(a => a.status === 'rejected').length,
-      hired: allApps.filter(a => a.status === 'hired' || a.status === 'offer').length,
+      pending: allApps.filter((a) => a.status === 'applied').length,
+      shortlisted: allApps.filter((a) => a.status === 'shortlisted').length,
+      interview: allApps.filter((a) => a.status === 'interview').length,
+      rejected: allApps.filter((a) => a.status === 'rejected').length,
+      hired: allApps.filter((a) => a.status === 'hired' || a.status === 'offer').length
     };
   }, [applications, paginationMeta]);
 
-  // Check if any application is hired (for congratulations banner)
   const hiredApplications = useMemo(() => {
-    return applications.filter(app => app.status === 'hired' || app.status === 'offer');
+    return applications.filter((app) => app.status === 'hired' || app.status === 'offer');
   }, [applications]);
 
   const formatDate = (dateString: string) => {
@@ -116,52 +117,85 @@ const MyApplications: React.FC = () => {
     });
   };
 
+  const getHumanStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'applied':
+        return 'bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200';
+      case 'interview':
+        return 'bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-200';
+      case 'shortlisted':
+        return 'bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200';
+      case 'offer':
+        return 'bg-teal-100 text-teal-700 border border-teal-200 hover:bg-teal-200';
+      case 'hired':
+        return 'bg-green-100 text-green-700 border border-green-200 hover:bg-green-200';
+      case 'withdrawn':
+        return 'bg-red-100 text-red-600 border border-red-200 hover:bg-red-200';
+      case 'rejected':
+        return 'bg-red-100 text-red-600 border border-red-200 hover:bg-red-200';
+      default:
+        return 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200';
+    }
+  };
+
+  const statCards = [
+    { label: 'Total Applications', value: stats.total },
+    { label: 'In Review', value: stats.pending },
+    { label: 'Interviews', value: stats.interview },
+    { label: 'Accepted', value: stats.hired }
+  ];
+
   return (
     <DashboardLayout variant="job-seeker" title="My Applications">
-      <div className="max-w-7xl mx-auto">
-        {/* Congratulations Banner for Hired Applications */}
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         {hiredApplications.length > 0 && (
-          <div className="mb-6 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="mb-6 border border-emerald-200 bg-emerald-50 px-4 py-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold mb-2">
-                  🎉 Congratulations!
-                </h2>
-                <p className="text-emerald-50 text-lg mb-2">
-                  You've been selected for {hiredApplications.length} position{hiredApplications.length > 1 ? 's' : ''}!
+
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm font-semibold text-emerald-900">Congratulations</h2>
+                <p className="mt-1 text-sm text-emerald-800">
+                  You have been selected for {hiredApplications.length} position
+                  {hiredApplications.length > 1 ? 's' : ''}.
                 </p>
-                <ul className="space-y-1 text-emerald-100">
-                  {hiredApplications.map(app => {
-                    const job = typeof app.jobId === 'object' ? app.jobId as Job : null;
+
+                <ul className="mt-2 space-y-1">
+                  {hiredApplications.map((app) => {
+                    const job = typeof app.jobId === 'object' ? (app.jobId as Job) : null;
                     return (
-                      <li key={app._id} className="flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
+                      <li key={app._id} className="text-sm text-emerald-900">
                         <span className="font-medium">{job?.title || 'Position'}</span>
-                        <span className="text-sm text-emerald-200">at {job?.companyName || 'Company'}</span>
+                        <span className="text-emerald-700"> at {job?.companyName || 'Company'}</span>
                       </li>
                     );
                   })}
                 </ul>
-                <p className="text-sm text-emerald-100 mt-3">
-                  The employer will contact you with next steps regarding your onboarding.
-                </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Header */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">My Applications</h1>
-          <div className="flex items-center gap-4">
-            <p className="text-gray-600 dark:text-slate-300">Track the status of all your job applications in one place.</p>
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h1 className="text-[34px] font-semibold tracking-tight text-slate-900">
+              My Applications
+            </h1>
+            <p className="mt-1 text-sm text-slate-600">
+              Track and manage your professional trajectory.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
             <PageSizeSelect
               value={limit}
               onChange={(nextLimit) => {
@@ -171,15 +205,35 @@ const MyApplications: React.FC = () => {
               options={[5, 10, 20]}
               disabled={isLoading}
             />
+            <Link
+              to="/job-seeker/browse-jobs"
+              className="inline-flex h-10 items-center justify-center bg-[#3b4bb8] px-4 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94]"
+            >
+              Browse Jobs
+            </Link>
           </div>
         </div>
 
-        {/* Search and Filter */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
+        {stats.total > 0 && (
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {statCards.map((item) => (
+              <div key={item.label} className="border border-slate-200 bg-white px-5 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                  {item.label}
+                </p>
+                <p className="mt-2 text-4xl font-semibold leading-none tracking-tight text-slate-900">
+                  {String(item.value).padStart(2, '0')}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mb-6 border border-slate-200 bg-white px-4 py-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="relative flex-1">
               <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-500"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -191,30 +245,30 @@ const MyApplications: React.FC = () => {
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
+
               <input
                 type="text"
                 placeholder="Search by job title or company..."
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-10 w-full border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8]"
               />
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value as typeof statusFilter);
-              }}
-              className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              <option value="all">All Statuses</option>
-              <option value="applied">Pending</option>
-              <option value="shortlisted">Shortlisted</option>
-              <option value="interview">Interview</option>
-              <option value="rejected">Rejected</option>
-              <option value="withdrawn">Withdrawn</option>
-            </select>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                className="h-10 min-w-[160px] border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-[#3b4bb8]"
+              >
+                <option value="all">Status: All</option>
+                <option value="applied">Pending</option>
+                <option value="shortlisted">Shortlisted</option>
+                <option value="interview">Interview</option>
+                <option value="rejected">Rejected</option>
+                <option value="withdrawn">Withdrawn</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -222,17 +276,21 @@ const MyApplications: React.FC = () => {
           <LoadingSpinner text="Loading your applications..." />
         ) : applications.length === 0 ? (
           <EmptyState
-            title={statusFilter === 'all' && !debouncedSearch ? "No applications yet" : "No matching applications"}
+            title={
+              statusFilter === 'all' && !debouncedSearch
+                ? 'No applications yet'
+                : 'No matching applications'
+            }
             description={
               statusFilter === 'all' && !debouncedSearch
-                ? "Start applying to jobs to see your applications here."
-                : "Try adjusting your search or filter criteria."
+                ? 'Start applying to jobs to see your applications here.'
+                : 'Try adjusting your search or filter criteria.'
             }
             action={
               statusFilter === 'all' && !debouncedSearch ? (
                 <Link
                   to="/job-seeker/browse-jobs"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="inline-flex items-center justify-center bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white hover:bg-[#2e3a94]"
                 >
                   Browse Jobs
                 </Link>
@@ -242,7 +300,7 @@ const MyApplications: React.FC = () => {
                     setSearchTerm('');
                     setStatusFilter('all');
                   }}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="inline-flex items-center justify-center bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white hover:bg-[#2e3a94]"
                 >
                   Clear Filters
                 </button>
@@ -250,250 +308,307 @@ const MyApplications: React.FC = () => {
             }
           />
         ) : (
-          /* Applications Table */
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-slate-950 border-b border-gray-200 dark:border-slate-800">
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Job Title</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Company</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Applied Date</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Status</th>                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Interview</th>                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">AI Match</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-slate-300">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {applications.map((application) => {
-                    const job = typeof application.jobId === 'object' ? application.jobId as Job : null;
-                    const jobId = typeof application.jobId === 'string' ? application.jobId : job?._id;
-                    
-                    // Get real match score from cached data
-                    const matchData = jobId ? matchScores[jobId] : null;
-                    const hasMatchScore = matchData?.matchScore !== null && matchData?.matchScore !== undefined;
-                    
-                    // Check if job is deleted or inactive
-                    const isJobInactive = job?.isDeleted || (job && !job.isActive);
+          <div className="border border-slate-200 bg-white">
+            <div className="hidden border-b border-slate-200 bg-slate-50 lg:block">
+              <div className="grid grid-cols-12 gap-4 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <div className="col-span-5">Application</div>
+                <div className="col-span-2">Status</div>
+                <div className="col-span-2">Interview</div>
+                <div className="col-span-1">Match</div>
+                <div className="col-span-2 text-right">Actions</div>
+              </div>
+            </div>
 
-                    // Get interview info (safely cast)
-                    const appWithInterviews = application as Application;
-                    const interviews = (appWithInterviews.interviews || []) as Interview[];
-                    const hasInterviews = interviews.length > 0;
-                    const isExpanded = expandedAppId === application._id;
-                    const canWithdraw = application.status === 'applied' || application.status === 'shortlisted';
-                    
-                    return (
-                      <React.Fragment key={application._id}>
-                        <tr className="hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950">
-                          <td className="px-6 py-4">
-                            <div>
-                              <div className="font-medium text-gray-900 dark:text-slate-100">{job?.title || 'Job Title'}</div>
-                              {isJobInactive && (
-                                <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
-                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                  </svg>
-                                  Job Removed
-                                </span>
-                              )}
+            <div className="divide-y divide-slate-200 py-1">
+              {applications.map((application) => {
+                const job = typeof application.jobId === 'object' ? (application.jobId as Job) : null;
+                const jobId = typeof application.jobId === 'string' ? application.jobId : job?._id;
+
+                const matchData = jobId ? matchScores[jobId] : null;
+                const hasMatchScore =
+                  matchData?.matchScore !== null && matchData?.matchScore !== undefined;
+
+                const isJobInactive = job?.isDeleted || (job && !job.isActive);
+
+                const appWithInterviews = application as Application;
+                const interviews = (appWithInterviews.interviews || []) as Interview[];
+                const hasInterviews = interviews.length > 0;
+                const isExpanded = expandedAppId === application._id;
+                const canWithdraw =
+                  application.status === 'applied' || application.status === 'shortlisted';
+
+                const isActive = activeCardId === application._id;
+
+                return (
+                  <React.Fragment key={application._id}>
+                    <div
+                      onClick={() =>
+                        setActiveCardId(isActive ? null : application._id)
+                      }
+                      className={`group relative mx-2 my-1 cursor-pointer overflow-hidden rounded-md border transition-all duration-200 ${
+                        isActive
+                          ? 'z-10 -translate-y-[2px] scale-[1.01] border-amber-200 bg-white shadow-md'
+                          : 'border-transparent bg-white hover:border-slate-200 hover:bg-slate-50/70 hover:shadow-sm'
+                      }`}
+                    >
+                      {isActive && (
+                        <span className="absolute left-0 top-0 h-full w-[3px] rounded-l-md bg-amber-500" />
+                      )}
+                      <div className="px-5 py-5">
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-center">
+                          <div className="lg:col-span-5">
+                            <div className="flex items-start gap-3">
+                              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center border border-slate-200 bg-slate-50 text-slate-500">
+                                <svg
+                                  className="h-5 w-5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={1.8}
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-16 0H3m4-14h10M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"
+                                  />
+                                </svg>
+                              </div>
+
+                              <div className="min-w-0">
+                                <h3 className="text-[15px] font-semibold text-slate-900">
+                                  {job?.title || 'Job Title'}
+                                </h3>
+
+                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
+                                  <span className="font-medium text-slate-700">
+                                    {job?.companyName || 'Company'}
+                                  </span>
+                                  {job?.location && <span>{job.location}</span>}
+                                  <span>Applied {formatDate(application.createdAt)}</span>
+                                </div>
+
+                                {isJobInactive && (
+                                  <span className="mt-2 inline-flex items-center border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
+                                    Job Removed
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </td>
-                          <td className="px-6 py-4 text-gray-600 dark:text-slate-300">{job?.companyName || 'Company'}</td>
-                          <td className="px-6 py-4 text-gray-600 dark:text-slate-300">{formatDate(application.createdAt)}</td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
+                          </div>
+
+                          <div className="lg:col-span-2">
+                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400 lg:hidden">
+                              Status
+                            </p>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-1 text-[11px] font-medium transition-colors ${getHumanStatusBadgeClass(
+                                application.status
+                              )}`}
+                            >
                               {getStatusLabel(application.status)}
                             </span>
-                          </td>
-                          <td className="px-6 py-4">
+                          </div>
+
+                          <div className="lg:col-span-2">
+                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400 lg:hidden">
+                              Interview
+                            </p>
                             {hasInterviews ? (
                               <button
-                                onClick={() => setExpandedAppId(isExpanded ? null : application._id)}
-                                className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedAppId(isExpanded ? null : application._id);
+                                }}
+                                className="inline-flex items-center gap-1 text-sm font-medium text-[#3b4bb8] hover:text-[#2e3a94]"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
                                 {interviews.length} Round{interviews.length > 1 ? 's' : ''}
-                                <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                <svg
+                                  className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                  />
                                 </svg>
                               </button>
                             ) : (
-                              <span className="text-gray-400 dark:text-slate-500 text-xs">—</span>
+                              <span className="text-sm text-slate-400">—</span>
                             )}
-                          </td>
-                          <td className="px-6 py-4">
+                          </div>
+
+                          <div className="lg:col-span-1">
+                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400 lg:hidden">
+                              Match
+                            </p>
                             {hasMatchScore ? (
-                              <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                                {matchData.matchScore}%
+                              <span className="inline-flex border border-indigo-100 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-700">
+                                {matchData.matchScore}% Match
                               </span>
                             ) : (
-                              <span className="text-gray-400 dark:text-slate-500 text-xs">—</span>
+                              <span className="text-sm text-slate-400">—</span>
                             )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
+                          </div>
+
+                          <div className="lg:col-span-2">
+                            <div className="flex flex-wrap items-center gap-3 lg:justify-end">
                               {job && jobId ? (
                                 <Link
                                   to={`/job-seeker/jobs/${jobId}`}
-                                  className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-sm font-medium text-[#3b4bb8] hover:text-[#2e3a94]"
                                 >
                                   View Job
                                 </Link>
                               ) : (
-                                <span className="text-gray-400 dark:text-slate-500 text-sm">N/A</span>
+                                <span className="text-sm text-slate-400">N/A</span>
                               )}
 
                               <button
                                 type="button"
-                                onClick={() => setWithdrawTargetId(application._id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setWithdrawTargetId(application._id);
+                                }}
                                 disabled={!canWithdraw || withdrawMutation.isPending}
-                                title={canWithdraw ? 'Withdraw Application' : 'Withdrawal is only allowed for applied or shortlisted applications'}
-                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                                title={
                                   canWithdraw
-                                    ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
-                                    : 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500 border border-gray-200 dark:border-slate-800 cursor-not-allowed'
+                                    ? 'Withdraw Application'
+                                    : 'Withdrawal is only allowed for applied or shortlisted applications'
+                                }
+                                className={`inline-flex items-center justify-center border px-3 py-1.5 text-xs font-medium transition-colors ${
+                                  canWithdraw
+                                    ? 'border-red-300 text-red-600 hover:bg-red-50'
+                                    : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
                                 }`}
                               >
-                                Withdraw Application
+                                Withdraw
                               </button>
                             </div>
-                          </td>
-                        </tr>
-                        
-                        {/* Expandable Interview Details Row */}
-                        {isExpanded && hasInterviews && (
-                          <tr>
-                            <td colSpan={7} className="px-6 py-4 bg-gray-50 dark:bg-slate-950">
-                              <div className="space-y-3">
-                                <h4 className="font-semibold text-gray-900 dark:text-slate-100 text-sm">Interview Schedule</h4>
-                                {interviews.map((interview: Interview, idx: number) => {
-                                  const interviewStatus = getInterviewDisplayStatusMeta(interview);
-                                  const interviewOutcome = getInterviewOutcomeMeta(interview);
-                                  const timeRange = formatInterviewTimeRange(interview);
-                                  
-                                  return (
-                                  <div key={idx} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg p-4">
-                                    <div className="flex items-start justify-between mb-2">
-                                      <div className="flex items-center gap-2">
-                                        <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
-                                          Round {interview.roundNumber}
-                                        </span>
-                                        <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded text-xs capitalize">
-                                          {interview.mode}
-                                        </span>
-                                      </div>
-                                      {/* Candidate-safe status: only show Scheduled or Completed */}
-                                      <span className={`px-2 py-1 rounded text-xs font-medium ${interviewStatus.colorClass}`}>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {isExpanded && hasInterviews && (
+                      <div className="mx-2 mb-2 border border-slate-200 bg-slate-50 px-5 py-4">
+                        <div className="mb-3">
+                          <h4 className="text-sm font-semibold text-slate-900">Interview Schedule</h4>
+                        </div>
+
+                        <div className="space-y-3">
+                          {interviews.map((interview: Interview, idx: number) => {
+                            const interviewStatus = getInterviewDisplayStatusMeta(interview);
+                            const interviewOutcome = getInterviewOutcomeMeta(interview);
+                            const timeRange = formatInterviewTimeRange(interview);
+
+                            return (
+                              <div key={idx} className="border border-slate-200 bg-white p-4">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                  <div className="space-y-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="inline-flex border border-indigo-100 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-700">
+                                        Round {interview.roundNumber}
+                                      </span>
+                                      <span className="inline-flex border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium capitalize text-slate-600">
+                                        {interview.mode}
+                                      </span>
+                                      <span
+                                        className={`inline-flex px-2 py-1 text-[11px] font-medium ${interviewStatus.colorClass}`}
+                                      >
                                         {interviewStatus.label}
                                       </span>
                                     </div>
-                                    <div className="text-sm space-y-2">
-                                      <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
-                                        <span className="text-xs text-gray-500 dark:text-slate-400">Result:</span>
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${interviewOutcome.colorClass}`}>
+
+                                    <div className="space-y-2 text-sm text-slate-700">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-xs text-slate-500">Result:</span>
+                                        <span
+                                          className={`inline-flex px-2 py-1 text-[11px] font-medium ${interviewOutcome.colorClass}`}
+                                        >
                                           {interviewOutcome.label}
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <span className="font-medium">
-                                          {new Date(interview.date).toLocaleDateString('en-US', { 
-                                            weekday: 'long',
-                                            year: 'numeric', 
-                                            month: 'long', 
-                                            day: 'numeric' 
-                                          })}
-                                        </span>
+
+                                      <div>
+                                        {new Date(interview.date).toLocaleDateString('en-US', {
+                                          weekday: 'long',
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric'
+                                        })}
                                       </div>
+
                                       {timeRange && (
-                                        <div className="flex items-center gap-2 text-gray-600 dark:text-slate-300">
-                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                          </svg>
-                                          <span>{timeRange} {interview.timezone && `(${interview.timezone})`}</span>
+                                        <div className="text-slate-600">
+                                          {timeRange} {interview.timezone && `(${interview.timezone})`}
                                         </div>
                                       )}
+
                                       {interview.linkOrLocation && (
-                                        <div className="flex items-start gap-2 text-gray-600 dark:text-slate-300">
-                                          <svg className="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            {interview.mode === 'online' ? (
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                                            ) : (
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            )}
-                                          </svg>
-                                          <div>
-                                            {interview.mode === 'online' ? (
-                                              <a href={interview.linkOrLocation} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline break-all">
-                                                {interview.linkOrLocation}
-                                              </a>
-                                            ) : (
-                                              <span className="break-words">{interview.linkOrLocation}</span>
-                                            )}
-                                          </div>
+                                        <div className="text-slate-600">
+                                          {interview.mode === 'online' ? (
+                                            <a
+                                              href={interview.linkOrLocation}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="break-all text-[#3b4bb8] hover:underline"
+                                            >
+                                              {interview.linkOrLocation}
+                                            </a>
+                                          ) : (
+                                            <span>{interview.linkOrLocation}</span>
+                                          )}
                                         </div>
                                       )}
-                                      {interview.messageToCandidate && (
-                                        <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                                          <p className="font-medium text-blue-900 text-xs mb-1">Message from Recruiter:</p>
-                                          <p className="text-blue-700 text-sm">{interview.messageToCandidate}</p>
-                                        </div>
-                                      )}
-                                      {interviewStatus.value === 'completed' && interviewOutcome.value === 'pending' && (
-                                        <p className="text-xs text-gray-500 dark:text-slate-400">Awaiting recruiter decision</p>
-                                      )}
-                                      {/* DO NOT SHOW: internalNotes, feedback, or pass/fail outcome - these are recruiter-only */}
                                     </div>
                                   </div>
-                                  );
-                                })}
+                                </div>
+
+                                {interview.messageToCandidate && (
+                                  <div className="mt-3 border border-slate-200 bg-slate-50 p-3">
+                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                      Message from Recruiter
+                                    </p>
+                                    <p className="mt-1 text-sm text-slate-700">
+                                      {interview.messageToCandidate}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {interviewStatus.value === 'completed' &&
+                                  interviewOutcome.value === 'pending' && (
+                                    <p className="mt-3 text-xs text-slate-500">
+                                      Awaiting recruiter decision
+                                    </p>
+                                  )}
                               </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
 
             {paginationMeta && paginationMeta.pages > 1 && (
-              <PaginationControls
-                pagination={paginationMeta}
-                onPageChange={(nextPage) => {
-                  updatePaginationParams(nextPage, limit);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                isLoading={isLoading}
-              />
+              <div className="border-t border-slate-200 bg-white">
+                <PaginationControls
+                  pagination={paginationMeta}
+                  onPageChange={(nextPage) => {
+                    updatePaginationParams(nextPage, limit);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  isLoading={isLoading}
+                />
+              </div>
             )}
-          </div>
-        )}
-
-        {/* Stats Summary */}
-        {stats.total > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{stats.total}</p>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Total Applications</p>
-            </div>
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
-              <p className="text-2xl font-bold text-blue-600">{stats.pending}</p>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Pending</p>
-            </div>
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
-              <p className="text-2xl font-bold text-green-600">{stats.interview}</p>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Interview</p>
-            </div>
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4 text-center">
-              <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Rejected</p>
-            </div>
           </div>
         )}
 
@@ -512,9 +627,11 @@ const MyApplications: React.FC = () => {
                 typeof error === 'object' &&
                 error !== null &&
                 'response' in error &&
-                typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+                typeof (error as { response?: { data?: { message?: string } } }).response?.data
+                  ?.message === 'string'
                   ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
                   : 'Failed to withdraw application';
+
               handleError(errorMessage ?? 'Failed to withdraw application');
             }
           }}
@@ -531,4 +648,3 @@ const MyApplications: React.FC = () => {
 };
 
 export default MyApplications;
-

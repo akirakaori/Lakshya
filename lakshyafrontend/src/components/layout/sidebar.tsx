@@ -54,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ variant, isCollapsed, isMobileOpen, o
           type="button"
           aria-label="Close sidebar overlay"
           onClick={onCloseMobile}
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
         />
       )}
 
@@ -63,106 +63,101 @@ const Sidebar: React.FC<SidebarProps> = ({ variant, isCollapsed, isMobileOpen, o
           isCollapsed ? 'w-20' : 'w-64'
         } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
-      {/* Logo */}
-      <div className={`border-b border-slate-800 ${isCollapsed ? 'p-4' : 'p-6'}`}>
-        <Link
-          to="/"
-          className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}
-          onClick={onCloseMobile}
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 shadow-lg shadow-indigo-950/30">
-            <img src={lakshyaLogo} alt="Lakshya Logo" className="h-6 w-auto" />
-          </div>
-          {!isCollapsed && <span className="text-xl font-bold text-indigo-300">Lakshya</span>}
-        </Link>
-      </div>
+        <div className={`border-b border-slate-800 ${isCollapsed ? 'p-4' : 'p-6'}`}>
+          <Link
+            to="/"
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}
+            onClick={onCloseMobile}
+          >
+            <div className="flex h-8 w-8 items-center justify-center border border-slate-700 bg-slate-900">
+              <img src={lakshyaLogo} alt="Lakshya Logo" className="h-6 w-auto" />
+            </div>
+            {!isCollapsed && <span className="text-xl font-bold text-white">Lakshya</span>}
+          </Link>
+        </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 p-4 overflow-y-auto">
-        <ul className="space-y-2">
-          {links.map((link) => (
-            <li key={link.path}>
-              <Link
-                to={link.path}
-                onClick={onCloseMobile}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive(link.path)
-                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-950/30'
-                    : 'text-slate-300 hover:bg-slate-900 hover:text-white'
-                } ${isCollapsed ? 'justify-center px-2' : ''}`}
-                title={isCollapsed ? link.label : undefined}
+        <nav className="flex-1 overflow-y-auto p-4">
+          <ul className="space-y-2">
+            {links.map((link) => (
+              <li key={link.path}>
+                <Link
+                  to={link.path}
+                  onClick={onCloseMobile}
+                  className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                    isActive(link.path)
+                      ? 'bg-[#2563EB] text-white'
+                      : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+                  } ${isCollapsed ? 'justify-center px-2' : ''}`}
+                  title={isCollapsed ? link.label : undefined}
+                >
+                  <svg
+                    className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 ${
+                      isCollapsed ? 'scale-110' : 'scale-100'
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={link.icon} />
+                  </svg>
+                  <span
+                    className={`overflow-hidden whitespace-nowrap text-sm transition-all duration-300 ${
+                      isCollapsed ? 'max-w-0 -translate-x-1 opacity-0' : 'max-w-[11rem] translate-x-0 opacity-100'
+                    }`}
+                  >
+                    {link.label}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="space-y-2 border-t border-slate-800 p-4">
+          <button
+            onClick={() => setShowLogoutModal(true)}
+            className={`w-full px-4 py-3 text-left text-slate-300 transition-colors hover:bg-red-600 hover:text-white ${
+              isCollapsed ? 'px-2 text-center' : ''
+            }`}
+            title={isCollapsed ? 'Logout' : undefined}
+          >
+            <span className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
+              <svg
+                className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 ${
+                  isCollapsed ? 'scale-110' : 'scale-100'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
-                    isCollapsed ? 'scale-110' : 'scale-100'
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={link.icon} />
-                </svg>
-                <span
-                  className={`overflow-hidden whitespace-nowrap text-sm transition-all duration-300 ${
-                    isCollapsed ? 'max-w-0 -translate-x-1 opacity-0' : 'max-w-[11rem] translate-x-0 opacity-100'
-                  }`}
-                >
-                  {link.label}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      {/* Bottom Actions */}
-      <div className="space-y-2 border-t border-slate-800 p-4">
-        <button
-          onClick={() => setShowLogoutModal(true)}
-          className={`w-full rounded-lg px-4 py-3 text-left text-slate-300 transition-colors hover:bg-red-600 hover:text-white ${
-            isCollapsed ? 'px-2 text-center' : ''
-          }`}
-          title={isCollapsed ? 'Logout' : undefined}
-        >
-          <span className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
-            <svg
-              className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
-                isCollapsed ? 'scale-110' : 'scale-100'
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            <span
-              className={`overflow-hidden whitespace-nowrap text-sm transition-all duration-300 ${
-                isCollapsed ? 'max-w-0 -translate-x-1 opacity-0' : 'max-w-[11rem] translate-x-0 opacity-100'
-              }`}
-            >
-              Logout
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span
+                className={`overflow-hidden whitespace-nowrap text-sm transition-all duration-300 ${
+                  isCollapsed ? 'max-w-0 -translate-x-1 opacity-0' : 'max-w-[11rem] translate-x-0 opacity-100'
+                }`}
+              >
+                Logout
+              </span>
             </span>
-          </span>
-        </button>
-      </div>
+          </button>
+        </div>
 
-      {/* Logout Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showLogoutModal}
-        onClose={() => setShowLogoutModal(false)}
-        onConfirm={async () => {
-          // Clear all queries before logout to prevent stale data
-          await queryClient.cancelQueries();
-          queryClient.clear();
-          logout();
-          navigate('/login', { replace: true });
-        }}
-        title="Logout Confirmation"
-        message="Are you sure you want to logout? You will need to login again to access your account."
-        confirmText="Logout"
-        cancelText="Cancel"
-        confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
-      />
+        <ConfirmModal
+          isOpen={showLogoutModal}
+          onClose={() => setShowLogoutModal(false)}
+          onConfirm={async () => {
+            await queryClient.cancelQueries();
+            queryClient.clear();
+            logout();
+            navigate('/login', { replace: true });
+          }}
+          title="Logout Confirmation"
+          message="Are you sure you want to logout? You will need to login again to access your account."
+          confirmText="Logout"
+          cancelText="Cancel"
+          confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
+        />
       </aside>
     </>
   );
