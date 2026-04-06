@@ -84,22 +84,22 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`flex w-full items-center justify-between border bg-white px-4 py-2.5 text-left transition-colors ${
+        className={`flex w-full items-center justify-between border bg-white px-4 py-2.5 text-left transition-colors dark:bg-slate-900 ${
           disabled
-            ? 'cursor-not-allowed bg-slate-50 opacity-60'
+            ? 'cursor-not-allowed bg-slate-50 opacity-60 dark:bg-slate-800'
             : 'hover:border-[#2563EB] focus:border-[#2563EB] focus:ring-0'
         } ${
-          error ? 'border-red-300' : 'border-[#D1D5DB]'
+          error ? 'border-red-300 dark:border-red-500/40' : 'border-[#D1D5DB] dark:border-slate-700'
         } ${isOpen ? 'border-[#2563EB]' : ''}`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {value && selectedMeta ? (
             <>
               <span className="flex-shrink-0 text-lg">{selectedMeta.icon}</span>
-              <span className="truncate text-[14px] text-[#111827]">{value}</span>
+              <span className="truncate text-[14px] text-[#111827] dark:text-slate-100">{value}</span>
             </>
           ) : (
-            <span className="text-[14px] text-[#6B7280]">{placeholder}</span>
+            <span className="text-[14px] text-[#6B7280] dark:text-slate-400">{placeholder}</span>
           )}
         </div>
 
@@ -108,16 +108,16 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
             <span
               role="button"
               onClick={handleClear}
-              className="cursor-pointer p-0.5 transition-colors hover:bg-slate-100"
+              className="cursor-pointer p-0.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
               title="Clear selection"
             >
-              <svg className="h-4 w-4 text-slate-400 hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </span>
           )}
           <svg
-            className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            className={`h-4 w-4 text-slate-400 transition-transform dark:text-slate-500 ${isOpen ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -132,12 +132,12 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
       )}
 
       {isOpen && (
-        <div className="absolute z-50 mt-2 w-full overflow-hidden border border-[#E5E7EB] bg-white">
+        <div className="absolute z-50 mt-2 w-full overflow-hidden border border-[#E5E7EB] bg-white dark:border-slate-700 dark:bg-slate-900">
           {searchable && (
-            <div className="border-b border-[#E5E7EB] bg-[#F9FAFB] p-2">
+            <div className="border-b border-[#E5E7EB] bg-[#F9FAFB] p-2 dark:border-slate-800 dark:bg-slate-950">
               <div className="relative">
                 <svg
-                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -150,7 +150,7 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search categories..."
-                  className="w-full border border-[#D1D5DB] bg-white py-2 pl-9 pr-3 text-[14px] text-[#111827] outline-none focus:border-[#2563EB]"
+                  className="w-full border border-[#D1D5DB] bg-white py-2 pl-9 pr-3 text-[14px] text-[#111827] outline-none focus:border-[#2563EB] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
               </div>
             </div>
@@ -171,13 +171,13 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
                       className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                         isSelected
                           ? 'bg-blue-50 text-blue-700'
-                          : 'text-[#111827] hover:bg-slate-50'
+                          : 'text-[#111827] hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
                       <span className="flex-shrink-0 text-lg">{meta.icon}</span>
                       <span className="flex-1 truncate text-[14px] font-medium">{category}</span>
                       {isSelected && (
-                        <svg className="h-5 w-5 flex-shrink-0 text-[#2563EB]" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="h-5 w-5 flex-shrink-0 text-[#2563EB] dark:text-indigo-300" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       )}
@@ -186,7 +186,7 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
                 })}
               </div>
             ) : (
-              <div className="px-4 py-8 text-center text-[13px] text-[#6B7280]">
+              <div className="px-4 py-8 text-center text-[13px] text-[#6B7280] dark:text-slate-400">
                 No categories found matching "{searchTerm}"
               </div>
             )}

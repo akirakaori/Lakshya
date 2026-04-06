@@ -28,13 +28,13 @@ interface Applicant {
   };
 }
 
-const panelClass = 'rounded-sm border border-slate-300 bg-white';
+const panelClass = 'rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900';
 const inputClass =
-  'w-full rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#3b4bb8]';
+  'w-full rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 outline-none transition-colors placeholder:text-slate-400 focus:border-[#3b4bb8]';
 const selectClass =
-  'rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-colors focus:border-[#3b4bb8]';
+  'rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 outline-none transition-colors focus:border-[#3b4bb8]';
 const subtleButtonClass =
-  'inline-flex items-center justify-center rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50';
+  'inline-flex items-center justify-center rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800';
 const primaryButtonClass =
   'inline-flex items-center justify-center rounded-sm border border-[#3b4bb8] bg-[#3b4bb8] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94]';
 
@@ -226,7 +226,7 @@ const JobApplications: React.FC = () => {
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'applied':
-        return 'bg-slate-100 text-slate-700';
+        return 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
       case 'shortlisted':
         return 'bg-emerald-50 text-emerald-700';
       case 'interview':
@@ -240,22 +240,22 @@ const JobApplications: React.FC = () => {
       case 'withdrawn':
         return 'bg-amber-50 text-amber-800';
       default:
-        return 'bg-slate-100 text-slate-700';
+        return 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
     }
   };
 
   const getAnalysisBadgeClass = (isAnalyzed: boolean) =>
     isAnalyzed
       ? 'bg-emerald-50 text-emerald-700'
-      : 'bg-slate-100 text-slate-600';
+      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
 
   const getScoreTextClass = (score: number) => {
     if (score >= 85) return 'text-emerald-700';
     if (score >= 70) return 'text-amber-600';
-    return 'text-slate-500';
+    return 'text-slate-500 dark:text-slate-400';
   };
 
-const matchedSkillClass = 'inline-flex items-center rounded-sm border border-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-700';
+const matchedSkillClass = 'inline-flex items-center rounded-sm border border-slate-200 dark:border-slate-800 px-1.5 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300';
 const missingSkillClass = 'inline-flex items-center rounded-sm border border-red-100 bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-700';
 
   const formatDate = (dateString: string) => {
@@ -292,7 +292,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
         <div className="mb-6">
           <Link
             to="/recruiter/manage-jobs"
-            className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+            className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 19l-7-7 7-7" />
@@ -300,13 +300,13 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
             Back to Jobs
           </Link>
 
-          <h1 className="text-[32px] font-semibold tracking-tight text-slate-900">{job.title}</h1>
-          <p className="mt-1 text-sm text-slate-500">{job.companyName}</p>
+          <h1 className="text-[32px] font-semibold tracking-tight text-slate-900 dark:text-slate-100">{job.title}</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{job.companyName}</p>
         </div>
 
         {/* Tabs + Toolbar */}
         <div className={`${panelClass} mb-6 overflow-hidden`}>
-          <div className="border-b border-slate-200">
+          <div className="border-b border-slate-200 dark:border-slate-800">
             <nav className="relative flex overflow-x-auto">
               {[
                 { key: 'all', label: 'All', count: counts.total },
@@ -325,7 +325,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                   className={`relative whitespace-nowrap px-6 py-4 text-sm font-medium transition-colors ${
                     activeTab === tab.key
                       ? 'text-[#3b4bb8]'
-                      : 'text-slate-500 hover:text-slate-700'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                   } ${
                     activeTab === tab.key ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#3b4bb8]' : ''
                   }`}
@@ -334,7 +334,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                   <span className={`ml-2 text-[11px] font-semibold ${
                       activeTab === tab.key
                         ? 'text-[#4654c7]'
-                        : 'text-slate-500'
+                        : 'text-slate-500 dark:text-slate-400'
                     }`}
                   >
                     {tab.count}
@@ -375,7 +375,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <label className="whitespace-nowrap text-sm font-medium text-slate-600">Sort by:</label>
+                  <label className="whitespace-nowrap text-sm font-medium text-slate-600 dark:text-slate-400">Sort by:</label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
@@ -395,8 +395,8 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                   className={`inline-flex items-center gap-2 rounded-sm border px-4 py-2 text-sm font-medium transition-colors ${
                     showAdvancedFilters || activeFilterCount > 0
-                      ? 'border-slate-300 bg-[#3b4bb8]/5 text-slate-900'
-                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                      ? 'border-slate-300 dark:border-slate-700 bg-[#3b4bb8]/5 text-slate-900 dark:text-slate-100'
+                      : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -404,7 +404,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                   </svg>
                   Match Filters
                   {activeFilterCount > 0 && (
-                    <span className="inline-flex items-center rounded-sm bg-slate-200 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">
+                    <span className="inline-flex items-center rounded-sm bg-slate-200 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                       {activeFilterCount}
                     </span>
                   )}
@@ -414,10 +414,10 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
 
             {/* Advanced Filters */}
             {showAdvancedFilters && (
-              <div className="mt-4 border-t border-slate-200 pt-4">
+              <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Minimum Match Score
                     </label>
                     <select
@@ -435,7 +435,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Must Have Skill
                     </label>
                     <input
@@ -451,7 +451,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Missing Skill
                     </label>
                     <input
@@ -467,7 +467,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Analysis Status
                     </label>
                     <select
@@ -506,48 +506,48 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
 
             {/* Bulk Actions */}
             {selectedApplications.size > 0 && (
-              <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-slate-200 bg-slate-50 px-4 py-3">
-                <span className="text-sm font-medium text-slate-700">
+              <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   {selectedApplications.size} selected
                 </span>
                 <button
                   onClick={() => handleBulkStatusUpdate('shortlisted')}
                   disabled={bulkUpdateMutation.isPending}
-                  className="text-sm font-medium text-slate-600 hover:text-slate-900 disabled:opacity-50"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-50"
                 >
                   Shortlist
                 </button>
                 <button
                   onClick={() => handleBulkStatusUpdate('interview')}
                   disabled={bulkUpdateMutation.isPending}
-                  className="text-sm font-medium text-slate-600 hover:text-slate-900 disabled:opacity-50"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-50"
                 >
                   Interview
                 </button>
                 <button
                   onClick={() => handleBulkStatusUpdate('hired')}
                   disabled={bulkUpdateMutation.isPending}
-                  className="text-sm font-medium text-slate-600 hover:text-slate-900 disabled:opacity-50"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-50"
                 >
                   Hire
                 </button>
                 <button
                   onClick={() => handleBulkStatusUpdate('offer')}
                   disabled={bulkUpdateMutation.isPending}
-                  className="text-sm font-medium text-slate-600 hover:text-slate-900 disabled:opacity-50"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-50"
                 >
                   Offer
                 </button>
                 <button
                   onClick={() => handleBulkStatusUpdate('rejected')}
                   disabled={bulkUpdateMutation.isPending}
-                  className="text-sm font-medium text-slate-600 hover:text-slate-900 disabled:opacity-50"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-50"
                 >
                   Reject
                 </button>
                 <button
                   onClick={() => setSelectedApplications(new Set())}
-                  className="text-sm font-medium text-slate-500 hover:text-slate-700"
+                  className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                 >
                   Clear
                 </button>
@@ -558,12 +558,12 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
 
         {/* Filtering Indicator */}
         {isFetching && !isLoading && (
-          <div className="mb-4 flex items-center gap-2 rounded-sm border border-slate-200 bg-slate-50 px-4 py-2">
-            <svg className="h-4 w-4 animate-spin text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <div className="mb-4 flex items-center gap-2 rounded-sm border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-4 py-2">
+            <svg className="h-4 w-4 animate-spin text-slate-600 dark:text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span className="text-sm font-medium text-slate-600">Filtering...</span>
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filtering...</span>
           </div>
         )}
 
@@ -582,7 +582,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
+                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
                     <th className="px-4 py-3 text-left">
                       <input
                         type="checkbox"
@@ -593,21 +593,21 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                         }
                         onChange={handleSelectAll}
                         disabled={!applications.some((app: RecruiterApplication) => app.status !== 'withdrawn' && !app.isWithdrawn)}
-                        className="rounded-sm border-slate-300 text-[#3b4bb8] focus:ring-[#3b4bb8]"
+                        className="rounded-sm border-slate-300 dark:border-slate-700 text-[#3b4bb8] focus:ring-[#3b4bb8]"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Candidate</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Match Score</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Analysis Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Matched Skills</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Missing Skills</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Experience</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Applied</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Candidate</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Match Score</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Analysis Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Matched Skills</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Missing Skills</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Experience</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Applied</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                   {applications.map((application: RecruiterApplication) => {
                     const applicant = typeof application.applicant === 'object'
                       ? (application.applicant as Applicant)
@@ -623,7 +623,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                     return (
                       <tr
                         key={application._id}
-                        className={`transition-colors hover:bg-slate-50 ${isSelected ? 'bg-[#f7f8ff]' : ''}`}
+                        className={`transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${isSelected ? 'bg-[#f7f8ff]' : ''}`}
                       >
                         <td className="px-4 py-4">
                           <input
@@ -631,7 +631,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                             checked={isSelected}
                             onChange={() => handleSelectOne(application._id)}
                             disabled={isWithdrawn}
-                            className="rounded-sm border-slate-300 text-[#3b4bb8] focus:ring-[#3b4bb8]"
+                            className="rounded-sm border-slate-300 dark:border-slate-700 text-[#3b4bb8] focus:ring-[#3b4bb8]"
                           />
                         </td>
 
@@ -640,15 +640,15 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                             {avatarUrl ? (
                               <img src={avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
                             ) : (
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-100">
-                                <span className="text-sm font-medium text-slate-700">{initials}</span>
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{initials}</span>
                               </div>
                             )}
                             <div className="min-w-0">
-                              <div className="font-medium text-slate-900">
+                              <div className="font-medium text-slate-900 dark:text-slate-100">
                                 {applicant?.fullName || applicant?.name || 'Unknown'}
                               </div>
-                              <div className="text-sm text-slate-500">{applicant?.email}</div>
+                              <div className="text-sm text-slate-500 dark:text-slate-400">{applicant?.email}</div>
                               {applicant?.jobSeeker?.title && (
                                 <div className="text-xs text-slate-400">{applicant.jobSeeker.title}</div>
                               )}
@@ -680,7 +680,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                               </span>
                             ))}
                             {(application.matchedSkills?.length || 0) > 2 && (
-                              <span className="text-[11px] font-medium text-slate-500">
+                              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                                 +{(application.matchedSkills?.length || 0) - 2}
                               </span>
                             )}
@@ -708,11 +708,11 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                           </div>
                         </td>
 
-                        <td className="px-4 py-4 text-sm text-slate-600">
+                        <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-400">
                           {application.experienceYears || 0} yrs
                         </td>
 
-                        <td className="px-4 py-4 text-sm text-slate-600">
+                        <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-400">
                           {formatDate(application.createdAt)}
                         </td>
 
@@ -745,7 +745,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                             </button>
                             <Link
                               to={`/recruiter/application/${application._id}`}
-                              className="text-sm font-medium text-slate-600 hover:text-slate-800"
+                              className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                             >
                               Profile
                             </Link>
@@ -754,7 +754,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                                 href={getFileUrl(applicant.jobSeeker.resumeUrl) || '#'}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-slate-500 hover:text-slate-700"
+                                className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                                 title="View Resume"
                               >
                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -789,7 +789,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
           if (drawerLoading) {
             return (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-                <div className="rounded-sm border border-slate-300 bg-white p-8 shadow-lg">
+                <div className="rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 shadow-lg">
                   <LoadingSpinner text="Loading details..." />
                 </div>
               </div>
@@ -804,8 +804,8 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
           if (!viewingDetails || !applicant) {
             return (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-                <div className="rounded-sm border border-slate-300 bg-white p-8 shadow-lg">
-                  <p className="text-slate-600">Application not found</p>
+                <div className="rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 shadow-lg">
+                  <p className="text-slate-600 dark:text-slate-400">Application not found</p>
                   <button
                     onClick={() => setViewingDetailsId(null)}
                     className="mt-4 rounded-sm border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94]"
@@ -819,17 +819,17 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
 
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-              <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-sm border border-slate-300 bg-white shadow-lg">
-                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-6 py-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-900">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                       {applicant?.fullName || applicant?.name || 'Candidate'}
                     </h3>
-                    <p className="text-sm text-slate-500">{applicant?.email}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{applicant?.email}</p>
                   </div>
                   <button
                     onClick={() => setViewingDetailsId(null)}
-                    className="text-slate-500 hover:text-slate-700"
+                    className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   >
                     <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -839,26 +839,26 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
 
                 <div className="max-h-[calc(90vh-180px)] overflow-y-auto px-6 py-5">
                   {/* Match Score Summary */}
-                  <div className="mb-6 grid grid-cols-1 gap-px md:grid-cols-3 bg-slate-100 rounded-sm overflow-hidden">
-                    <div className="bg-white p-4">
-                      <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Match Score</div>
-                      <div className="text-2xl font-semibold text-slate-900">
+                  <div className="mb-6 grid grid-cols-1 gap-px md:grid-cols-3 bg-slate-100 dark:bg-slate-800 rounded-sm overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 p-4">
+                      <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Match Score</div>
+                      <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                         {detailsAnalyzed ? `${detailsMatchScore}%` : 'Not analyzed'}
                       </div>
                     </div>
-                    <div className="bg-white p-4">
-                      <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Matched Skills</div>
-                      <div className="text-2xl font-semibold text-slate-900">{viewingDetails.matchedSkills?.length || 0}</div>
+                    <div className="bg-white dark:bg-slate-900 p-4">
+                      <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Matched Skills</div>
+                      <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{viewingDetails.matchedSkills?.length || 0}</div>
                     </div>
-                    <div className="bg-white p-4">
-                      <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Missing Skills</div>
-                      <div className="text-2xl font-semibold text-slate-900">{viewingDetails.missingSkills?.length || 0}</div>
+                    <div className="bg-white dark:bg-slate-900 p-4">
+                      <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Missing Skills</div>
+                      <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{viewingDetails.missingSkills?.length || 0}</div>
                     </div>
                   </div>
 
                   {/* Matched Skills */}
                   <div className="mb-6">
-                    <h4 className="mb-3 text-sm font-semibold text-slate-900">Matched Skills</h4>
+                    <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Matched Skills</h4>
                     {viewingDetails.matchedSkills && viewingDetails.matchedSkills.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {viewingDetails.matchedSkills.map((skill: string, idx: number) => (
@@ -868,13 +868,13 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm italic text-slate-500">No matched skills recorded</p>
+                      <p className="text-sm italic text-slate-500 dark:text-slate-400">No matched skills recorded</p>
                     )}
                   </div>
 
                   {/* Missing Skills */}
                   <div className="mb-6">
-                    <h4 className="mb-3 text-sm font-semibold text-slate-900">Missing Skills</h4>
+                    <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Missing Skills</h4>
                     {viewingDetails.missingSkills && viewingDetails.missingSkills.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {viewingDetails.missingSkills.map((skill: string, idx: number) => (
@@ -884,28 +884,28 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm italic text-slate-500">No missing skills recorded</p>
+                      <p className="text-sm italic text-slate-500 dark:text-slate-400">No missing skills recorded</p>
                     )}
                   </div>
 
                   {/* Additional Info */}
-                  <div className="mb-6 grid grid-cols-1 gap-px md:grid-cols-2 bg-slate-100 rounded-sm overflow-hidden">
-                    <div className="bg-white p-4">
-                      <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Experience</div>
-                      <div className="text-lg font-semibold text-slate-900">{viewingDetails.experienceYears || 0} years</div>
+                  <div className="mb-6 grid grid-cols-1 gap-px md:grid-cols-2 bg-slate-100 dark:bg-slate-800 rounded-sm overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 p-4">
+                      <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Experience</div>
+                      <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">{viewingDetails.experienceYears || 0} years</div>
                     </div>
-                    <div className="bg-white p-4">
-                      <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Applied On</div>
-                      <div className="text-lg font-semibold text-slate-900">{formatDate(viewingDetails.createdAt)}</div>
+                    <div className="bg-white dark:bg-slate-900 p-4">
+                      <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Applied On</div>
+                      <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">{formatDate(viewingDetails.createdAt)}</div>
                     </div>
                   </div>
 
                   {/* Notes */}
                   {viewingDetails.notes && (
                     <div className="mb-6">
-                      <h4 className="mb-2 text-sm font-semibold text-slate-900">Recruiter Notes</h4>
-                      <div className="rounded-sm border-l-2 border-amber-300 bg-white p-4 pl-3">
-                        <p className="whitespace-pre-wrap text-sm text-slate-700">
+                      <h4 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">Recruiter Notes</h4>
+                      <div className="rounded-sm border-l-2 border-amber-300 bg-white dark:bg-slate-900 p-4 pl-3">
+                        <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
                           {viewingDetails.notes}
                         </p>
                       </div>
@@ -913,8 +913,8 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                   )}
 
                   {/* Status Update */}
-                  <div className="border-t border-slate-200 pt-4">
-                    <h4 className="mb-3 text-sm font-semibold text-slate-900">Update Status</h4>
+                  <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+                    <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Update Status</h4>
                     {(viewingDetails.status === 'withdrawn' || viewingDetails.isWithdrawn) ? (
                       <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
                         This candidate withdrew the application. Status updates are disabled.
@@ -934,7 +934,7 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                             disabled={viewingDetails.status === status}
                             className={`rounded-sm border px-4 py-2 text-sm font-medium transition-colors ${
                               viewingDetails.status === status
-                                ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                                ? 'cursor-not-allowed border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-400'
                                 : status === 'rejected'
                                   ? 'border-red-600 bg-red-600 text-white hover:bg-red-700'
                                   : 'border-[#3b4bb8] bg-[#3b4bb8] text-white hover:bg-[#2e3a94]'
@@ -948,17 +948,17 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                   </div>
                 </div>
 
-                <div className="flex justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
+                <div className="flex justify-between border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-6 py-4">
                   <Link
                     to={`/recruiter/application/${viewingDetails._id}`}
-                    className="rounded-sm border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                    className="rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                     onClick={() => setViewingDetailsId(null)}
                   >
                     View Full Profile
                   </Link>
                   <button
                     onClick={() => setViewingDetailsId(null)}
-                    className="rounded-sm border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+                    className="rounded-sm border border-slate-300 dark:border-slate-700 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
                   >
                     Close
                   </button>

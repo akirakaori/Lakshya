@@ -50,9 +50,9 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({ filters, onRemoveFilter, 
   const removeButtonClass = 'ml-1 p-0.5 transition-colors';
 
   return (
-    <div className="mb-4 border border-[#E5E7EB] bg-white p-4">
+    <div className="mb-4 border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-[14px] font-semibold text-[#111827]">
+        <h3 className="text-[14px] font-semibold text-slate-900 dark:text-slate-100">
           Filters Applied ({activeCount})
         </h3>
         <button

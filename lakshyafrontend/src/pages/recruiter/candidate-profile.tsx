@@ -58,10 +58,10 @@ interface ApplicationSnapshot {
   interviews?: Interview[];
 }
 
-const baseCardClass = 'rounded-lg border border-slate-200 bg-white';
+const baseCardClass = 'rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900';
 const sectionCardClass = `${baseCardClass} p-6`;
-const sectionHeadingClass = 'text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500';
-const bodyTextClass = 'text-sm leading-6 text-slate-600';
+const sectionHeadingClass = 'text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400';
+const bodyTextClass = 'text-sm leading-6 text-slate-600 dark:text-slate-400';
 const subtleLabelClass = 'text-xs font-medium uppercase tracking-[0.06em] text-slate-400';
 
 const getApplicationStatusBadgeClass = (status: string) => {
@@ -78,7 +78,7 @@ const getApplicationStatusBadgeClass = (status: string) => {
       return 'border border-emerald-200 bg-emerald-50 text-emerald-700';
     case 'applied':
     default:
-      return 'border border-slate-200 bg-slate-50 text-slate-700';
+      return 'border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300';
   }
 };
 
@@ -88,12 +88,12 @@ const getPrimaryButtonClass = (disabled?: boolean) =>
   }`;
 
 const getSecondaryButtonClass = (disabled?: boolean) =>
-  `inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 ${
+  `inline-flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${
     disabled ? 'cursor-not-allowed opacity-50' : ''
   }`;
 
 const getDangerButtonClass = (disabled?: boolean) =>
-  `inline-flex items-center justify-center rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 ${
+  `inline-flex items-center justify-center rounded-md border border-red-200 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 ${
     disabled ? 'cursor-not-allowed opacity-50' : ''
   }`;
 
@@ -418,8 +418,8 @@ const CandidateProfile: React.FC = () => {
     return (
       <DashboardLayout variant="recruiter" title="Candidate Profile">
         <div className="py-12 text-center">
-          <h2 className="mb-2 text-xl font-semibold text-slate-900">Candidate not found</h2>
-          <p className="mb-4 text-sm text-slate-600">The candidate profile you're looking for doesn't exist.</p>
+          <h2 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-100">Candidate not found</h2>
+          <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">The candidate profile you're looking for doesn't exist.</p>
           <Link
             to="/recruiter/manage-jobs"
             className="font-medium text-[#3b4bb8] hover:text-[#2e3a94]"
@@ -447,14 +447,14 @@ const CandidateProfile: React.FC = () => {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.9fr)_320px]">
           <div className="space-y-6">
             <div className={`${baseCardClass} overflow-hidden`}>
-              <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+              <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-6 py-4">
                 <p className={sectionHeadingClass}>Candidate Profile</p>
               </div>
 
               <div className="px-6 py-6">
                 <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                   <div className="flex min-w-0 items-start gap-4">
-                    <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-slate-300 bg-slate-100">
+                    <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
                       {avatarUrl ? (
                         <img
                           src={avatarUrl}
@@ -462,21 +462,21 @@ const CandidateProfile: React.FC = () => {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-slate-100">
-                          <span className="text-xl font-semibold text-slate-700">{initials}</span>
+                        <div className="flex h-full w-full items-center justify-center bg-slate-100 dark:bg-slate-800">
+                          <span className="text-xl font-semibold text-slate-700 dark:text-slate-300">{initials}</span>
                         </div>
                       )}
                     </div>
 
                     <div className="min-w-0">
-                      <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+                      <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                         {candidate.fullName}
                       </h1>
-                      <p className="mt-1 text-sm font-medium text-slate-600">
+                      <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
                         {candidate.jobSeeker?.title || 'Job Seeker'}
                       </p>
 
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                         {application && (
                           <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.05em] ${getApplicationStatusBadgeClass(application.status)}`}>
                             {application.status}
@@ -553,16 +553,16 @@ const CandidateProfile: React.FC = () => {
                     )
                   }
                 ].map((item) => (
-                  <div key={item.label} className="rounded-md border border-slate-200 bg-slate-50/60 px-4 py-4">
+                  <div key={item.label} className="rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50/60 px-4 py-4">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500">
+                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400">
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           {item.icon}
                         </svg>
                       </div>
                       <div className="min-w-0">
                         <p className={subtleLabelClass}>{item.label}</p>
-                        <p className="mt-1 break-words text-sm font-medium text-slate-900">{item.value}</p>
+                        <p className="mt-1 break-words text-sm font-medium text-slate-900 dark:text-slate-100">{item.value}</p>
                       </div>
                     </div>
                   </div>
@@ -583,13 +583,13 @@ const CandidateProfile: React.FC = () => {
                 {candidate.jobSeeker?.skills?.map((skill, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700"
+                    className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300"
                   >
                     {skill}
                   </span>
                 ))}
                 {(!candidate.jobSeeker?.skills || candidate.jobSeeker.skills.length === 0) && (
-                  <p className="text-sm text-slate-500">No skills listed.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">No skills listed.</p>
                 )}
               </div>
             </div>
@@ -599,7 +599,7 @@ const CandidateProfile: React.FC = () => {
               {candidate.jobSeeker?.experience ? (
                 <div className="mt-4 space-y-3">
                   <div className="relative pl-6 before:absolute before:left-0 before:top-0 before:h-full before:w-[2px] before:bg-slate-200">
-                    <div className="absolute -left-[5px] top-1 h-3 w-3 rounded-full border-2 border-[#3b4bb8] bg-white"></div>
+                    <div className="absolute -left-[5px] top-1 h-3 w-3 rounded-full border-2 border-[#3b4bb8] bg-white dark:bg-slate-900"></div>
                     <p className={`whitespace-pre-wrap ${bodyTextClass}`}>
                       {candidate.jobSeeker.experience}
                     </p>
@@ -615,7 +615,7 @@ const CandidateProfile: React.FC = () => {
               {candidate.jobSeeker?.education ? (
                 <div className="mt-4 space-y-3">
                   <div className="relative pl-6 before:absolute before:left-0 before:top-0 before:h-full before:w-[2px] before:bg-slate-200">
-                    <div className="absolute -left-[5px] top-1 h-3 w-3 rounded-full border-2 border-[#3b4bb8] bg-white"></div>
+                    <div className="absolute -left-[5px] top-1 h-3 w-3 rounded-full border-2 border-[#3b4bb8] bg-white dark:bg-slate-900"></div>
                     <p className={`whitespace-pre-wrap ${bodyTextClass}`}>
                       {candidate.jobSeeker.education}
                     </p>
@@ -635,7 +635,7 @@ const CandidateProfile: React.FC = () => {
                     onChange={(e) => handleNotesChange(e.target.value)}
                     placeholder="Add private feedback about the candidate..."
                     rows={5}
-                    className="mt-4 w-full resize-none rounded-md border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#3b4bb8]"
+                    className="mt-4 w-full resize-none rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition-colors placeholder:text-slate-400 focus:border-[#3b4bb8]"
                   />
                   <div className="mt-3 flex items-center gap-3">
                     <button
@@ -651,7 +651,7 @@ const CandidateProfile: React.FC = () => {
                   </div>
                 </>
               ) : (
-                <p className="mt-4 text-sm text-slate-500">Application not found. Notes are not available.</p>
+                <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Application not found. Notes are not available.</p>
               )}
             </div>
           </div>
@@ -686,10 +686,10 @@ const CandidateProfile: React.FC = () => {
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-3xl font-semibold text-slate-900">{matchScore}%</span>
+                        <span className="text-3xl font-semibold text-slate-900 dark:text-slate-100">{matchScore}%</span>
                       </div>
                     </div>
-                    <p className="mt-3 text-sm font-medium text-slate-700">Overall Match Score</p>
+                    <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-300">Overall Match Score</p>
                     {matchAnalyzedAt && (
                       <p className="mt-1 text-xs text-slate-400">
                         Analyzed {new Date(matchAnalyzedAt).toLocaleDateString()}
@@ -699,7 +699,7 @@ const CandidateProfile: React.FC = () => {
 
                   {matchedSkills.length > 0 && (
                     <div className="mt-6">
-                      <h3 className="text-sm font-semibold text-slate-800">
+                      <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                         Matched Skills ({matchedSkills.length})
                       </h3>
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -712,7 +712,7 @@ const CandidateProfile: React.FC = () => {
                           </span>
                         ))}
                         {matchedSkills.length > 10 && (
-                          <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600">
+                          <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 text-xs text-slate-600 dark:text-slate-400">
                             +{matchedSkills.length - 10} more
                           </span>
                         )}
@@ -722,7 +722,7 @@ const CandidateProfile: React.FC = () => {
 
                   {missingSkills.length > 0 && (
                     <div className="mt-5">
-                      <h3 className="text-sm font-semibold text-slate-800">
+                      <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                         Missing Skills ({missingSkills.length})
                       </h3>
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -735,7 +735,7 @@ const CandidateProfile: React.FC = () => {
                           </span>
                         ))}
                         {missingSkills.length > 8 && (
-                          <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600">
+                          <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 text-xs text-slate-600 dark:text-slate-400">
                             +{missingSkills.length - 8} more
                           </span>
                         )}
@@ -745,7 +745,7 @@ const CandidateProfile: React.FC = () => {
                 </>
               ) : (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-slate-500">No analysis snapshot available</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">No analysis snapshot available</p>
                   <p className="mt-1 text-xs text-slate-400">
                     The candidate applied before match analysis was enabled
                   </p>
@@ -783,7 +783,7 @@ const CandidateProfile: React.FC = () => {
                           All rounds completed - Eligible for hire
                         </p>
                       ) : (
-                        <p className="mt-2 text-xs text-slate-600">
+                        <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
                           {interviewProgress.required - interviewProgress.completed} more round{interviewProgress.required - interviewProgress.completed > 1 ? 's' : ''} needed
                         </p>
                       )}
@@ -889,9 +889,9 @@ const CandidateProfile: React.FC = () => {
                   )}
 
                   {(application.status === 'rejected' || application.status === 'hired' || application.status === 'withdrawn') && (
-                    <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-4 text-center">
-                      <p className="text-sm text-slate-600">
-                        Status: <span className="font-medium capitalize text-slate-900">{application.status}</span>
+                    <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-4 py-4 text-center">
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Status: <span className="font-medium capitalize text-slate-900 dark:text-slate-100">{application.status}</span>
                       </p>
                       {application.status === 'hired' && (
                         <p className="mt-1 text-xs font-medium text-emerald-700">
@@ -909,7 +909,7 @@ const CandidateProfile: React.FC = () => {
                   </a>
                 </div>
               ) : (
-                <p className="mt-4 text-sm text-slate-500">Application not found. Quick actions are not available.</p>
+                <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Application not found. Quick actions are not available.</p>
               )}
             </div>
 
@@ -976,11 +976,11 @@ const CandidateProfile: React.FC = () => {
                       return (
                         <div
                           key={interview._id || `round-${interview.roundNumber}`}
-                          className="rounded-md border border-slate-200 bg-slate-50/40 p-4"
+                          className="rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50/40 p-4"
                         >
                           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-slate-700">
+                              <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-slate-700 dark:text-slate-300">
                                 Round {interview.roundNumber}
                               </span>
                               <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-medium ${outcomeMeta.colorClass}`}>
@@ -991,12 +991,12 @@ const CandidateProfile: React.FC = () => {
                               </span>
                             </div>
 
-                            <span className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium capitalize text-slate-600">
+                            <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-medium capitalize text-slate-600 dark:text-slate-400">
                               {interview.mode}
                             </span>
                           </div>
 
-                          <div className="space-y-2 text-sm text-slate-600">
+                          <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
                             <div className="flex items-center gap-2">
                               <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -1039,7 +1039,7 @@ const CandidateProfile: React.FC = () => {
                               </div>
                             )}
 
-                            <div className="mt-4 border-t border-slate-200 pt-3">
+                            <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-3">
                               {canEditOrReschedule && interview._id && (
                                 <div className="space-y-2">
                                   <button
@@ -1047,7 +1047,7 @@ const CandidateProfile: React.FC = () => {
                                       setInterviewToEdit(interview);
                                       setShowScheduleModal(true);
                                     }}
-                                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                                   >
                                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1059,7 +1059,7 @@ const CandidateProfile: React.FC = () => {
 
                               {canMarkOutcome && (
                                 <div className="space-y-2">
-                                  <p className="text-xs text-slate-500">
+                                  <p className="text-xs text-slate-500 dark:text-slate-400">
                                     Interview session completed. Record result to continue workflow.
                                   </p>
                                   <div className="flex gap-2">
@@ -1131,7 +1131,7 @@ const CandidateProfile: React.FC = () => {
                                         }
                                       }}
                                       disabled={updateInterviewOutcomeMutation.isPending}
-                                      className="flex-1 rounded-md border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                      className="flex-1 rounded-md border border-red-200 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                       Mark as Rejected
                                     </button>

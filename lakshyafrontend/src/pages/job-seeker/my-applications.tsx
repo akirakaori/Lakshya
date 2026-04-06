@@ -134,7 +134,7 @@ const MyApplications: React.FC = () => {
       case 'rejected':
         return 'bg-red-100 text-red-600 border border-red-200 hover:bg-red-200';
       default:
-        return 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200';
+        return 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-200';
     }
   };
 
@@ -187,10 +187,10 @@ const MyApplications: React.FC = () => {
 
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-[34px] font-semibold tracking-tight text-slate-900">
+            <h1 className="text-[34px] font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               My Applications
             </h1>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Track and manage your professional trajectory.
             </p>
           </div>
@@ -217,11 +217,11 @@ const MyApplications: React.FC = () => {
         {stats.total > 0 && (
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {statCards.map((item) => (
-              <div key={item.label} className="border border-slate-200 bg-white px-5 py-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+              <div key={item.label} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                   {item.label}
                 </p>
-                <p className="mt-2 text-4xl font-semibold leading-none tracking-tight text-slate-900">
+                <p className="mt-2 text-4xl font-semibold leading-none tracking-tight text-slate-900 dark:text-slate-100">
                   {String(item.value).padStart(2, '0')}
                 </p>
               </div>
@@ -229,7 +229,7 @@ const MyApplications: React.FC = () => {
           </div>
         )}
 
-        <div className="mb-6 border border-slate-200 bg-white px-4 py-3">
+        <div className="mb-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="relative flex-1">
               <svg
@@ -251,7 +251,7 @@ const MyApplications: React.FC = () => {
                 placeholder="Search by job title or company..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-10 w-full border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8]"
+                className="h-10 w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 pl-10 pr-4 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8]"
               />
             </div>
 
@@ -259,7 +259,7 @@ const MyApplications: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="h-10 min-w-[160px] border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-[#3b4bb8]"
+                className="h-10 min-w-[160px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 text-sm text-slate-700 dark:text-slate-300 outline-none transition focus:border-[#3b4bb8]"
               >
                 <option value="all">Status: All</option>
                 <option value="applied">Pending</option>
@@ -308,9 +308,9 @@ const MyApplications: React.FC = () => {
             }
           />
         ) : (
-          <div className="border border-slate-200 bg-white">
-            <div className="hidden border-b border-slate-200 bg-slate-50 lg:block">
-              <div className="grid grid-cols-12 gap-4 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+          <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <div className="hidden border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 lg:block">
+              <div className="grid grid-cols-12 gap-4 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                 <div className="col-span-5">Application</div>
                 <div className="col-span-2">Status</div>
                 <div className="col-span-2">Interview</div>
@@ -319,7 +319,7 @@ const MyApplications: React.FC = () => {
               </div>
             </div>
 
-            <div className="divide-y divide-slate-200 py-1">
+            <div className="divide-y divide-slate-200 dark:divide-slate-800 py-1">
               {applications.map((application) => {
                 const job = typeof application.jobId === 'object' ? (application.jobId as Job) : null;
                 const jobId = typeof application.jobId === 'string' ? application.jobId : job?._id;
@@ -347,8 +347,8 @@ const MyApplications: React.FC = () => {
                       }
                       className={`group relative mx-2 my-1 cursor-pointer overflow-hidden rounded-md border transition-all duration-200 ${
                         isActive
-                          ? 'z-10 -translate-y-[2px] scale-[1.01] border-amber-200 bg-white shadow-md'
-                          : 'border-transparent bg-white hover:border-slate-200 hover:bg-slate-50/70 hover:shadow-sm'
+                          ? 'z-10 -translate-y-[2px] scale-[1.01] border-amber-200 bg-white dark:bg-slate-900 shadow-md'
+                          : 'border-transparent bg-white dark:bg-slate-900 hover:border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/70 hover:shadow-sm'
                       }`}
                     >
                       {isActive && (
@@ -358,7 +358,7 @@ const MyApplications: React.FC = () => {
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-center">
                           <div className="lg:col-span-5">
                             <div className="flex items-start gap-3">
-                              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center border border-slate-200 bg-slate-50 text-slate-500">
+                              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400">
                                 <svg
                                   className="h-5 w-5"
                                   fill="none"
@@ -375,12 +375,12 @@ const MyApplications: React.FC = () => {
                               </div>
 
                               <div className="min-w-0">
-                                <h3 className="text-[15px] font-semibold text-slate-900">
+                                <h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
                                   {job?.title || 'Job Title'}
                                 </h3>
 
-                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
-                                  <span className="font-medium text-slate-700">
+                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
+                                  <span className="font-medium text-slate-700 dark:text-slate-300">
                                     {job?.companyName || 'Company'}
                                   </span>
                                   {job?.location && <span>{job.location}</span>}
@@ -483,7 +483,7 @@ const MyApplications: React.FC = () => {
                                 className={`inline-flex items-center justify-center border px-3 py-1.5 text-xs font-medium transition-colors ${
                                   canWithdraw
                                     ? 'border-red-300 text-red-600 hover:bg-red-50'
-                                    : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                                    : 'cursor-not-allowed border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-400'
                                 }`}
                               >
                                 Withdraw
@@ -495,9 +495,9 @@ const MyApplications: React.FC = () => {
                     </div>
 
                     {isExpanded && hasInterviews && (
-                      <div className="mx-2 mb-2 border border-slate-200 bg-slate-50 px-5 py-4">
+                      <div className="mx-2 mb-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-5 py-4">
                         <div className="mb-3">
-                          <h4 className="text-sm font-semibold text-slate-900">Interview Schedule</h4>
+                          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Interview Schedule</h4>
                         </div>
 
                         <div className="space-y-3">
@@ -507,14 +507,14 @@ const MyApplications: React.FC = () => {
                             const timeRange = formatInterviewTimeRange(interview);
 
                             return (
-                              <div key={idx} className="border border-slate-200 bg-white p-4">
+                              <div key={idx} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                   <div className="space-y-2">
                                     <div className="flex flex-wrap items-center gap-2">
                                       <span className="inline-flex border border-indigo-100 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-700">
                                         Round {interview.roundNumber}
                                       </span>
-                                      <span className="inline-flex border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium capitalize text-slate-600">
+                                      <span className="inline-flex border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-2 py-1 text-[11px] font-medium capitalize text-slate-600 dark:text-slate-400">
                                         {interview.mode}
                                       </span>
                                       <span
@@ -524,9 +524,9 @@ const MyApplications: React.FC = () => {
                                       </span>
                                     </div>
 
-                                    <div className="space-y-2 text-sm text-slate-700">
+                                    <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
                                       <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-xs text-slate-500">Result:</span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">Result:</span>
                                         <span
                                           className={`inline-flex px-2 py-1 text-[11px] font-medium ${interviewOutcome.colorClass}`}
                                         >
@@ -544,13 +544,13 @@ const MyApplications: React.FC = () => {
                                       </div>
 
                                       {timeRange && (
-                                        <div className="text-slate-600">
+                                        <div className="text-slate-600 dark:text-slate-400">
                                           {timeRange} {interview.timezone && `(${interview.timezone})`}
                                         </div>
                                       )}
 
                                       {interview.linkOrLocation && (
-                                        <div className="text-slate-600">
+                                        <div className="text-slate-600 dark:text-slate-400">
                                           {interview.mode === 'online' ? (
                                             <a
                                               href={interview.linkOrLocation}
@@ -570,11 +570,11 @@ const MyApplications: React.FC = () => {
                                 </div>
 
                                 {interview.messageToCandidate && (
-                                  <div className="mt-3 border border-slate-200 bg-slate-50 p-3">
-                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                  <div className="mt-3 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-3">
+                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                       Message from Recruiter
                                     </p>
-                                    <p className="mt-1 text-sm text-slate-700">
+                                    <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
                                       {interview.messageToCandidate}
                                     </p>
                                   </div>
@@ -582,7 +582,7 @@ const MyApplications: React.FC = () => {
 
                                 {interviewStatus.value === 'completed' &&
                                   interviewOutcome.value === 'pending' && (
-                                    <p className="mt-3 text-xs text-slate-500">
+                                    <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
                                       Awaiting recruiter decision
                                     </p>
                                   )}
@@ -598,7 +598,7 @@ const MyApplications: React.FC = () => {
             </div>
 
             {paginationMeta && paginationMeta.pages > 1 && (
-              <div className="border-t border-slate-200 bg-white">
+              <div className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <PaginationControls
                   pagination={paginationMeta}
                   onPageChange={(nextPage) => {

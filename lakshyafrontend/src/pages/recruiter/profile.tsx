@@ -162,12 +162,12 @@ const RecruiterProfile: React.FC = () => {
           </div>
         )}
 
-        <div className="mb-6 border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+        <div className="mb-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-6 py-5">
             <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
               <div className="flex min-w-0 items-start gap-4">
                 <div className="relative">
-                  <div className="h-20 w-20 overflow-hidden border border-slate-300 bg-slate-100">
+                  <div className="h-20 w-20 overflow-hidden border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
                     {avatarUrl ? (
                       <img
                         src={avatarUrl}
@@ -176,7 +176,7 @@ const RecruiterProfile: React.FC = () => {
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-slate-200">
-                        <span className="text-xl font-semibold text-slate-700">{initials}</span>
+                        <span className="text-xl font-semibold text-slate-700 dark:text-slate-300">{initials}</span>
                       </div>
                     )}
                   </div>
@@ -190,7 +190,7 @@ const RecruiterProfile: React.FC = () => {
                       fileInputRef.current?.click();
                     }}
                     disabled={!isEditing}
-                    className="absolute -bottom-2 -right-2 inline-flex h-8 w-8 items-center justify-center border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="absolute -bottom-2 -right-2 inline-flex h-8 w-8 items-center justify-center border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                     title={isEditing ? 'Upload profile photo' : 'Enable edit mode to upload photo'}
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,16 +208,16 @@ const RecruiterProfile: React.FC = () => {
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                     Recruiter Profile
                   </p>
-                  <h1 className="mt-1 truncate text-2xl font-semibold text-slate-900">
+                  <h1 className="mt-1 truncate text-2xl font-semibold text-slate-900 dark:text-slate-100">
                     {displayName}
                   </h1>
-                  <p className="mt-1 text-sm text-slate-600">
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                     {formData.recruiter.position || 'Recruiter'} at {formData.companyName || 'Company'}
                   </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
+                  <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
                     <span>{profile?.email || '-'}</span>
                     <span>{profile?.phone || profile?.number || '-'}</span>
                     <span>{profile?.location || formData.location || '-'}</span>
@@ -230,7 +230,7 @@ const RecruiterProfile: React.FC = () => {
                   <>
                     <button
                       onClick={exitEditMode}
-                      className="inline-flex items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                      className="inline-flex items-center justify-center border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                     >
                       Cancel
                     </button>
@@ -257,49 +257,49 @@ const RecruiterProfile: React.FC = () => {
 
         <div className="grid w-full gap-6 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-8">
-            <section className="border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-5 py-4">
-                <h2 className="text-base font-semibold tracking-tight text-slate-900">Personal Information</h2>
+            <section className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div className="border-b border-slate-200 dark:border-slate-800 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">Personal Information</h2>
               </div>
 
               <div className="space-y-5 p-5">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Full Name</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                      className="w-full border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-sm text-slate-900">{profile?.fullName || profile?.name || '-'}</p>
+                    <p className="text-sm text-slate-900 dark:text-slate-100">{profile?.fullName || profile?.name || '-'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
-                  <p className="text-sm text-slate-900 break-words">{profile?.email || '-'}</p>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+                  <p className="text-sm text-slate-900 dark:text-slate-100 break-words">{profile?.email || '-'}</p>
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Phone</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Phone</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                      className="w-full border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-sm text-slate-900">{profile?.phone || profile?.number || '-'}</p>
+                    <p className="text-sm text-slate-900 dark:text-slate-100">{profile?.phone || profile?.number || '-'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Position / Title</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Position / Title</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -307,15 +307,15 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.recruiter.position}
                       onChange={handleInputChange}
                       placeholder="e.g., Senior HR Manager"
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                      className="w-full border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-sm text-slate-900">{profile?.recruiter?.position || '-'}</p>
+                    <p className="text-sm text-slate-900 dark:text-slate-100">{profile?.recruiter?.position || '-'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Department</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Department</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -323,23 +323,23 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.recruiter.department}
                       onChange={handleInputChange}
                       placeholder="e.g., Human Resources"
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                      className="w-full border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-sm text-slate-900">{profile?.recruiter?.department || '-'}</p>
+                    <p className="text-sm text-slate-900 dark:text-slate-100">{profile?.recruiter?.department || '-'}</p>
                   )}
                 </div>
               </div>
             </section>
 
-            <section className="border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-5 py-4">
-                <h2 className="text-base font-semibold tracking-tight text-slate-900">Company Information</h2>
+            <section className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div className="border-b border-slate-200 dark:border-slate-800 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">Company Information</h2>
               </div>
 
               <div className="space-y-5 p-5">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Company Name</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Company Name</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -347,15 +347,15 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.companyName}
                       onChange={handleInputChange}
                       placeholder="e.g., Tech Corp Inc."
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                      className="w-full border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-sm text-slate-900">{profile?.companyName || '-'}</p>
+                    <p className="text-sm text-slate-900 dark:text-slate-100">{profile?.companyName || '-'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Location</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Location</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -363,15 +363,15 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.location}
                       onChange={handleInputChange}
                       placeholder="e.g., Kathmandu, Nepal"
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                      className="w-full border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-sm text-slate-900">{profile?.location || '-'}</p>
+                    <p className="text-sm text-slate-900 dark:text-slate-100">{profile?.location || '-'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Company Website</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Company Website</label>
                   {isEditing ? (
                     <input
                       type="url"
@@ -379,10 +379,10 @@ const RecruiterProfile: React.FC = () => {
                       value={formData.recruiter.companyWebsite}
                       onChange={handleInputChange}
                       placeholder="https://www.company.com"
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                      className="w-full border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="text-sm text-slate-900 break-words">
+                    <p className="text-sm text-slate-900 dark:text-slate-100 break-words">
                       {profile?.recruiter?.companyWebsite ? (
                         <a
                           href={profile.recruiter.companyWebsite}
@@ -398,7 +398,7 @@ const RecruiterProfile: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Company Description</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Company Description</label>
                   {isEditing ? (
                     <textarea
                       name="recruiter.companyDescription"
@@ -406,10 +406,10 @@ const RecruiterProfile: React.FC = () => {
                       onChange={handleInputChange}
                       rows={5}
                       placeholder="Tell candidates about your company..."
-                      className="w-full resize-none border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                      className="w-full resize-none border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                     />
                   ) : (
-                    <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                    <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-300">
                       {profile?.recruiter?.companyDescription || 'No description added.'}
                     </p>
                   )}
@@ -419,15 +419,15 @@ const RecruiterProfile: React.FC = () => {
           </div>
 
           <div className="space-y-6 lg:col-span-4">
-            <section className="border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-5 py-4">
-                <h2 className="text-base font-semibold tracking-tight text-slate-900">Account Overview</h2>
+            <section className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div className="border-b border-slate-200 dark:border-slate-800 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">Account Overview</h2>
               </div>
 
               <div className="space-y-4 p-5">
-                <div className="flex items-center justify-between border border-slate-200 bg-slate-50 px-4 py-3">
-                  <span className="text-sm text-slate-600">Member Since</span>
-                  <span className="text-sm font-medium text-slate-900">
+                <div className="flex items-center justify-between border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Member Since</span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
                     {profile?.createdAt
                       ? new Date(profile.createdAt).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -437,23 +437,23 @@ const RecruiterProfile: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between border border-slate-200 bg-slate-50 px-4 py-3">
-                  <span className="text-sm text-slate-600">Account Status</span>
+                <div className="flex items-center justify-between border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Account Status</span>
                   <span className="inline-flex border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                     Active
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between border border-slate-200 bg-slate-50 px-4 py-3">
-                  <span className="text-sm text-slate-600">Recruiter Type</span>
-                  <span className="text-sm font-medium text-slate-900">Employer</span>
+                <div className="flex items-center justify-between border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Recruiter Type</span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-slate-100">Employer</span>
                 </div>
               </div>
             </section>
 
-            <section className="border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-5 py-4">
-                <h2 className="text-base font-semibold tracking-tight text-slate-900">Security</h2>
+            <section className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div className="border-b border-slate-200 dark:border-slate-800 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">Security</h2>
               </div>
 
               <div className="p-5">
@@ -466,20 +466,20 @@ const RecruiterProfile: React.FC = () => {
                     setShowPasswordModal(true);
                   }}
                   disabled={!isEditing}
-                  className="w-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Change Password
                 </button>
               </div>
             </section>
 
-            <section className="border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-5 py-4">
-                <h2 className="text-base font-semibold tracking-tight text-slate-900">Need Help?</h2>
+            <section className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div className="border-b border-slate-200 dark:border-slate-800 px-5 py-4">
+                <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">Need Help?</h2>
               </div>
 
               <div className="p-5">
-                <p className="mb-4 text-sm leading-6 text-slate-600">
+                <p className="mb-4 text-sm leading-6 text-slate-600 dark:text-slate-400">
                   Contact our support team if you have questions about managing your recruiter account.
                 </p>
                 <a
@@ -497,41 +497,41 @@ const RecruiterProfile: React.FC = () => {
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50" onClick={() => setShowPasswordModal(false)} />
-          <div className="relative z-10 w-full max-w-md border border-slate-200 bg-white p-6">
-            <h2 className="mb-4 text-xl font-semibold text-slate-900">Change Password</h2>
+          <div className="relative z-10 w-full max-w-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+            <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-slate-100">Change Password</h2>
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Current Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Current Password</label>
                 <input
                   type="password"
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                  className="w-full border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">New Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">New Password</label>
                 <input
                   type="password"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                  className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                  className="w-full border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Confirm New Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Confirm New Password</label>
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
+                  className="w-full border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-[#3b4bb8] focus:ring-2 focus:ring-[#3b4bb8]/10"
                 />
               </div>
             </div>
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setShowPasswordModal(false)}
-                className="flex-1 border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                className="flex-1 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>

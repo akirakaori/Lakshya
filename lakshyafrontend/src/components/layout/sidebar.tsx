@@ -59,20 +59,20 @@ const Sidebar: React.FC<SidebarProps> = ({ variant, isCollapsed, isMobileOpen, o
       )}
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-slate-800 bg-slate-950 text-white transition-all duration-300 ease-out ${
+        className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-white transition-all duration-300 ease-out ${
           isCollapsed ? 'w-20' : 'w-64'
         } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
-        <div className={`border-b border-slate-800 ${isCollapsed ? 'p-4' : 'p-6'}`}>
+        <div className={`border-b border-slate-200 dark:border-slate-800 ${isCollapsed ? 'p-4' : 'p-6'}`}>
           <Link
             to="/"
             className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}
             onClick={onCloseMobile}
           >
-            <div className="flex h-8 w-8 items-center justify-center border border-slate-700 bg-slate-900">
+            <div className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-900">
               <img src={lakshyaLogo} alt="Lakshya Logo" className="h-6 w-auto" />
             </div>
-            {!isCollapsed && <span className="text-xl font-bold text-white">Lakshya</span>}
+            {!isCollapsed && <span className="text-xl font-bold text-slate-900 dark:text-white">Lakshya</span>}
           </Link>
         </div>
 
@@ -86,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ variant, isCollapsed, isMobileOpen, o
                   className={`flex items-center gap-3 px-4 py-3 transition-colors ${
                     isActive(link.path)
                       ? 'bg-[#2563EB] text-white'
-                      : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white'
                   } ${isCollapsed ? 'justify-center px-2' : ''}`}
                   title={isCollapsed ? link.label : undefined}
                 >
@@ -113,10 +113,10 @@ const Sidebar: React.FC<SidebarProps> = ({ variant, isCollapsed, isMobileOpen, o
           </ul>
         </nav>
 
-        <div className="space-y-2 border-t border-slate-800 p-4">
+        <div className="space-y-2 border-t border-slate-200 dark:border-slate-800 p-4">
           <button
             onClick={() => setShowLogoutModal(true)}
-            className={`w-full px-4 py-3 text-left text-slate-300 transition-colors hover:bg-red-600 hover:text-white ${
+            className={`w-full px-4 py-3 text-left text-slate-600 dark:text-slate-300 transition-colors hover:bg-red-600 hover:text-white ${
               isCollapsed ? 'px-2 text-center' : ''
             }`}
             title={isCollapsed ? 'Logout' : undefined}

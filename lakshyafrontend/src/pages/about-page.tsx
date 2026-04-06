@@ -290,7 +290,7 @@ const AboutPage: React.FC = () => {
             <div className="flex flex-wrap justify-center gap-4">
               <Link
                 to="/jobs"
-                className="inline-flex items-center gap-2 px-7 py-3.5 bg-white text-indigo-700 rounded-2xl font-bold hover:bg-indigo-50 active:scale-95 transition-all duration-200 shadow-xl shadow-indigo-900/30"
+                className="inline-flex items-center gap-2 px-7 py-3.5 bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 rounded-2xl font-bold hover:bg-indigo-50 dark:hover:bg-indigo-500/10 active:scale-95 transition-all duration-200 shadow-xl shadow-indigo-900/30"
               >
                 Browse Jobs
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

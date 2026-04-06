@@ -10,12 +10,9 @@
         const storageKey = 'lakshya-theme';
         const root = document.documentElement;
         const storedTheme = localStorage.getItem(storageKey);
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const resolvedTheme = storedTheme === 'light' || storedTheme === 'dark'
           ? storedTheme
-          : prefersDark
-            ? 'dark'
-            : 'light';
+          : 'light';
 
         root.classList.toggle('dark', resolvedTheme === 'dark');
         root.style.colorScheme = resolvedTheme;

@@ -15,7 +15,7 @@ export const PageSizeSelect: React.FC<PageSizeSelectProps> = ({
 }) => {
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="page-size" className="text-[13px] font-medium text-[#4B5563]">
+      <label htmlFor="page-size" className="text-[13px] font-medium text-[#4B5563] dark:text-slate-400">
         Show
       </label>
       <select
@@ -23,7 +23,7 @@ export const PageSizeSelect: React.FC<PageSizeSelectProps> = ({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         disabled={disabled}
-        className="border border-[#D1D5DB] bg-white px-3 py-2 text-[13px] text-[#374151] focus:border-[#2563EB] disabled:cursor-not-allowed disabled:opacity-50"
+        className="border border-[#D1D5DB] dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-[13px] text-[#374151] dark:text-slate-300 focus:border-[#2563EB] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -31,7 +31,7 @@ export const PageSizeSelect: React.FC<PageSizeSelectProps> = ({
           </option>
         ))}
       </select>
-      <span className="text-[13px] text-[#4B5563]">per page</span>
+      <span className="text-[13px] text-[#4B5563] dark:text-slate-400">per page</span>
     </div>
   );
 };

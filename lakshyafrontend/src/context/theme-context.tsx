@@ -26,7 +26,7 @@ const getInitialTheme = (): Theme => {
     return storedTheme;
   }
 
-  return getSystemTheme();
+  return 'light';
 };
 
 const applyTheme = (theme: Theme) => {

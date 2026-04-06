@@ -5,9 +5,9 @@ import { useMyJobs, useRecruiterRecentActivity } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import type { RecruiterRecentActivityType } from '../../services';
 
-const cardClass = 'rounded-sm border border-slate-300 bg-white';
-const sectionTitleClass = 'text-[18px] font-semibold tracking-tight text-slate-900';
-const sectionLabelClass = 'text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500';
+const cardClass = 'rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900';
+const sectionTitleClass = 'text-[18px] font-semibold tracking-tight text-slate-900 dark:text-slate-100';
+const sectionLabelClass = 'text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400';
 
 const RecruiterDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -57,7 +57,7 @@ const RecruiterDashboard: React.FC = () => {
   const getActivityIcon = (type: RecruiterRecentActivityType) => {
     if (type === 'application_received') {
       return {
-        wrapperClass: 'border border-slate-200 bg-slate-50 text-slate-700',
+        wrapperClass: 'border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300',
         icon: (
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -112,7 +112,7 @@ const RecruiterDashboard: React.FC = () => {
 
     if (type === 'job_created') {
       return {
-        wrapperClass: 'border border-slate-200 bg-slate-50 text-slate-700',
+        wrapperClass: 'border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300',
         icon: (
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -123,7 +123,7 @@ const RecruiterDashboard: React.FC = () => {
 
     if (type === 'job_deactivated') {
       return {
-        wrapperClass: 'border border-slate-200 bg-slate-50 text-slate-700',
+        wrapperClass: 'border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300',
         icon: (
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
@@ -133,7 +133,7 @@ const RecruiterDashboard: React.FC = () => {
     }
 
     return {
-      wrapperClass: 'border border-slate-200 bg-slate-50 text-slate-700',
+      wrapperClass: 'border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300',
       icon: (
         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
@@ -146,10 +146,10 @@ const RecruiterDashboard: React.FC = () => {
   const getJobStatusClass = (isActive?: boolean) => {
     return isActive
       ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-      : 'border border-slate-200 bg-slate-100 text-slate-600';
+      : 'border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
   };
 
-  const getMetricAccentClass = () => 'text-slate-900';
+  const getMetricAccentClass = () => 'text-slate-900 dark:text-slate-100';
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -170,17 +170,17 @@ const RecruiterDashboard: React.FC = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {/* ── Header ──────────────────────────────────────────────────── */}
-        <div className="mb-8 flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
+        <div className="mb-8 flex flex-col gap-4 border-b border-slate-200 dark:border-slate-800 pb-5 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
               {today}
             </p>
-            <h1 className="mt-1.5 text-[26px] font-semibold tracking-tight text-slate-900">
+            <h1 className="mt-1.5 text-[26px] font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               {user?.fullName || user?.name
                 ? `Good to see you, ${(user?.fullName || user?.name || '').split(' ')[0]}.`
                 : 'Recruiter Dashboard'}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Here's an overview of your hiring activity.
             </p>
           </div>
@@ -188,7 +188,7 @@ const RecruiterDashboard: React.FC = () => {
           <div className="flex items-center gap-2 shrink-0">
             <Link
               to="/recruiter/manage-jobs"
-              className="inline-flex h-9 items-center border border-slate-300 bg-white px-4 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              className="inline-flex h-9 items-center border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 text-[13px] font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
             >
               Manage Jobs
             </Link>
@@ -229,14 +229,14 @@ const RecruiterDashboard: React.FC = () => {
             },
           ].map((metric) => (
             <div key={metric.label} className={`${cardClass} px-5 py-5`}>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                 {metric.label}
               </p>
               <div className="mt-3 flex items-end justify-between gap-3">
                 <p className={`text-[34px] font-semibold leading-none tracking-tight ${getMetricAccentClass()}`}>
                   {metric.value}
                 </p>
-                <p className="text-xs font-medium text-slate-500">{metric.helper}</p>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{metric.helper}</p>
               </div>
             </div>
           ))}
@@ -248,7 +248,7 @@ const RecruiterDashboard: React.FC = () => {
           <div className="space-y-6">
             {/* Recent Job Posts */}
             <section className={cardClass}>
-              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-6 py-5">
                 <div>
                   <h2 className={sectionTitleClass}>Recent Job Posts</h2>
                 </div>
@@ -263,7 +263,7 @@ const RecruiterDashboard: React.FC = () => {
               {recentJobs.length > 0 ? (
                 <div className="overflow-x-auto">
                   <div className="min-w-[720px]">
-                    <div className="grid grid-cols-[2.2fr_1fr_1fr_1fr] border-b border-slate-200 bg-slate-50 px-6 py-3">
+                    <div className="grid grid-cols-[2.2fr_1fr_1fr_1fr] border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-6 py-3">
                       <div className={sectionLabelClass}>Job Title</div>
                       <div className={sectionLabelClass}>Applicants</div>
                       <div className={sectionLabelClass}>Status</div>
@@ -273,18 +273,18 @@ const RecruiterDashboard: React.FC = () => {
                     {recentJobs.map((job) => (
                       <div
                         key={job._id}
-                        className="grid grid-cols-[2.2fr_1fr_1fr_1fr] items-center border-b border-slate-200 px-6 py-4 last:border-b-0"
+                        className="grid grid-cols-[2.2fr_1fr_1fr_1fr] items-center border-b border-slate-200 dark:border-slate-800 px-6 py-4 last:border-b-0"
                       >
                         <div className="min-w-0 pr-4">
-                          <h3 className="truncate text-sm font-semibold text-slate-900">
+                          <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {job.title}
                           </h3>
-                          <p className="mt-1 truncate text-xs text-slate-500">
+                          <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
                             {job.location} • {job.type}
                           </p>
                         </div>
 
-                        <div className="text-sm font-medium text-slate-700">
+                        <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
                           {'applicantsCount' in job && typeof job.applicantsCount === 'number'
                             ? job.applicantsCount
                             : '—'}
@@ -300,7 +300,7 @@ const RecruiterDashboard: React.FC = () => {
                           </span>
                         </div>
 
-                        <div className="text-sm text-slate-500">
+                        <div className="text-sm text-slate-500 dark:text-slate-400">
                           {formatPostedDate(job.createdAt)}
                         </div>
                       </div>
@@ -309,8 +309,8 @@ const RecruiterDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="px-6 py-10 text-center">
-                  <p className="text-sm font-medium text-slate-800">No job posts yet</p>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">No job posts yet</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Start recruiting by posting your first job.
                   </p>
                   <Link
@@ -325,7 +325,7 @@ const RecruiterDashboard: React.FC = () => {
 
             {/* Recent Activity */}
             <section className={cardClass}>
-              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-6 py-5">
                 <h2 className={sectionTitleClass}>Recent Activity</h2>
               </div>
 
@@ -343,9 +343,9 @@ const RecruiterDashboard: React.FC = () => {
                     ))}
                   </div>
                 ) : recentActivity.length === 0 ? (
-                  <div className="rounded-sm border border-dashed border-slate-300 px-5 py-8 text-center">
-                    <p className="text-sm font-medium text-slate-800">No recent activity</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                  <div className="rounded-sm border border-dashed border-slate-300 dark:border-slate-700 px-5 py-8 text-center">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">No recent activity</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       Activity related to your jobs and candidates will appear here.
                     </p>
                   </div>
@@ -358,7 +358,7 @@ const RecruiterDashboard: React.FC = () => {
                         return (
                           <div
                             key={activity.id}
-                            className="rounded-sm border border-slate-200 bg-white px-4 py-4 transition-colors hover:bg-slate-50"
+                            className="rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                           >
                             <div className="flex items-start gap-3">
                               <div
@@ -368,15 +368,15 @@ const RecruiterDashboard: React.FC = () => {
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium leading-5 text-slate-900">
+                                <p className="text-sm font-medium leading-5 text-slate-900 dark:text-slate-100">
                                   {activity.title}
                                 </p>
-                                <p className="mt-1 text-xs leading-5 text-slate-500">
+                                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
                                   {activity.description}
                                 </p>
 
                                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                                  <span className="text-slate-500">
+                                  <span className="text-slate-500 dark:text-slate-400">
                                     {formatActivityTime(activity.createdAt)}
                                   </span>
 
@@ -397,12 +397,12 @@ const RecruiterDashboard: React.FC = () => {
                     </div>
 
                     {activityTotalPages > 1 && (
-                      <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4">
+                      <div className="mt-5 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-4">
                         <button
                           type="button"
                           onClick={() => setActivityPage((prev) => Math.max(1, prev - 1))}
                           disabled={activityPage <= 1}
-                          className="inline-flex items-center gap-1.5 rounded-sm border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M15 19l-7-7 7-7" />
@@ -410,7 +410,7 @@ const RecruiterDashboard: React.FC = () => {
                           Previous
                         </button>
 
-                        <span className="text-xs font-medium text-slate-500">
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                           Page {activityPage} of {activityTotalPages}
                         </span>
 
@@ -437,17 +437,17 @@ const RecruiterDashboard: React.FC = () => {
           <aside className="space-y-6">
             {/* Quick Actions */}
             <section className={cardClass}>
-              <div className="border-b border-slate-200 px-5 py-4">
+              <div className="border-b border-slate-200 dark:border-slate-800 px-5 py-4">
                 <h2 className={sectionLabelClass}>Quick Actions</h2>
               </div>
 
               <div className="space-y-3 p-5">
                 <Link
                   to="/recruiter/post-job"
-                  className="flex items-center justify-between rounded-sm border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                  className="flex items-center justify-between rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   <span className="flex items-center gap-2">
-                    <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                     Post New Job
@@ -459,10 +459,10 @@ const RecruiterDashboard: React.FC = () => {
 
                 <Link
                   to="/recruiter/manage-jobs"
-                  className="flex items-center justify-between rounded-sm border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                  className="flex items-center justify-between rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   <span className="flex items-center gap-2">
-                    <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Manage Jobs

@@ -6,8 +6,8 @@ import { toast } from 'react-toastify';
 import type { Job } from '../../services';
 import { PaginationControls, PageSizeSelect } from '../../components/pagination';
 
-const shellCard = 'rounded-sm border border-slate-300 bg-white';
-const labelText = 'text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500';
+const shellCard = 'rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900';
+const labelText = 'text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400';
 
 interface StatCardProps {
   label: string;
@@ -17,7 +17,7 @@ interface StatCardProps {
 const StatCard: React.FC<StatCardProps> = ({ label, value }) => (
   <div className={`${shellCard} px-5 py-4`}>
     <p className={labelText}>{label}</p>
-    <p className="mt-2 text-[34px] font-semibold leading-none tracking-tight text-slate-900">
+    <p className="mt-2 text-[34px] font-semibold leading-none tracking-tight text-slate-900 dark:text-slate-100">
       {value}
     </p>
   </div>
@@ -143,7 +143,7 @@ const ManageJobs: React.FC = () => {
     if (job.isActive) {
       return 'border border-emerald-200 bg-emerald-50 text-emerald-700';
     }
-    return 'border border-slate-200 bg-slate-100 text-slate-600';
+    return 'border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
   };
 
   const getStatusLabel = (job: Job) => {
@@ -153,7 +153,7 @@ const ManageJobs: React.FC = () => {
   };
 
 
-  const secondaryBtn = 'inline-flex items-center justify-center rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50';
+  const secondaryBtn = 'inline-flex items-center justify-center rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800';
   const dangerBtn = 'inline-flex items-center justify-center rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100';
 
   if (isLoading) {
@@ -170,10 +170,10 @@ const ManageJobs: React.FC = () => {
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-[34px] font-semibold tracking-tight text-slate-900">
+            <h1 className="text-[34px] font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               Manage Jobs
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Review, update, and manage your current active and inactive job listings.
             </p>
           </div>
@@ -219,7 +219,7 @@ const ManageJobs: React.FC = () => {
                 placeholder="Search by job title or keyword..."
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full rounded-sm border border-slate-300 bg-white py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#3b4bb8]"
+                className="w-full rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-3 pl-11 pr-4 text-sm text-slate-800 dark:text-slate-200 outline-none transition-colors placeholder:text-slate-400 focus:border-[#3b4bb8]"
               />
             </div>
 
@@ -227,7 +227,7 @@ const ManageJobs: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => handleStatusChange(e.target.value)}
-                className="rounded-sm border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-colors focus:border-[#3b4bb8]"
+                className="rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 outline-none transition-colors focus:border-[#3b4bb8]"
               >
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
@@ -235,7 +235,7 @@ const ManageJobs: React.FC = () => {
               </select>
 
               <div className="flex items-center gap-3">
-                <span className="text-sm text-slate-600">Show</span>
+                <span className="text-sm text-slate-600 dark:text-slate-400">Show</span>
                 <PageSizeSelect value={limit} onChange={handleLimitChange} />
               </div>
             </div>
@@ -289,7 +289,7 @@ const ManageJobs: React.FC = () => {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="truncate text-[18px] font-semibold tracking-tight text-slate-900">
+                          <h3 className="truncate text-[18px] font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                             {job.title}
                           </h3>
                           <span
@@ -299,7 +299,7 @@ const ManageJobs: React.FC = () => {
                           </span>
                         </div>
 
-                        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-500">
+                        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-500 dark:text-slate-400">
                           <span className="inline-flex items-center gap-1.5">
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -334,13 +334,13 @@ const ManageJobs: React.FC = () => {
                           {job.skillsRequired?.slice(0, 4).map((skill: string, index: number) => (
                             <span
                               key={index}
-                              className="inline-flex items-center rounded-sm border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600"
+                              className="inline-flex items-center rounded-sm border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-400"
                             >
                               {skill}
                             </span>
                           ))}
                           {(job.skillsRequired?.length ?? 0) > 4 && (
-                            <span className="inline-flex items-center px-1 py-1 text-[11px] font-medium text-slate-500">
+                            <span className="inline-flex items-center px-1 py-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
                               +{(job.skillsRequired?.length ?? 0) - 4} more
                             </span>
                           )}
@@ -376,7 +376,7 @@ const ManageJobs: React.FC = () => {
                           title={job.isDeleted ? 'Cannot edit deleted jobs' : ''}
                           className={`inline-flex items-center justify-center rounded-sm border px-3 py-2 text-sm font-medium transition-colors ${
                             job.isDeleted
-                              ? 'pointer-events-none cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                              ? 'pointer-events-none cursor-not-allowed border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-400'
                               : secondaryBtn
                           }`}
                         >
@@ -415,17 +415,17 @@ const ManageJobs: React.FC = () => {
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/45" onClick={() => setDeleteConfirmId(null)} />
-          <div className="relative w-full max-w-md rounded-sm border border-slate-300 bg-white p-6 shadow-lg">
-            <h2 className="mb-2 text-xl font-semibold tracking-tight text-slate-900">
+          <div className="relative w-full max-w-md rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-lg">
+            <h2 className="mb-2 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               Delete Job Post
             </h2>
-            <p className="mb-6 text-sm leading-6 text-slate-600">
+            <p className="mb-6 text-sm leading-6 text-slate-600 dark:text-slate-400">
               Are you sure you want to delete this job post? The job will be marked as deleted and will no longer be visible to job seekers. Applications will be preserved.
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                className="flex-1 rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>

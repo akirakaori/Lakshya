@@ -9,7 +9,7 @@ const Footer: React.FC<FooterProps> = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="flex-shrink-0 border-t border-slate-800 bg-slate-950 text-slate-300">
+    <footer className="flex-shrink-0 border-t border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
@@ -19,9 +19,9 @@ const Footer: React.FC<FooterProps> = () => {
               <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md">
                 <span className="text-xl">💼</span>
               </div>
-              <span className="text-xl font-bold text-white">Lakshya</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white">Lakshya</span>
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed mb-4 max-w-sm">
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4 max-w-sm">
               The first AI-powered job portal where scores truly matter. Lakshya goes beyond finding jobs—it matches futures with intelligent resume analysis and personalized recommendations.
             </p>
             {/* Social Media Icons */}
@@ -30,7 +30,7 @@ const Footer: React.FC<FooterProps> = () => {
                 href="https://www.facebook.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 transition-colors duration-200 hover:bg-indigo-600"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors duration-200 hover:bg-indigo-600 hover:text-white dark:bg-slate-900 dark:text-slate-300"
                 aria-label="Facebook"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -41,7 +41,7 @@ const Footer: React.FC<FooterProps> = () => {
                 href="https://twitter.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 transition-colors duration-200 hover:bg-indigo-600"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors duration-200 hover:bg-indigo-600 hover:text-white dark:bg-slate-900 dark:text-slate-300"
                 aria-label="Twitter"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -52,7 +52,7 @@ const Footer: React.FC<FooterProps> = () => {
                 href="https://www.linkedin.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 transition-colors duration-200 hover:bg-indigo-600"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors duration-200 hover:bg-indigo-600 hover:text-white dark:bg-slate-900 dark:text-slate-300"
                 aria-label="LinkedIn"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -63,7 +63,7 @@ const Footer: React.FC<FooterProps> = () => {
                 href="https://www.instagram.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 transition-colors duration-200 hover:bg-indigo-600"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors duration-200 hover:bg-indigo-600 hover:text-white dark:bg-slate-900 dark:text-slate-300"
                 aria-label="Instagram"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -75,30 +75,30 @@ const Footer: React.FC<FooterProps> = () => {
 
           {/* For Job Seekers */}
           <div>
-            <h4 className="text-sm font-semibold mb-4 text-white">For Job Seekers</h4>
+            <h4 className="text-sm font-semibold mb-4 text-slate-900 dark:text-white">For Job Seekers</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/signup" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <Link to="/signup" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Create Account
                 </Link>
               </li>
               <li>
-                <Link to="/job-seeker/browse-jobs" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <Link to="/job-seeker/browse-jobs" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Browse Jobs
                 </Link>
               </li>
               <li>
-                <a href="#resume-tips" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <a href="#resume-tips" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Resume Tips
                 </a>
               </li>
               <li>
-                <a href="#career-advice" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <a href="#career-advice" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Career Advice
                 </a>
               </li>
               <li>
-                <a href="#salary-tools" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <a href="#salary-tools" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Salary Tools
                 </a>
               </li>
@@ -107,30 +107,30 @@ const Footer: React.FC<FooterProps> = () => {
 
           {/* For Employers */}
           <div>
-            <h4 className="text-sm font-semibold mb-4 text-white">For Employers</h4>
+            <h4 className="text-sm font-semibold mb-4 text-slate-900 dark:text-white">For Employers</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/signup" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <Link to="/signup" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Post a Job
                 </Link>
               </li>
               <li>
-                <a href="#pricing" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <a href="#pricing" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Pricing
                 </a>
               </li>
               <li>
-                <a href="#solutions" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <a href="#solutions" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Recruiting Solutions
                 </a>
               </li>
               <li>
-                <a href="#screening" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <a href="#screening" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   AI Screening
                 </a>
               </li>
               <li>
-                <a href="#success-stories" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <a href="#success-stories" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Success Stories
                 </a>
               </li>
@@ -139,30 +139,30 @@ const Footer: React.FC<FooterProps> = () => {
 
           {/* Company & Resources */}
           <div>
-            <h4 className="text-sm font-semibold mb-4 text-white">Company</h4>
+            <h4 className="text-sm font-semibold mb-4 text-slate-900 dark:text-white">Company</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/about" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <Link to="/about" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   About
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <Link to="/blog" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <Link to="/contact" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Contact
                 </Link>
               </li>
               <li>
-                <a href="#help" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <a href="#help" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   Help Center
                 </a>
               </li>
               <li>
-                <a href="#faq" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+                <a href="#faq" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                   FAQs
                 </a>
               </li>
@@ -171,22 +171,22 @@ const Footer: React.FC<FooterProps> = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-gray-800">
+        <div className="pt-8 border-t border-slate-200 dark:border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               © {currentYear} Lakshya. All rights reserved.
             </p>
             <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-              <a href="#privacy" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+              <a href="#privacy" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                 Privacy Policy
               </a>
-              <a href="#terms" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+              <a href="#terms" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                 Terms of Service
               </a>
-              <a href="#cookies" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+              <a href="#cookies" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                 Cookie Policy
               </a>
-              <a href="#accessibility" className="text-sm text-gray-400 hover:text-indigo-400 transition-colors">
+              <a href="#accessibility" className="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors">
                 Accessibility
               </a>
             </div>

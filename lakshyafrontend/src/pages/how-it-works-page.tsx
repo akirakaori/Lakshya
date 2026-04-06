@@ -170,7 +170,7 @@ export const HowItWorksPage: React.FC = () => {
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Link
               to="/browse-jobs"
-              className="rounded-xl bg-white px-6 py-3 font-semibold text-indigo-700 transition hover:bg-indigo-50"
+              className="rounded-xl bg-white dark:bg-slate-900 px-6 py-3 font-semibold text-indigo-700 dark:text-indigo-300 transition hover:bg-indigo-50 dark:hover:bg-indigo-500/10"
             >
               Browse Jobs
             </Link>
@@ -260,7 +260,7 @@ export const HowItWorksPage: React.FC = () => {
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Link
               to="/browse-jobs"
-              className="rounded-xl bg-white px-6 py-3 font-semibold text-indigo-700 transition hover:bg-indigo-50"
+              className="rounded-xl bg-white dark:bg-slate-900 px-6 py-3 font-semibold text-indigo-700 dark:text-indigo-300 transition hover:bg-indigo-50 dark:hover:bg-indigo-500/10"
             >
               Explore Jobs
             </Link>
