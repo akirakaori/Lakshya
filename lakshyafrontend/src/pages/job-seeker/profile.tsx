@@ -26,6 +26,7 @@ const Profile: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
   const { parseStatus, startPolling } = useResumeParsePolling({
     onParseComplete: (summary) => {
@@ -69,24 +70,69 @@ const Profile: React.FC = () => {
   const [formInitialized, setFormInitialized] = React.useState(false);
   const [isDirty, setIsDirty] = React.useState(false);
 
+  const buildFormFromProfile = React.useCallback((profileData: any) => ({
+    fullName: profileData?.fullName || profileData?.name || '',
+    phone: profileData?.phone || profileData?.number || '',
+    jobSeeker: {
+      title: profileData?.jobSeeker?.title || '',
+      bio: profileData?.jobSeeker?.bio || '',
+      skills: profileData?.jobSeeker?.skills || [],
+      experience: profileData?.jobSeeker?.experience || '',
+      education: profileData?.jobSeeker?.education || '',
+      preferredLocation: profileData?.jobSeeker?.preferredLocation || '',
+      expectedSalary: profileData?.jobSeeker?.expectedSalary || '',
+    },
+  }), []);
+
+  const createComparableSnapshot = React.useCallback((data: typeof formData) => ({
+    fullName: data.fullName.trim(),
+    phone: data.phone.trim(),
+    jobSeeker: {
+      title: data.jobSeeker.title.trim(),
+      bio: data.jobSeeker.bio.trim(),
+      skills: data.jobSeeker.skills.map((skill) => skill.trim()).filter(Boolean),
+      experience: data.jobSeeker.experience.trim(),
+      education: data.jobSeeker.education.trim(),
+      preferredLocation: data.jobSeeker.preferredLocation.trim(),
+      expectedSalary: data.jobSeeker.expectedSalary.trim(),
+    },
+  }), []);
+
+  const clearAvatarSelection = React.useCallback(() => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+    setAvatarPreview(null);
+    setPendingAvatarFile(null);
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = '';
+    }
+  }, [avatarPreview]);
+
+  const profileSnapshot = React.useMemo(() => {
+    if (!profile) return null;
+    return createComparableSnapshot(buildFormFromProfile(profile));
+  }, [profile, buildFormFromProfile, createComparableSnapshot]);
+
+  const formSnapshot = React.useMemo(
+    () => createComparableSnapshot(formData),
+    [formData, createComparableSnapshot],
+  );
+
+  const hasFormChanges = React.useMemo(() => {
+    if (!profileSnapshot) return false;
+    return JSON.stringify(formSnapshot) !== JSON.stringify(profileSnapshot);
+  }, [formSnapshot, profileSnapshot]);
+
+  const hasUnsavedChanges = hasFormChanges || Boolean(pendingAvatarFile);
+  const isSavingProfile = updateProfileMutation.isPending || uploadProfileImageMutation.isPending;
+
   React.useEffect(() => {
     const latestProfile = profileData?.data;
 
     if (!latestProfile) return;
 
-    const mapProfileToForm = () => ({
-      fullName: latestProfile.fullName || latestProfile.name || '',
-      phone: latestProfile.phone || latestProfile.number || '',
-      jobSeeker: {
-        title: latestProfile.jobSeeker?.title || '',
-        bio: latestProfile.jobSeeker?.bio || '',
-        skills: latestProfile.jobSeeker?.skills || [],
-        experience: latestProfile.jobSeeker?.experience || '',
-        education: latestProfile.jobSeeker?.education || '',
-        preferredLocation: latestProfile.jobSeeker?.preferredLocation || '',
-        expectedSalary: latestProfile.jobSeeker?.expectedSalary || '',
-      },
-    });
+    const mapProfileToForm = () => buildFormFromProfile(latestProfile);
 
     console.log('?? formData sync check:');
     console.log('  isEditing:', isEditing, '| isDirty:', isDirty, '| formInitialized:', formInitialized);
@@ -138,7 +184,7 @@ const Profile: React.FC = () => {
     if (!formInitialized) {
       setFormInitialized(true);
     }
-  }, [profileData?.data, isEditing, isDirty]);
+  }, [profileData?.data, isEditing, isDirty, buildFormFromProfile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -193,22 +239,11 @@ const Profile: React.FC = () => {
     setFormInitialized(false);
 
     if (profile) {
-      setFormData({
-        fullName: profile.fullName || profile.name || '',
-        phone: profile.phone || profile.number || '',
-        jobSeeker: {
-          title: profile.jobSeeker?.title || '',
-          bio: profile.jobSeeker?.bio || '',
-          skills: profile.jobSeeker?.skills || [],
-          experience: profile.jobSeeker?.experience || '',
-          education: profile.jobSeeker?.education || '',
-          preferredLocation: profile.jobSeeker?.preferredLocation || '',
-          expectedSalary: profile.jobSeeker?.expectedSalary || '',
-        },
-      });
+      setFormData(buildFormFromProfile(profile));
       console.log('  Synced skills count:', profile.jobSeeker?.skills?.length || 0);
     }
 
+    clearAvatarSelection();
     enterEditMode();
   };
 
@@ -218,31 +253,34 @@ const Profile: React.FC = () => {
     setIsDirty(false);
 
     if (profile) {
-      setFormData({
-        fullName: profile.fullName || profile.name || '',
-        phone: profile.phone || profile.number || '',
-        jobSeeker: {
-          title: profile.jobSeeker?.title || '',
-          bio: profile.jobSeeker?.bio || '',
-          skills: profile.jobSeeker?.skills || [],
-          experience: profile.jobSeeker?.experience || '',
-          education: profile.jobSeeker?.education || '',
-          preferredLocation: profile.jobSeeker?.preferredLocation || '',
-          expectedSalary: profile.jobSeeker?.expectedSalary || '',
-        },
-      });
+      setFormData(buildFormFromProfile(profile));
     }
 
+    clearAvatarSelection();
     exitEditMode();
   };
 
   const handleSave = async () => {
     if (!guardAction('save')) return;
+    if (!hasUnsavedChanges) {
+      toast.info('No changes to save');
+      return;
+    }
 
     try {
-      console.log('Saving profile with data:', formData);
-      const response = await updateProfileMutation.mutateAsync(formData);
-      console.log('Profile update response:', response);
+      if (pendingAvatarFile) {
+        console.log('Uploading avatar during save:', pendingAvatarFile.name, pendingAvatarFile.size);
+        const imageResponse = await uploadProfileImageMutation.mutateAsync(pendingAvatarFile);
+        if (imageResponse?.data?.profileImageUrl) {
+          updateUser({ profileImageUrl: imageResponse.data.profileImageUrl });
+        }
+      }
+
+      if (hasFormChanges) {
+        console.log('Saving profile with data:', formData);
+        const response = await updateProfileMutation.mutateAsync(formData);
+        console.log('Profile update response:', response);
+      }
 
       updateUser({
         name: formData.fullName,
@@ -252,6 +290,7 @@ const Profile: React.FC = () => {
       toast.success('Profile updated successfully!');
 
       setIsDirty(false);
+      clearAvatarSelection();
       exitEditMode();
 
       setTimeout(() => {
@@ -354,45 +393,34 @@ const Profile: React.FC = () => {
       return;
     }
 
-    const previewUrl = URL.createObjectURL(file);
-    setAvatarPreview(previewUrl);
-
-    try {
-      console.log('Uploading avatar:', file.name, file.size);
-      const response = await uploadProfileImageMutation.mutateAsync(file);
-      console.log('Avatar upload response:', response);
-
-      toast.success('Profile photo updated successfully!');
-
-      if (response?.data?.profileImageUrl) {
-        updateUser({ profileImageUrl: response.data.profileImageUrl });
-      }
-
-      setTimeout(() => {
-        URL.revokeObjectURL(previewUrl);
-        setAvatarPreview(null);
-      }, 500);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to upload profile photo';
-      toast.error(errorMessage);
-      console.error('Avatar upload error:', err);
-      console.error('Error response:', err.response?.data);
-
-      URL.revokeObjectURL(previewUrl);
-      setAvatarPreview(null);
+    const isSameAsPending =
+      pendingAvatarFile &&
+      pendingAvatarFile.name === file.name &&
+      pendingAvatarFile.size === file.size &&
+      pendingAvatarFile.lastModified === file.lastModified;
+    if (isSameAsPending) {
+      toast.info('This image is already selected');
+      if (e.target) e.target.value = '';
+      return;
     }
+
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+    setAvatarPreview(URL.createObjectURL(file));
+    setPendingAvatarFile(file);
+    setIsDirty(true);
+    toast.success('Profile photo selected. Click "Save Changes" to apply.');
 
     if (e.target) {
       e.target.value = '';
     }
   };
 
-  React.useEffect(() => {
-    return () => {
-      if (avatarPreview) {
-        URL.revokeObjectURL(avatarPreview);
-      }
-    };
+  React.useEffect(() => () => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
   }, [avatarPreview]);
 
   React.useEffect(() => {
@@ -473,11 +501,11 @@ const Profile: React.FC = () => {
                       }
                       avatarInputRef.current?.click();
                     }}
-                    disabled={uploadProfileImageMutation.isPending || !isEditing}
+                    disabled={isSavingProfile || !isEditing}
                     className="absolute -bottom-2 -right-2 inline-flex h-8 w-8 items-center justify-center border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                     title={isEditing ? 'Upload photo' : 'Enable edit mode to upload photo'}
                   >
-                    {uploadProfileImageMutation.isPending ? (
+                    {isSavingProfile ? (
                       <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -518,10 +546,10 @@ const Profile: React.FC = () => {
                     </button>
                     <button
                       onClick={handleSave}
-                      disabled={updateProfileMutation.isPending}
+                      disabled={isSavingProfile || !hasUnsavedChanges}
                       className="inline-flex items-center justify-center border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94] disabled:opacity-50"
                     >
-                      {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
+                      {isSavingProfile ? 'Saving...' : 'Save Changes'}
                     </button>
                   </>
                 ) : (

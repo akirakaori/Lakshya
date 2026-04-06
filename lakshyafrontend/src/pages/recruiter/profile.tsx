@@ -13,6 +13,8 @@ const RecruiterProfile: React.FC = () => {
   const { isEditing, enterEditMode, exitEditMode, guardAction } = useEditMode();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
   const profile = profileData?.data;
 
@@ -35,22 +37,67 @@ const RecruiterProfile: React.FC = () => {
     confirmPassword: '',
   });
 
-  useEffect(() => {
-    if (profile) {
-      setFormData({
-        fullName: profile.fullName || profile.name || '',
-        phone: profile.phone || profile.number || '',
-        companyName: profile.companyName || '',
-        location: profile.location || '',
-        recruiter: {
-          companyWebsite: profile.recruiter?.companyWebsite || '',
-          companyDescription: profile.recruiter?.companyDescription || '',
-          position: profile.recruiter?.position || '',
-          department: profile.recruiter?.department || '',
-        },
-      });
+  const buildFormFromProfile = React.useCallback((profileData: any) => ({
+    fullName: profileData?.fullName || profileData?.name || '',
+    phone: profileData?.phone || profileData?.number || '',
+    companyName: profileData?.companyName || '',
+    location: profileData?.location || '',
+    recruiter: {
+      companyWebsite: profileData?.recruiter?.companyWebsite || '',
+      companyDescription: profileData?.recruiter?.companyDescription || '',
+      position: profileData?.recruiter?.position || '',
+      department: profileData?.recruiter?.department || '',
+    },
+  }), []);
+
+  const createComparableSnapshot = React.useCallback((data: typeof formData) => ({
+    fullName: data.fullName.trim(),
+    phone: data.phone.trim(),
+    companyName: data.companyName.trim(),
+    location: data.location.trim(),
+    recruiter: {
+      companyWebsite: data.recruiter.companyWebsite.trim(),
+      companyDescription: data.recruiter.companyDescription.trim(),
+      position: data.recruiter.position.trim(),
+      department: data.recruiter.department.trim(),
+    },
+  }), []);
+
+  const clearAvatarSelection = React.useCallback(() => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
     }
-  }, [profile]);
+    setAvatarPreview(null);
+    setPendingAvatarFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [avatarPreview]);
+
+  const profileSnapshot = React.useMemo(() => {
+    if (!profile) return null;
+    return createComparableSnapshot(buildFormFromProfile(profile));
+  }, [profile, buildFormFromProfile, createComparableSnapshot]);
+
+  const formSnapshot = React.useMemo(
+    () => createComparableSnapshot(formData),
+    [formData, createComparableSnapshot],
+  );
+
+  const hasFormChanges = React.useMemo(() => {
+    if (!profileSnapshot) return false;
+    return JSON.stringify(formSnapshot) !== JSON.stringify(profileSnapshot);
+  }, [formSnapshot, profileSnapshot]);
+
+  const hasUnsavedChanges = hasFormChanges || Boolean(pendingAvatarFile);
+  const isSavingProfile = updateProfileMutation.isPending || uploadImageMutation.isPending;
+
+  useEffect(() => {
+    if (profile && !isEditing) {
+      setFormData(buildFormFromProfile(profile));
+      clearAvatarSelection();
+    }
+  }, [profile, isEditing, buildFormFromProfile, clearAvatarSelection]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -73,10 +120,20 @@ const RecruiterProfile: React.FC = () => {
 
   const handleSave = async () => {
     if (!guardAction('save')) return;
+    if (!hasUnsavedChanges) {
+      toast.info('No changes to save');
+      return;
+    }
 
     try {
-      await updateProfileMutation.mutateAsync(formData);
+      if (pendingAvatarFile) {
+        await uploadImageMutation.mutateAsync(pendingAvatarFile);
+      }
+      if (hasFormChanges) {
+        await updateProfileMutation.mutateAsync(formData);
+      }
       toast.success('Profile updated successfully!');
+      clearAvatarSelection();
       exitEditMode();
     } catch {
       toast.error('Failed to update profile');
@@ -103,12 +160,24 @@ const RecruiterProfile: React.FC = () => {
       return;
     }
 
-    try {
-      await uploadImageMutation.mutateAsync(file);
-      toast.success('Profile photo updated successfully!');
-    } catch {
-      toast.error('Failed to upload profile photo');
+    const isSameAsPending =
+      pendingAvatarFile &&
+      pendingAvatarFile.name === file.name &&
+      pendingAvatarFile.size === file.size &&
+      pendingAvatarFile.lastModified === file.lastModified;
+    if (isSameAsPending) {
+      toast.info('This image is already selected');
+      if (e.target) e.target.value = '';
+      return;
     }
+
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+    setAvatarPreview(URL.createObjectURL(file));
+    setPendingAvatarFile(file);
+    toast.success('Profile photo selected. Click "Save Changes" to apply.');
+    if (e.target) e.target.value = '';
   };
 
   const handlePasswordChange = async () => {
@@ -144,9 +213,15 @@ const RecruiterProfile: React.FC = () => {
     );
   }
 
-  const avatarUrl = getFileUrl(profile?.profileImageUrl);
+  const avatarUrl = avatarPreview || getFileUrl(profile?.profileImageUrl);
   const displayName = profile?.fullName || profile?.name || 'Recruiter';
   const initials = getInitials(displayName);
+
+  useEffect(() => () => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+  }, [avatarPreview]);
 
   return (
     <DashboardLayout variant="recruiter" title="Profile">
@@ -189,7 +264,7 @@ const RecruiterProfile: React.FC = () => {
                       }
                       fileInputRef.current?.click();
                     }}
-                    disabled={!isEditing}
+                    disabled={!isEditing || isSavingProfile}
                     className="absolute -bottom-2 -right-2 inline-flex h-8 w-8 items-center justify-center border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                     title={isEditing ? 'Upload profile photo' : 'Enable edit mode to upload photo'}
                   >
@@ -229,18 +304,22 @@ const RecruiterProfile: React.FC = () => {
                 {isEditing ? (
                   <>
                     <button
-                      onClick={exitEditMode}
-                      className="inline-flex items-center justify-center border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      disabled={updateProfileMutation.isPending}
-                      className="inline-flex items-center justify-center border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94] disabled:opacity-50"
-                    >
-                      {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
-                    </button>
+                    onClick={() => {
+                      setFormData(buildFormFromProfile(profile));
+                      clearAvatarSelection();
+                      exitEditMode();
+                    }}
+                    className="inline-flex items-center justify-center border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSavingProfile || !hasUnsavedChanges}
+                    className="inline-flex items-center justify-center border border-[#3b4bb8] bg-[#3b4bb8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94] disabled:opacity-50"
+                  >
+                    {isSavingProfile ? 'Saving...' : 'Save Changes'}
+                  </button>
                   </>
                 ) : (
                   <button

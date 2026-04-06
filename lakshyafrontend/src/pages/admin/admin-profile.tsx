@@ -10,6 +10,8 @@ const AdminProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
   // Use the shared profile hook so the header/sidebar avatar stays in sync
   const { data: profileData, isLoading } = useProfile();
@@ -29,16 +31,53 @@ const AdminProfile: React.FC = () => {
     confirmPassword: '',
   });
 
+  const buildFormFromProfile = React.useCallback((profileData: any) => ({
+    name: profileData?.fullName || profileData?.name || '',
+    email: profileData?.email || '',
+    phone: profileData?.phone || profileData?.number || '',
+  }), []);
+
+  const createComparableSnapshot = React.useCallback((data: typeof formData) => ({
+    name: data.name.trim(),
+    phone: data.phone.trim(),
+  }), []);
+
+  const clearAvatarSelection = React.useCallback(() => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+    setAvatarPreview(null);
+    setPendingAvatarFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [avatarPreview]);
+
+  const profileSnapshot = React.useMemo(() => {
+    if (!profile) return null;
+    return createComparableSnapshot(buildFormFromProfile(profile));
+  }, [profile, buildFormFromProfile, createComparableSnapshot]);
+
+  const formSnapshot = React.useMemo(
+    () => createComparableSnapshot(formData),
+    [formData, createComparableSnapshot],
+  );
+
+  const hasFormChanges = React.useMemo(() => {
+    if (!profileSnapshot) return false;
+    return JSON.stringify(formSnapshot) !== JSON.stringify(profileSnapshot);
+  }, [formSnapshot, profileSnapshot]);
+
+  const hasUnsavedChanges = hasFormChanges || Boolean(pendingAvatarFile);
+  const isSavingProfile = isSaving || uploadImageMutation.isPending;
+
   // Sync form when profile data loads
   useEffect(() => {
-    if (profile) {
-      setFormData({
-        name: profile.fullName || profile.name || '',
-        email: profile.email || '',
-        phone: profile.phone || profile.number || '',
-      });
+    if (profile && !isEditing) {
+      setFormData(buildFormFromProfile(profile));
+      clearAvatarSelection();
     }
-  }, [profile]);
+  }, [profile, isEditing, buildFormFromProfile, clearAvatarSelection]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,13 +85,24 @@ const AdminProfile: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (!hasUnsavedChanges) {
+      toast.info('No changes to save');
+      return;
+    }
+
     setIsSaving(true);
     try {
-      await profileService.updateProfile({
-        fullName: formData.name,
-        phone: formData.phone,
-      });
+      if (pendingAvatarFile) {
+        await uploadImageMutation.mutateAsync(pendingAvatarFile);
+      }
+      if (hasFormChanges) {
+        await profileService.updateProfile({
+          fullName: formData.name,
+          phone: formData.phone,
+        });
+      }
       toast.success('Profile updated successfully!');
+      clearAvatarSelection();
       setIsEditing(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to update profile');
@@ -78,12 +128,23 @@ const AdminProfile: React.FC = () => {
       return;
     }
 
-    try {
-      await uploadImageMutation.mutateAsync(file);
-      toast.success('Profile photo updated successfully!');
-    } catch {
-      toast.error('Failed to upload profile photo');
+    const isSameAsPending =
+      pendingAvatarFile &&
+      pendingAvatarFile.name === file.name &&
+      pendingAvatarFile.size === file.size &&
+      pendingAvatarFile.lastModified === file.lastModified;
+    if (isSameAsPending) {
+      toast.info('This image is already selected');
+      if (e.target) e.target.value = '';
+      return;
     }
+
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+    setAvatarPreview(URL.createObjectURL(file));
+    setPendingAvatarFile(file);
+    toast.success('Profile photo selected. Click "Save Changes" to apply.');
     if (e.target) e.target.value = '';
   };
 
@@ -113,9 +174,15 @@ const AdminProfile: React.FC = () => {
     }
   };
 
-  const avatarUrl = getFileUrl(profile?.profileImageUrl);
+  const avatarUrl = avatarPreview || getFileUrl(profile?.profileImageUrl);
   const displayName = formData.name || profile?.fullName || profile?.name || 'Administrator';
   const initials = getInitials(displayName);
+
+  useEffect(() => () => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+  }, [avatarPreview]);
 
   if (isLoading) {
     return (
@@ -172,7 +239,7 @@ const AdminProfile: React.FC = () => {
                         }
                         fileInputRef.current?.click();
                       }}
-                      disabled={uploadImageMutation.isPending}
+                      disabled={uploadImageMutation.isPending || !isEditing}
                       className="absolute -bottom-2 -right-2 inline-flex h-8 w-8 items-center justify-center border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                       title={isEditing ? 'Upload profile photo' : 'Enable edit mode to upload photo'}
                     >
@@ -228,18 +295,22 @@ const AdminProfile: React.FC = () => {
                   ) : (
                     <>
                       <button
-                        onClick={() => setIsEditing(false)}
-                        disabled={isSaving}
+                        onClick={() => {
+                          setFormData(buildFormFromProfile(profile));
+                          clearAvatarSelection();
+                          setIsEditing(false);
+                        }}
+                        disabled={isSavingProfile}
                         className="inline-flex items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleSave}
-                        disabled={isSaving}
+                        disabled={isSavingProfile || !hasUnsavedChanges}
                         className="inline-flex items-center justify-center border border-[#2563EB] bg-[#2563EB] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8] disabled:opacity-50"
                       >
-                        {isSaving ? 'Saving...' : 'Save Changes'}
+                        {isSavingProfile ? 'Saving...' : 'Save Changes'}
                       </button>
                     </>
                   )}
