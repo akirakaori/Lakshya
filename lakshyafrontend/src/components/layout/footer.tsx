@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import lakshyaLogo from '../../assets/lakhsya-logo.svg';
 
 interface FooterProps {
   variant?: 'public' | 'dashboard';
@@ -15,12 +16,12 @@ const Footer: React.FC<FooterProps> = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
           {/* Company Info */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md">
-                <span className="text-xl">💼</span>
+            <Link to="/" className="flex items-center gap-2 mb-4 group w-fit">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 shadow-sm transition-colors group-hover:border-indigo-300 group-hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-900 dark:group-hover:border-indigo-700 dark:group-hover:bg-indigo-950">
+                <img src={lakshyaLogo} alt="Lakshya Logo" className="h-6 w-auto" />
               </div>
-              <span className="text-xl font-bold text-slate-900 dark:text-white">Lakshya</span>
-            </div>
+              <span className="text-xl font-bold text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">Lakshya</span>
+            </Link>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4 max-w-sm">
               The first AI-powered job portal where scores truly matter. Lakshya goes beyond finding jobs—it matches futures with intelligent resume analysis and personalized recommendations.
             </p>
