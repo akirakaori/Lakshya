@@ -1,6 +1,6 @@
-﻿import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { handleSuccess, handleError } from '../../Utils';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { handleSuccess, handleError, getFileUrl, getInitials } from '../../Utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/api-client';
 import {
@@ -12,6 +12,7 @@ import {
 } from '../../components';
 import ThemeToggle from '../../components/ui/theme-toggle';
 import lakshyaLogo from '../../assets/lakhsya-logo.svg';
+import { useProfile } from '../../hooks';
 import {
   LineChart,
   Line,
@@ -54,6 +55,13 @@ function AdminDashboard() {
   const loggedInUser = localStorage.getItem('loggedInUser') || 'Admin';
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeNav, setActiveNav] = useState('dashboard');
+
+  // Profile data for avatar in header
+  const { data: profileData } = useProfile();
+  const adminProfile = profileData?.data;
+  const adminAvatarUrl = getFileUrl(adminProfile?.profileImageUrl);
+  const adminDisplayName = adminProfile?.fullName || adminProfile?.name || loggedInUser;
+  const adminInitials = getInitials(adminDisplayName);
 
   // Preview tables pagination (dashboard tab only)
   const [previewUsersPage, setPreviewUsersPage] = useState(1);
@@ -99,11 +107,21 @@ function AdminDashboard() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab === 'users' || tab === 'posts' || tab === 'dashboard') {
+      setActiveNav(tab);
+      return;
+    }
+    setActiveNav('dashboard');
+  }, [location.search]);
 
   const panelClass =
     'border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950';
-  const mutedTextClass = 'text-sm text-slate-500 dark:text-slate-400';
   const inputClass =
     'w-full border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/10';
   const primaryButtonClass =
@@ -490,9 +508,35 @@ function AdminDashboard() {
             </svg>
             {isSidebarOpen && <span>Posts</span>}
           </button>
+
+          <button
+            onClick={() => navigate('/admin/profile')}
+            className={`flex w-full items-center ${isSidebarOpen ? 'space-x-3 px-4' : 'justify-center'} rounded-sm py-3 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white`}
+          >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            {isSidebarOpen && <span>Profile</span>}
+          </button>
         </nav>
 
         <div className="border-t border-slate-200 p-4 dark:border-slate-800">
+          <button
+            onClick={() => navigate('/admin/profile')}
+            className={`mb-2 flex w-full items-center ${
+              isSidebarOpen ? 'space-x-3 px-4' : 'justify-center'
+            } rounded-sm py-3 text-slate-600 transition-all duration-200 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900`}
+          >
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
+              {adminAvatarUrl ? (
+                <img src={adminAvatarUrl} alt={adminDisplayName} className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-xs font-bold text-[#2563EB]">{adminInitials}</span>
+              )}
+            </div>
+            {isSidebarOpen && <span className="truncate text-sm font-medium">{adminDisplayName}</span>}
+          </button>
+
           <button
             onClick={handleLogout}
             className={`w-full flex items-center ${
@@ -543,9 +587,24 @@ function AdminDashboard() {
               >
                 Profile
               </button>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2563EB] text-sm font-bold text-white">
-                {loggedInUser.charAt(0).toUpperCase()}
-              </div>
+              {/* Dynamic avatar — shows uploaded image or initials fallback */}
+              <button
+                onClick={() => navigate('/admin/profile')}
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#2563EB] transition-opacity hover:opacity-80"
+                title="Admin Profile"
+              >
+                {adminAvatarUrl ? (
+                  <img
+                    src={adminAvatarUrl}
+                    alt={adminDisplayName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-[#2563EB] text-sm font-bold text-white">
+                    {adminInitials}
+                  </div>
+                )}
+              </button>
             </div>
           </div>
         </header>
