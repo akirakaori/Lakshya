@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { handleSuccess, handleError } from '../../Utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -376,9 +376,9 @@ function AdminDashboard() {
 
   return (
     <div className='admin-shell flex h-screen'>
-      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} flex flex-col bg-gradient-to-b from-indigo-950 via-indigo-900 to-indigo-950 text-white shadow-2xl transition-all duration-300`}>
+      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} flex flex-col border-r border-slate-200 bg-white text-slate-900 shadow-sm transition-all duration-300 dark:border-slate-800 dark:bg-slate-950 dark:text-white`}>
 
-        <div className='p-6 flex items-center justify-between border-b border-indigo-700'>
+        <div className='p-6 flex items-center justify-between border-b border-slate-200 dark:border-slate-800'>
           <button
             onClick={() => navigate('/')}
             className={`flex cursor-pointer items-center hover:opacity-80 transition ${
@@ -390,27 +390,27 @@ function AdminDashboard() {
             <div className='admin-subpanel flex h-10 w-10 items-center justify-center rounded-lg'>
               <img src={lakshyaLogo} alt='Lakshya Logo' className='h-7 w-auto' />
             </div>
-            {isSidebarOpen && <h1 className='text-xl font-bold'>Lakshya</h1>}
+            {isSidebarOpen && <h1 className='text-xl font-bold text-slate-900 dark:text-white'>Lakshya</h1>}
           </button>
         </div>
 
         <nav className='flex-1 p-4 space-y-2'>
-          <button onClick={() => setActiveNav('dashboard')} className={`admin-sidebar-item flex items-center space-x-3 ${activeNav === 'dashboard' ? 'admin-sidebar-item-active' : ''}`}>
+          <button onClick={() => setActiveNav('dashboard')} className={`flex w-full items-center space-x-3 rounded-sm px-4 py-3 transition-colors ${activeNav === 'dashboard' ? 'bg-[#2563EB] text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white'}`}>
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' /></svg>
             {isSidebarOpen && <span className='font-medium'>Dashboard</span>}
           </button>
-          <button onClick={() => setActiveNav('users')} className={`admin-sidebar-item flex items-center space-x-3 ${activeNav === 'users' ? 'admin-sidebar-item-active' : ''}`}>
+          <button onClick={() => setActiveNav('users')} className={`flex w-full items-center space-x-3 rounded-sm px-4 py-3 transition-colors ${activeNav === 'users' ? 'bg-[#2563EB] text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white'}`}>
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' /></svg>
             {isSidebarOpen && <span className='font-medium'>Users</span>}
           </button>
-          <button onClick={() => setActiveNav('posts')} className={`admin-sidebar-item flex items-center space-x-3 ${activeNav === 'posts' ? 'admin-sidebar-item-active' : ''}`}>
+          <button onClick={() => setActiveNav('posts')} className={`flex w-full items-center space-x-3 rounded-sm px-4 py-3 transition-colors ${activeNav === 'posts' ? 'bg-[#2563EB] text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white'}`}>
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' /></svg>
             {isSidebarOpen && <span className='font-medium'>Posts</span>}
           </button>
         </nav>
 
-        <div className='p-4 border-t border-indigo-700'>
-          <button onClick={handleLogout} className='w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-600/20 transition-all duration-200 text-red-200 hover:text-white'>
+        <div className='p-4 border-t border-slate-200 dark:border-slate-800'>
+          <button onClick={handleLogout} className='w-full flex items-center space-x-3 px-4 py-3 rounded-sm text-slate-600 transition-all duration-200 hover:bg-red-600 hover:text-white dark:text-slate-300'>
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1' /></svg>
             {isSidebarOpen && <span className='font-medium'>Logout</span>}
           </button>
@@ -421,7 +421,7 @@ function AdminDashboard() {
         <header className='admin-topbar shadow-sm'>
           <div className='flex items-center justify-between px-8 py-4'>
             <div className='flex items-center space-x-4'>
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className='rounded-lg p-2 transition-colors hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700'>
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className='rounded-sm border border-slate-200 p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'>
                 <svg className='h-6 w-6 app-body-text' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 6h16M4 12h16M4 18h16' /></svg>
               </button>
               <h2 className='text-2xl font-bold app-heading'>{activeNav === 'dashboard' ? 'Overview' : activeNav === 'users' ? 'User Management' : 'Post Management'}</h2>
@@ -430,7 +430,7 @@ function AdminDashboard() {
               <ThemeToggle />
               <button
                 onClick={() => navigate('/admin/profile')}
-                className='flex items-center space-x-2 rounded-lg px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'
+                className='flex items-center space-x-2 rounded-sm px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'
               >
                 <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' />
@@ -758,14 +758,14 @@ function AdminDashboard() {
                       />
                       <button
                         onClick={handleApplyPreviewUsersSearch}
-                        className='px-5 py-3 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors'
+                        className='px-5 py-3 bg-indigo-600 text-white text-sm rounded-sm hover:bg-indigo-700 transition-colors'
                       >
                         Apply Search
                       </button>
                       {appliedPreviewUsersSearch && (
                         <button
                           onClick={handleClearPreviewUsersSearch}
-                          className='px-5 py-3 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors'
+                          className='px-5 py-3 bg-gray-600 text-white text-sm rounded-sm hover:bg-gray-700 transition-colors'
                         >
                           Clear
                         </button>
@@ -815,8 +815,8 @@ function AdminDashboard() {
                               <td className='px-6 py-4'><span className={`px-3 py-1 text-xs rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Suspended'}</span></td>
                               <td className='px-6 py-4 text-sm app-body-text'>{formatDate(user.createdAt)}</td>
                               <td className='px-6 py-4 space-x-2'>
-                                <button onClick={() => handleEditUser(user)} className='rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'>Edit</button>
-                                <button onClick={() => handleDeleteClick('user', user._id)} className='rounded-lg p-2 text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'>Delete</button>
+                                <button onClick={() => handleEditUser(user)} className='rounded-sm p-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'>Edit</button>
+                                <button onClick={() => handleDeleteClick('user', user._id)} className='rounded-sm p-2 text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'>Delete</button>
                               </td>
                             </tr>
                           );
@@ -860,14 +860,14 @@ function AdminDashboard() {
                       />
                       <button
                         onClick={handleApplyPreviewJobsSearch}
-                        className='px-5 py-3 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors'
+                        className='px-5 py-3 bg-indigo-600 text-white text-sm rounded-sm hover:bg-indigo-700 transition-colors'
                       >
                         Apply Search
                       </button>
                       {appliedPreviewJobsSearch && (
                         <button
                           onClick={handleClearPreviewJobsSearch}
-                          className='px-5 py-3 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors'
+                          className='px-5 py-3 bg-gray-600 text-white text-sm rounded-sm hover:bg-gray-700 transition-colors'
                         >
                           Clear
                         </button>
@@ -931,8 +931,8 @@ function AdminDashboard() {
                               </td>
                               <td className='px-6 py-4 text-sm app-body-text'>{formatDate(post.createdAt)}</td>
                               <td className='px-6 py-4 space-x-2'>
-                                <button onClick={() => handleEditPost(post)} className='rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'>Edit</button>
-                                <button onClick={() => handleDeleteClick('post', post._id)} className='rounded-lg p-2 text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'>Delete</button>
+                                <button onClick={() => handleEditPost(post)} className='rounded-sm p-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'>Edit</button>
+                                <button onClick={() => handleDeleteClick('post', post._id)} className='rounded-sm p-2 text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'>Delete</button>
                               </td>
                             </tr>
                           );
@@ -973,7 +973,7 @@ function AdminDashboard() {
                   <div className='flex gap-2'>
                     <button
                       onClick={handleApplyUserSearch}
-                      className='rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition-colors hover:bg-indigo-700'
+                      className='rounded-sm bg-indigo-600 px-6 py-3 font-medium text-white transition-colors hover:bg-indigo-700'
                     >
                       Apply Search
                     </button>
@@ -1032,8 +1032,8 @@ function AdminDashboard() {
                           <td className='px-6 py-4'><span className={`px-3 py-1 text-xs rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Suspended'}</span></td>
                           <td className='px-6 py-4 text-sm app-body-text'>{formatDate(user.createdAt)}</td>
                           <td className='px-6 py-4 space-x-2'>
-                            <button onClick={() => handleEditUser(user)} className='rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'>Edit</button>
-                            <button onClick={() => handleDeleteClick('user', user._id)} className='rounded-lg p-2 text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'>Delete</button>
+                            <button onClick={() => handleEditUser(user)} className='rounded-sm p-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'>Edit</button>
+                            <button onClick={() => handleDeleteClick('user', user._id)} className='rounded-sm p-2 text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'>Delete</button>
                           </td>
                         </tr>
                       );
@@ -1079,7 +1079,7 @@ function AdminDashboard() {
                   <div className='flex gap-2'>
                     <button
                       onClick={handleApplyPostSearch}
-                      className='rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition-colors hover:bg-indigo-700'
+                      className='rounded-sm bg-indigo-600 px-6 py-3 font-medium text-white transition-colors hover:bg-indigo-700'
                     >
                       Apply Search
                     </button>
@@ -1164,7 +1164,7 @@ function AdminDashboard() {
                             <button 
                               onClick={() => handleEditPost(post)} 
                               disabled={post.isDeleted}
-                              className={`p-2 rounded-lg ${
+                              className={`p-2 rounded-sm ${
                                 post.isDeleted 
                                   ? 'cursor-not-allowed text-slate-400 dark:text-slate-500' 
                                   : 'text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300'
@@ -1176,7 +1176,7 @@ function AdminDashboard() {
                             <button 
                               onClick={() => handleDeleteClick('post', post._id)} 
                               disabled={post.isDeleted}
-                              className={`p-2 rounded-lg ${
+                              className={`p-2 rounded-sm ${
                                 post.isDeleted 
                                   ? 'cursor-not-allowed text-slate-400 dark:text-slate-500' 
                                   : 'text-red-600 hover:bg-red-50 hover:text-red-900 dark:hover:bg-red-500/10 dark:hover:text-red-300'
@@ -1219,7 +1219,7 @@ function AdminDashboard() {
               <div><label className='app-label mb-2 block text-sm font-medium'>Reset Password (optional)</label><input type='password' value={editUserData.password} onChange={(e) => setEditUserData({...editUserData, password: e.target.value})} placeholder='Leave blank to keep current' className='app-input' /></div>
             </div>
             <div className='flex space-x-4 mt-6'>
-              <button onClick={handleSaveUser} className='flex-1 rounded-lg bg-indigo-600 py-2 text-white hover:bg-indigo-700'>Save</button>
+              <button onClick={handleSaveUser} className='flex-1 rounded-sm bg-indigo-600 py-2 text-white hover:bg-indigo-700'>Save</button>
               <button onClick={() => setShowEditUserModal(false)} className='app-secondary-button flex-1 py-2'>Cancel</button>
             </div>
           </div>
@@ -1236,7 +1236,7 @@ function AdminDashboard() {
               <div className='grid grid-cols-2 gap-4'><div><label className='app-label mb-2 block text-sm font-medium'>Company</label><input type='text' value={editPostData.company} onChange={(e) => setEditPostData({...editPostData, company: e.target.value})} className='app-input' /></div><div><label className='app-label mb-2 block text-sm font-medium'>Location</label><input type='text' value={editPostData.location} onChange={(e) => setEditPostData({...editPostData, location: e.target.value})} className='app-input' /></div></div>
             </div>
             <div className='flex space-x-4 mt-6'>
-              <button onClick={handleSavePost} className='flex-1 rounded-lg bg-indigo-600 py-2 text-white hover:bg-indigo-700'>Save</button>
+              <button onClick={handleSavePost} className='flex-1 rounded-sm bg-indigo-600 py-2 text-white hover:bg-indigo-700'>Save</button>
               <button onClick={() => setShowEditPostModal(false)} className='app-secondary-button flex-1 py-2'>Cancel</button>
             </div>
           </div>
@@ -1250,7 +1250,7 @@ function AdminDashboard() {
             <p className='mb-4 app-body-text'>Are you sure you want to delete this {deleteTarget.type}?</p>
             <div className='mb-4 app-body-text'><label className='app-label mb-2 block text-sm font-medium'>Reason (optional)</label><textarea value={deleteReason} onChange={(e) => setDeleteReason(e.target.value)} placeholder='e.g., Spam, inappropriate...' rows={3} className='app-input' /></div>
             <div className='flex space-x-4'>
-              <button onClick={handleConfirmDelete} className='flex-1 rounded-lg bg-red-600 py-2 text-white hover:bg-red-700'>Delete</button>
+              <button onClick={handleConfirmDelete} className='flex-1 rounded-sm bg-red-600 py-2 text-white hover:bg-red-700'>Delete</button>
               <button onClick={() => setShowDeleteConfirm(false)} className='app-secondary-button flex-1 py-2'>Cancel</button>
             </div>
           </div>

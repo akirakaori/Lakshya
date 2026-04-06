@@ -476,7 +476,7 @@ const PostJob: React.FC = () => {
               <button
                 type="button"
                 onClick={addSkill}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="px-4 py-2 bg-indigo-600 text-white rounded-sm hover:bg-indigo-700"
               >
                 Add
               </button>
@@ -558,14 +558,14 @@ const PostJob: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/recruiter/manage-jobs')}
-              className="px-6 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
+              className="px-6 py-2 border border-gray-300 dark:border-slate-700 rounded-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createJobMutation.isPending || updateJobMutation.isPending}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              className="px-6 py-2 bg-indigo-600 text-white rounded-sm hover:bg-indigo-700 disabled:opacity-50"
             >
               {isEditMode
                 ? (updateJobMutation.isPending ? 'Updating...' : 'Update Job')

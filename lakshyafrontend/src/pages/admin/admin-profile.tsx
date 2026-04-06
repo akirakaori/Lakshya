@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/auth-context';
 import { profileService } from '../../services';
@@ -115,7 +115,7 @@ const AdminProfile: React.FC = () => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/AdminDashboard')}
-                className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                className="rounded-sm p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
               >
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -127,7 +127,7 @@ const AdminProfile: React.FC = () => {
               <ThemeToggle />
               <button
                 onClick={() => setShowLogoutModal(true)}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                className="rounded-sm bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
               >
                 Logout
               </button>
@@ -145,7 +145,7 @@ const AdminProfile: React.FC = () => {
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="rounded-lg border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
+                  className="rounded-sm border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
                 >
                   Edit Profile
                 </button>
@@ -161,7 +161,7 @@ const AdminProfile: React.FC = () => {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                    className="rounded-sm bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {isSaving ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -221,7 +221,7 @@ const AdminProfile: React.FC = () => {
             <h2 className="mb-4 text-xl font-semibold app-heading">Security</h2>
             <button
               onClick={() => setShowPasswordModal(true)}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+              className="rounded-sm bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
             >
               Change Password
             </button>
@@ -237,7 +237,7 @@ const AdminProfile: React.FC = () => {
               <h3 className="text-lg font-semibold app-heading">Change Password</h3>
               <button
                 onClick={() => setShowPasswordModal(false)}
-                className="rounded-lg p-1 text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-200"
+                className="rounded-sm p-1 text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-200"
               >
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -287,7 +287,7 @@ const AdminProfile: React.FC = () => {
                 <button
                   onClick={handlePasswordChange}
                   disabled={isSaving}
-                  className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                  className="flex-1 rounded-sm bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                 >
                   {isSaving ? 'Changing...' : 'Change Password'}
                 </button>
