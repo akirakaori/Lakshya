@@ -17,7 +17,7 @@ import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
 import type { Job } from '../../services';
 import { getCategoryMeta } from '../../constants/jobCategories';
-import { ThemeToggle } from '../../components/ui';
+import { ThemeToggle, AnalysisRequiredModal } from '../../components/ui';
 import lakshyaLogo from '../../assets/lakhsya-logo.svg';
 import DOMPurify from 'dompurify';
 import { normalizeRichContent } from '../../utils/rich-text';
@@ -69,6 +69,7 @@ const JobDetails: React.FC = () => {
   const safeJobId = jobId ?? '';
   const [coverLetter, setCoverLetter] = useState('');
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showAnalysisRequiredModal, setShowAnalysisRequiredModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -180,27 +181,9 @@ const JobDetails: React.FC = () => {
     );
   }
 
-  const handleApply = async () => {
+  // Core submit logic (no validation here)
+  const submitApplication = async () => {
     if (!jobId) return;
-
-    if (!hasAnalysis) {
-      const confirmed = window.confirm(
-        'You haven\'t analyzed your match for this job yet. We recommend analyzing first to see how well you match. Continue anyway?'
-      );
-      if (!confirmed) {
-        setShowApplyModal(false);
-        return;
-      }
-    } else if (isAnalysisOutdated) {
-      const confirmed = window.confirm(
-        'Your profile has changed since the last analysis. We recommend re-analyzing to see your updated match score. Continue anyway?'
-      );
-      if (!confirmed) {
-        setShowApplyModal(false);
-        return;
-      }
-    }
-
     try {
       await applyMutation.mutateAsync({
         jobId,
@@ -218,6 +201,27 @@ const JobDetails: React.FC = () => {
           ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
           : 'Failed to submit application';
       toast.error(errorMessage);
+    }
+  };
+
+  // Called by "Submit Application" button in the apply modal
+  const handleApply = async () => {
+    if (!jobId) return;
+    await submitApplication();
+  };
+
+  // Called by "Continue anyway" in AnalysisRequiredModal
+  const handleProceedWithApplication = () => {
+    setShowAnalysisRequiredModal(false);
+    setShowApplyModal(true);
+  };
+
+  // Called by "Analyze Match Now" in AnalysisRequiredModal
+  const handleAnalyzeFromModal = () => {
+    setShowAnalysisRequiredModal(false);
+    setShowApplyModal(false);
+    if (matchPanelRef.current) {
+      matchPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -257,6 +261,11 @@ const JobDetails: React.FC = () => {
 
     if (isWithdrawnApplication && (job?.isDeleted || !job?.isActive || job?.status !== 'open')) {
       toast.info('This job is no longer open for reapplication.');
+      return;
+    }
+
+    if (!hasAnalysis || isAnalysisOutdated) {
+      setShowAnalysisRequiredModal(true);
       return;
     }
 
@@ -756,6 +765,7 @@ const JobDetails: React.FC = () => {
     <>
       {pageContent}
 
+      {/* Apply Modal */}
       {showApplyModal && (
         <div className="app-modal-overlay">
           <div className="app-modal-panel max-w-lg border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
@@ -797,6 +807,15 @@ const JobDetails: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Analysis Required Modal — replaces window.confirm */}
+      <AnalysisRequiredModal
+        isOpen={showAnalysisRequiredModal}
+        onClose={() => setShowAnalysisRequiredModal(false)}
+        onConfirm={handleProceedWithApplication}
+        onAnalyze={handleAnalyzeFromModal}
+        isOutdated={isAnalysisOutdated}
+      />
     </>
   );
 };
