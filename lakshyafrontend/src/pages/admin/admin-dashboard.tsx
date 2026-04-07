@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { handleSuccess, handleError, getFileUrl, getInitials } from '../../Utils';
+import { handleSuccess, handleError } from '../../Utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/api-client';
 import {
   Footer,
+  Navbar,
   PageSizeSelect,
   PaginationControls,
   ConfirmModal,
   type PaginationMeta,
 } from '../../components';
-import ThemeToggle from '../../components/ui/theme-toggle';
 import lakshyaLogo from '../../assets/lakhsya-logo.svg';
-import { useProfile } from '../../hooks';
 import {
   LineChart,
   Line,
@@ -52,16 +51,8 @@ interface Post {
 }
 
 function AdminDashboard() {
-  const loggedInUser = localStorage.getItem('loggedInUser') || 'Admin';
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeNav, setActiveNav] = useState('dashboard');
-
-  // Profile data for avatar in header
-  const { data: profileData } = useProfile();
-  const adminProfile = profileData?.data;
-  const adminAvatarUrl = getFileUrl(adminProfile?.profileImageUrl);
-  const adminDisplayName = adminProfile?.fullName || adminProfile?.name || loggedInUser;
-  const adminInitials = getInitials(adminDisplayName);
 
   // Preview tables pagination (dashboard tab only)
   const [previewUsersPage, setPreviewUsersPage] = useState(1);
@@ -128,8 +119,6 @@ function AdminDashboard() {
     'inline-flex items-center justify-center rounded-sm bg-[#2563EB] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1D4ED8]';
   const secondaryButtonClass =
     'inline-flex items-center justify-center rounded-sm border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900';
-  const iconButtonClass =
-    'inline-flex h-10 w-10 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white';
 
   const getNavButtonClass = (navKey: string) =>
     `flex w-full items-center ${isSidebarOpen ? 'space-x-3 px-4' : 'justify-center'} rounded-sm py-3 text-sm font-medium transition-colors ${
@@ -464,6 +453,8 @@ function AdminDashboard() {
     setShowLogoutModal(true);
   };
 
+  const activeNavTitle = activeNav === 'dashboard' ? 'Dashboard' : activeNav === 'users' ? 'Users' : 'Posts';
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-white">
       <aside
@@ -536,62 +527,11 @@ function AdminDashboard() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="border-b border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
-          <div className="flex items-center justify-between px-8 py-4">
-            <div className="flex items-center space-x-4">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={iconButtonClass}>
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {activeNav === 'dashboard'
-                    ? 'Overview'
-                    : activeNav === 'users'
-                    ? 'User Management'
-                    : 'Post Management'}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {activeNav === 'dashboard'
-                    ? 'Monitor platform activity and core metrics'
-                    : activeNav === 'users'
-                    ? 'Manage platform users and access'
-                    : 'Manage jobs and posting status'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <ThemeToggle />
-              <button
-                onClick={() => navigate('/admin/profile')}
-                className="hidden rounded-sm border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-[#2563EB] transition-colors hover:bg-blue-50 hover:text-[#1D4ED8] md:inline-flex dark:border-slate-700 dark:bg-slate-950 dark:text-blue-400 dark:hover:bg-slate-900"
-              >
-                Profile
-              </button>
-              {/* Dynamic avatar — shows uploaded image or initials fallback */}
-              <button
-                onClick={() => navigate('/admin/profile')}
-                className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#2563EB] transition-opacity hover:opacity-80"
-                title="Admin Profile"
-              >
-                {adminAvatarUrl ? (
-                  <img
-                    src={adminAvatarUrl}
-                    alt={adminDisplayName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-[#2563EB] text-sm font-bold text-white">
-                    {adminInitials}
-                  </div>
-                )}
-              </button>
-            </div>
-          </div>
-        </header>
+        <Navbar
+          title={activeNavTitle}
+          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+          showLogo={false}
+        />
 
         <div className="flex-1 overflow-y-auto">
           <main className="min-h-screen p-8">
