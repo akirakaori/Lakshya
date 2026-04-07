@@ -25,7 +25,10 @@ export function htmlToPlainText(html?: string): string {
  */
 export function arrayToHtmlList(items?: string[]): string {
   if (!items || items.length === 0) return '';
-  return `<ul>${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
+  return `<ul>${items
+    .map((item) => item.replace(/^\s*[•◦▪▫·●○*\-]+\s*/u, '').trim())
+    .map((item) => `<li>${item}</li>`)
+    .join('')}</ul>`;
 }
 
 /**
@@ -37,5 +40,5 @@ export function arrayToHtmlList(items?: string[]): string {
 export function normalizeRichContent(content: string | string[] | undefined): string {
   if (!content) return '';
   if (Array.isArray(content)) return arrayToHtmlList(content);
-  return content;
+  return content.replace(/(<li[^>]*>\s*)(?:[•◦▪▫·●○*\-]\s*)+/giu, '$1');
 }

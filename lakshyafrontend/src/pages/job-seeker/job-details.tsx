@@ -3,7 +3,16 @@ import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'reac
 import { DashboardLayout, LoadingSpinner, EmptyState, ErrorBoundary } from '../../components';
 import { JobCard } from '../../components/jobs';
 import JobMatchPanel from '../../components/jobs/JobMatchPanel';
-import { useJob, useJobs, useApplyForJob, useJobMatch, useIsJobSaved, useSaveJob, useRemoveSavedJob, useMyApplications } from '../../hooks';
+import {
+  useJob,
+  useJobs,
+  useApplyForJob,
+  useJobMatch,
+  useIsJobSaved,
+  useSaveJob,
+  useRemoveSavedJob,
+  useMyApplications
+} from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
 import type { Job } from '../../services';
@@ -31,7 +40,7 @@ function renderRichContent(content: string | string[] | undefined): React.ReactN
   if (!html || html === '<p><br></p>') return null;
   return (
     <div
-      className="prose prose-sm max-w-none prose-ul:list-disc prose-ul:pl-5 prose-ol:list-decimal prose-ol:pl-5 prose-li:my-1 prose-p:my-2 prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-indigo-600 dark:prose-headings:text-slate-100 dark:prose-p:text-slate-300 dark:prose-li:text-slate-300 dark:prose-strong:text-slate-100 dark:prose-a:text-indigo-300"
+      className="prose prose-sm max-w-none prose-headings:mb-3 prose-headings:text-slate-900 prose-p:my-2 prose-p:text-slate-700 prose-ul:my-3 prose-ul:list-disc prose-ul:pl-5 prose-ol:my-3 prose-ol:list-decimal prose-ol:pl-5 prose-li:my-1 prose-li:text-slate-700 prose-strong:text-slate-900 prose-a:text-[#2563EB] dark:prose-headings:text-slate-100 dark:prose-p:text-slate-300 dark:prose-li:text-slate-300 dark:prose-strong:text-slate-100 dark:prose-a:text-blue-300"
       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html, DOMPURIFY_CONFIG) }}
     />
   );
@@ -48,6 +57,12 @@ const formatSalary = (salary: Job['salary']) => {
   });
   return `${formatter.format(salary.min)} - ${formatter.format(salary.max)}`;
 };
+
+const surfaceClass =
+  'border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900';
+
+const sectionTitleClass =
+  'text-[15px] font-semibold tracking-tight text-slate-900 dark:text-slate-100';
 
 const JobDetails: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -75,16 +90,11 @@ const JobDetails: React.FC = () => {
   const job = jobData?.data;
   const relatedJobs = relatedJobsData?.data?.filter((j: Job) => j._id !== safeJobId).slice(0, 4) || [];
   const currentApplication = myApplicationsData?.data?.find((app) => {
-    if (!app?.jobId) {
-      return false;
-    }
-
-    if (typeof app.jobId === 'string') {
-      return app.jobId === safeJobId;
-    }
-
+    if (!app?.jobId) return false;
+    if (typeof app.jobId === 'string') return app.jobId === safeJobId;
     return app.jobId?._id === safeJobId;
   });
+
   const isWithdrawnApplication = currentApplication?.status === 'withdrawn' || currentApplication?.isWithdrawn;
   const withdrawnDateText = currentApplication?.withdrawnAt
     ? new Date(currentApplication.withdrawnAt).toLocaleDateString()
@@ -95,23 +105,18 @@ const JobDetails: React.FC = () => {
   const hasAnalysis = !!matchData?.data;
   const isAnalysisOutdated = matchData?.isOutdated || false;
 
-  // Handle action query params (apply/analyze)
   useEffect(() => {
     const action = searchParams.get('action');
     if (!action || !job) return;
 
-    // Check if user is logged in
     if (!user) {
-      // Not logged in - redirect to login
       const currentPath = `/jobs/${jobId}?action=${action}`;
       navigate(`/login?redirect=${encodeURIComponent(currentPath)}`, { replace: true });
       return;
     }
 
-    // Check if user is a job seeker
     if (user.role !== 'job_seeker') {
       toast.error('Only job seekers can apply or analyze jobs.');
-      // Remove action param
       searchParams.delete('action');
       setSearchParams(searchParams, { replace: true });
       return;
@@ -133,21 +138,16 @@ const JobDetails: React.FC = () => {
       }
     }
 
-    // Handle the action - use setTimeout to avoid cascading renders
     if (action === 'apply') {
-      // Delay to avoid cascading render warning
       setTimeout(() => {
         setShowApplyModal(true);
       }, 0);
-      // Remove action param from URL
       searchParams.delete('action');
       setSearchParams(searchParams, { replace: true });
     } else if (action === 'analyze') {
-      // Scroll to match panel
       if (matchPanelRef.current) {
         matchPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-      // Remove action param from URL after a brief delay
       setTimeout(() => {
         searchParams.delete('action');
         setSearchParams(searchParams, { replace: true });
@@ -155,7 +155,6 @@ const JobDetails: React.FC = () => {
     }
   }, [searchParams, job, user, jobId, navigate, setSearchParams, activeApplicationStatus, isWithdrawnApplication]);
 
-  // Guard: Invalid jobId parameter
   if (!jobId) {
     const content = (
       <EmptyState
@@ -164,28 +163,26 @@ const JobDetails: React.FC = () => {
         action={
           <Link
             to="/"
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="inline-flex items-center justify-center border border-[#2563EB] bg-[#2563EB] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
           >
             Back to Home
           </Link>
         }
       />
     );
-    
+
     return user && user.role === 'job_seeker' ? (
       <DashboardLayout variant="job-seeker" title="Job Details">
         {content}
       </DashboardLayout>
     ) : (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-8">{content}</div>
+      <div className="min-h-screen bg-slate-50 p-8 dark:bg-slate-950">{content}</div>
     );
   }
 
   const handleApply = async () => {
     if (!jobId) return;
-    
-    // Check if analysis exists and is up-to-date (optional - backend handles this automatically)
-    // We show warnings but still allow apply (backend will compute if needed)
+
     if (!hasAnalysis) {
       const confirmed = window.confirm(
         'You haven\'t analyzed your match for this job yet. We recommend analyzing first to see how well you match. Continue anyway?'
@@ -203,7 +200,7 @@ const JobDetails: React.FC = () => {
         return;
       }
     }
-    
+
     try {
       await applyMutation.mutateAsync({
         jobId,
@@ -226,18 +223,16 @@ const JobDetails: React.FC = () => {
 
   const handleAnalyzeClick = () => {
     if (!user) {
-      // Not logged in - redirect to login with action param
       const redirectUrl = encodeURIComponent(`/jobs/${jobId}?action=analyze`);
       navigate(`/login?redirect=${redirectUrl}`);
       return;
     }
-    
+
     if (user.role !== 'job_seeker') {
       toast.error('Only job seekers can analyze resume match.');
       return;
     }
-    
-    // Scroll to analysis panel
+
     if (matchPanelRef.current) {
       matchPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -245,12 +240,11 @@ const JobDetails: React.FC = () => {
 
   const handleApplyClick = () => {
     if (!user) {
-      // Not logged in - redirect to login with action param
       const redirectUrl = encodeURIComponent(`/jobs/${jobId}?action=apply`);
       navigate(`/login?redirect=${redirectUrl}`);
       return;
     }
-    
+
     if (user.role !== 'job_seeker') {
       toast.error('Only job seekers can apply for jobs.');
       return;
@@ -265,8 +259,7 @@ const JobDetails: React.FC = () => {
       toast.info('This job is no longer open for reapplication.');
       return;
     }
-    
-    // Open apply modal
+
     setShowApplyModal(true);
   };
 
@@ -304,7 +297,9 @@ const JobDetails: React.FC = () => {
         {loadingContent}
       </DashboardLayout>
     ) : (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">{loadingContent}</div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+        {loadingContent}
+      </div>
     );
   }
 
@@ -315,10 +310,10 @@ const JobDetails: React.FC = () => {
         description="The job you're looking for doesn't exist or has been removed."
         action={
           <Link
-            to={user && user.role === 'job_seeker' ? "/job-seeker/browse-jobs" : "/"}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            to={user && user.role === 'job_seeker' ? '/job-seeker/browse-jobs' : '/'}
+            className="inline-flex items-center justify-center border border-[#2563EB] bg-[#2563EB] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
           >
-            {user && user.role === 'job_seeker' ? "Browse Jobs" : "Back to Home"}
+            {user && user.role === 'job_seeker' ? 'Browse Jobs' : 'Back to Home'}
           </Link>
         }
       />
@@ -328,147 +323,183 @@ const JobDetails: React.FC = () => {
         {errorContent}
       </DashboardLayout>
     ) : (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-8">{errorContent}</div>
+      <div className="min-h-screen bg-slate-50 p-8 dark:bg-slate-950">{errorContent}</div>
     );
   }
 
-  // Check if job is deleted or inactive
   const isJobInactive = job.isDeleted || !job.isActive;
   const isJobOpenForApply = !isJobInactive && job.status === 'open';
   const canReapply = isWithdrawnApplication && isJobOpenForApply;
 
-  // Main content (used in both authenticated and public views)
   const jobDetailsContent = (
     <div className="mx-auto max-w-7xl">
-        {/* Inactive Job Warning */}
-        {isJobInactive && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <svg className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <div>
-                <h3 className="text-yellow-900 font-semibold">This job is no longer active</h3>
-                <p className="text-yellow-700 text-sm mt-1">
-                  {job.isDeleted 
-                    ? "This job post has been removed by the employer and is no longer accepting applications."
-                    : "This job is currently inactive and not accepting new applications."}
-                </p>
-              </div>
+      {isJobInactive && (
+        <div className="mb-6 border border-amber-200 bg-amber-50 px-4 py-4 dark:border-amber-500/20 dark:bg-amber-500/10">
+          <div className="flex items-start gap-3">
+            <svg className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h3 className="font-semibold text-amber-900 dark:text-amber-300">This job is no longer active</h3>
+              <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
+                {job.isDeleted
+                  ? 'This job post has been removed by the employer and is no longer accepting applications.'
+                  : 'This job is currently inactive and not accepting new applications.'}
+              </p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Back Link */}
-        <Link
-          to={user && user.role === 'job_seeker' ? "/job-seeker/browse-jobs" : "/"}
-          className="inline-flex items-center text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100 dark:text-slate-100 mb-6"
-        >
-          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          {user && user.role === 'job_seeker' ? "Back to Jobs" : "Back to Home"}
-        </Link>
+      <Link
+        to={user && user.role === 'job_seeker' ? '/job-seeker/browse-jobs' : '/'}
+        className="mb-5 inline-flex items-center text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+      >
+        <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        {user && user.role === 'job_seeker' ? 'Back to Jobs' : 'Back to Home'}
+      </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Job Header */}
-            <div className="overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{job.title}</h1>
-                  <div className="flex items-center gap-2 mt-2 text-gray-600 dark:text-slate-300">
-                    <span>{job.companyName}</span>
-                    <span>•</span>
-                    <span>{job.location}</span>
-                    {formatSalary(job.salary) && (
-                      <>
-                        <span>•</span>
-                        <span>{formatSalary(job.salary)}</span>
-                      </>
-                    )}
-                  </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="space-y-5 lg:col-span-8">
+          {/* Job Header */}
+          <div className={`${surfaceClass} p-6`}>
+            <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 md:flex-row md:items-start md:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-[28px] font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+                  {job.title}
+                </h1>
+
+                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{job.companyName}</span>
+                  <span>•</span>
+                  <span>{job.location}</span>
+                  {formatSalary(job.salary) && (
+                    <>
+                      <span>•</span>
+                      <span>{formatSalary(job.salary)}</span>
+                    </>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    job.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300'
-                  }`}>
-                    {job.status === 'open' ? 'Active' : 'Closed'}
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {job.category && (
+                    <span
+                      className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-medium ${
+                        getCategoryMeta(job.category).bgClass
+                      } ${getCategoryMeta(job.category).colorClass} ${getCategoryMeta(job.category).borderClass}`}
+                    >
+                      <span>{getCategoryMeta(job.category).icon}</span>
+                      <span>{job.category}</span>
+                    </span>
+                  )}
+
+                  <span className="inline-flex items-center border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    {job.jobType}
+                  </span>
+
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    Posted {new Date(job.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 mt-4">
-                {/* Category Badge */}
-                {job.category && (
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium border ${
-                    getCategoryMeta(job.category).bgClass
-                  } ${
-                    getCategoryMeta(job.category).colorClass
-                  } ${
-                    getCategoryMeta(job.category).borderClass
-                  }`}>
-                    <span>{getCategoryMeta(job.category).icon}</span>
-                    <span>{job.category}</span>
-                  </span>
-                )}
-                {/* Job Type Badge */}
-                <span className="text-sm text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 px-3 py-1 rounded-full">{job.jobType}</span>
-                {/* Posted Date */}
-                <span className="text-sm text-gray-500 dark:text-slate-400">
-                  Posted {new Date(job.createdAt).toLocaleDateString()}
+              <div className="shrink-0">
+                <span
+                  className={`inline-flex items-center px-2.5 py-1 text-xs font-medium ${
+                    job.status === 'open'
+                      ? 'border border-green-200 bg-green-50 text-green-700 dark:border-green-500/20 dark:bg-green-500/10 dark:text-green-300'
+                      : 'border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                  }`}
+                >
+                  {job.status === 'open' ? 'Active' : 'Closed'}
                 </span>
               </div>
             </div>
 
-            {/* Job Description */}
-            <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Job Description</h2>
-              {renderRichContent(job.description)}
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/50">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Job Type</p>
+                <p className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">{job.jobType}</p>
+              </div>
+              <div className="border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/50">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Location</p>
+                <p className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">{job.location}</p>
+              </div>
+              <div className="border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/50">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Salary</p>
+                <p className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">{formatSalary(job.salary) || 'Not specified'}</p>
+              </div>
             </div>
+          </div>
 
-            {/* Requirements */}
-            {renderRichContent(job.requirements as unknown as string | string[] | undefined) && (
-              <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Requirements</h2>
+          {/* Description */}
+          <div className={surfaceClass}>
+            <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+              <h2 className={sectionTitleClass}>Job Description</h2>
+            </div>
+            <div className="p-5">{renderRichContent(job.description)}</div>
+          </div>
+
+          {/* Requirements */}
+          {renderRichContent(job.requirements as unknown as string | string[] | undefined) && (
+            <div className={surfaceClass}>
+              <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                <h2 className={sectionTitleClass}>Requirements</h2>
+              </div>
+              <div className="p-5">
                 {renderRichContent(job.requirements as unknown as string | string[] | undefined)}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Benefits */}
-            {renderRichContent(job.benefits as unknown as string | string[] | undefined) && (
-              <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Benefits</h2>
+          {/* Benefits */}
+          {renderRichContent(job.benefits as unknown as string | string[] | undefined) && (
+            <div className={surfaceClass}>
+              <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                <h2 className={sectionTitleClass}>Benefits</h2>
+              </div>
+              <div className="p-5">
                 {renderRichContent(job.benefits as unknown as string | string[] | undefined)}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Required Skills */}
-            {job.skillsRequired && job.skillsRequired.length > 0 && (
-              <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Required Skills</h2>
+          {/* Skills */}
+          {job.skillsRequired && job.skillsRequired.length > 0 && (
+            <div className={surfaceClass}>
+              <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                <h2 className={sectionTitleClass}>Required Skills</h2>
+              </div>
+              <div className="p-5">
                 <div className="flex flex-wrap gap-2">
                   {job.skillsRequired.map((skill: string, index: number) => (
                     <span
                       key={index}
-                      className="px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 rounded-full text-sm"
+                      className="inline-flex items-center border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     >
                       {skill}
                     </span>
                   ))}
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Action Buttons: Apply & Analyze */}
-            <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Take Action</h3>
-              
+          {/* Actions */}
+          <div className={surfaceClass}>
+            <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+              <h3 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                Take Action
+              </h3>
+            </div>
+
+            <div className="p-5">
               {isJobInactive ? (
                 <div className="text-center">
-                  <div className="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-lg">
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="inline-flex items-center border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                     </svg>
                     This job is no longer available
@@ -476,40 +507,46 @@ const JobDetails: React.FC = () => {
                 </div>
               ) : isWithdrawnApplication ? (
                 <div className="text-center">
-                  <div className="inline-flex items-center px-4 py-2 bg-amber-100 text-amber-800 rounded-lg font-medium">
+                  <div className="inline-flex items-center border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
                     Withdrawn
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">
+                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                     {withdrawnDateText
                       ? `You withdrew your application on ${withdrawnDateText}.`
                       : 'You withdrew your application for this job.'}
                   </p>
                   {canReapply ? (
                     <>
-                      <p className="text-sm text-emerald-700 mt-1 font-medium">You can reapply because this job is still open.</p>
-                      <div className="mt-3 flex justify-center">
+                      <p className="mt-1 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                        You can reapply because this job is still open.
+                      </p>
+                      <div className="mt-4 flex justify-center">
                         <button
                           onClick={handleApplyClick}
-                          className="px-6 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium"
+                          className="inline-flex items-center justify-center border border-[#2563EB] bg-[#2563EB] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
                         >
                           Reapply
                         </button>
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">This job is no longer open for reapplication.</p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      This job is no longer open for reapplication.
+                    </p>
                   )}
                 </div>
               ) : activeApplicationStatus || applyMutation.isSuccess ? (
                 <div className="text-center">
-                  <div className={`inline-flex items-center px-4 py-2 rounded-lg ${getStatusBadgeClass(activeApplicationStatus || 'applied')}`}>
+                  <div className={`inline-flex items-center px-4 py-2 text-sm font-medium ${getStatusBadgeClass(activeApplicationStatus || 'applied')}`}>
                     {getStatusLabel(activeApplicationStatus || 'applied')}
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">You already have an active application for this job.</p>
-                  <div className="mt-3">
+                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                    You already have an active application for this job.
+                  </p>
+                  <div className="mt-4">
                     <Link
                       to="/job-seeker/my-applications"
-                      className="inline-flex items-center px-4 py-2 border border-green-300 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+                      className="inline-flex items-center justify-center border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-100 dark:border-green-500/20 dark:bg-green-500/10 dark:text-green-300"
                     >
                       Track Application
                     </Link>
@@ -517,33 +554,34 @@ const JobDetails: React.FC = () => {
                 </div>
               ) : job.status === 'closed' ? (
                 <div className="text-center">
-                  <div className="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-lg">
+                  <div className="inline-flex items-center border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                     This position is no longer accepting applications
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <button
                     onClick={handleApplyClick}
-                    className="flex-1 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-lg"
+                    className="inline-flex items-center justify-center border border-[#2563EB] bg-[#2563EB] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
                   >
                     Apply Now
                   </button>
+
                   <button
                     type="button"
                     onClick={handleToggleSave}
-                    className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                    className={`inline-flex items-center justify-center gap-2 border px-5 py-3 text-sm font-medium transition-colors ${
                       isSaved
-                        ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
-                        : 'border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950'
+                        ? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300'
+                        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
                     }`}
                   >
                     {isSaved ? (
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                       </svg>
                     )}
@@ -553,130 +591,142 @@ const JobDetails: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Company Info */}
-            <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">About {job.companyName}</h3>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <span className="text-indigo-600 font-bold text-2xl">
-                    {job.companyName?.charAt(0)}
-                  </span>
+        {/* Sidebar */}
+        <div className="space-y-5 lg:col-span-4">
+
+          {/* Company info */}
+          <div className={surfaceClass}>
+            <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+              <h3 className={sectionTitleClass}>About {job.companyName}</h3>
+            </div>
+
+            <div className="p-5">
+              <div className="mb-4 flex items-start gap-3">
+                <div className="flex h-14 w-14 items-center justify-center border border-slate-200 bg-slate-100 text-lg font-semibold text-[#2563EB] dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300">
+                  {job.companyName?.charAt(0)}
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-slate-100">{job.companyName}</h4>
-                  <p className="text-sm text-gray-500 dark:text-slate-400">Software Development</p>
-                  <p className="text-sm text-gray-500 dark:text-slate-400">50-200 employees</p>
+                <div className="min-w-0">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{job.companyName}</h4>
+                  <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">Software Development</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">50–200 employees</p>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 dark:text-slate-300">
+
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
                 A leading company dedicated to developing cutting-edge solutions for global and local clients.
               </p>
             </div>
+          </div>
 
-            {/* AI Match Score — Always show section */}
-            <div ref={matchPanelRef}>
-              {isJobSeeker && jobId ? (
-                <ErrorBoundary
-                  fallback={
-                    <div className="rounded-2xl border border-yellow-200 bg-white p-6 shadow-sm dark:border-yellow-500/20 dark:bg-slate-900">
-                      <h3 className="text-lg font-semibold text-yellow-900 mb-2">Match Analysis Unavailable</h3>
-                      <p className="text-sm text-yellow-700 mb-4">
-                        We encountered an error loading the match analysis. This may be due to missing data or a temporary issue.
-                      </p>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => window.location.reload()}
-                          className="flex-1 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
-                        >
-                          Retry
-                        </button>
-                        <button
-                          onClick={() => window.history.back()}
-                          className="flex-1 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                        >
-                          Go Back
-                        </button>
-                      </div>
+          {/* AI Match */}
+          <div ref={matchPanelRef}>
+            {isJobSeeker && jobId ? (
+              <ErrorBoundary
+                fallback={
+                  <div className="border border-yellow-200 bg-white p-6 shadow-sm dark:border-yellow-500/20 dark:bg-slate-900">
+                    <h3 className="mb-2 text-lg font-semibold text-yellow-900 dark:text-yellow-300">Match Analysis Unavailable</h3>
+                    <p className="mb-4 text-sm text-yellow-700 dark:text-yellow-400">
+                      We encountered an error loading the match analysis. This may be due to missing data or a temporary issue.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="flex-1 border border-[#2563EB] bg-[#2563EB] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+                      >
+                        Retry
+                      </button>
+                      <button
+                        onClick={() => window.history.back()}
+                        className="flex-1 border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                      >
+                        Go Back
+                      </button>
                     </div>
-                  }
-                >
-                  <JobMatchPanel jobId={jobId} />
-                </ErrorBoundary>
-              ) : (
-                <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/95">
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  </div>
+                }
+              >
+                <JobMatchPanel jobId={jobId} />
+              </ErrorBoundary>
+            ) : (
+              <div className={surfaceClass}>
+                <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                  <h3 className={sectionTitleClass}>AI Match Score</h3>
+                </div>
+
+                <div className="p-5">
+                  <div className="text-center">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center border border-blue-200 bg-blue-50 text-[#2563EB] dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Resume Match Analysis</h3>
-                    <p className="text-sm text-gray-600 dark:text-slate-300 max-w-sm mx-auto mb-4">
-                      {!user 
-                        ? "Login as a Job Seeker to analyze your resume match for this job and see your compatibility score."
-                        : "Only job seekers can analyze resume match. This feature helps match your skills and experience with job requirements."}
+
+                    <p className="mx-auto max-w-sm text-sm leading-6 text-slate-600 dark:text-slate-300">
+                      {!user
+                        ? 'Login as a Job Seeker to analyze your resume match for this job and see your compatibility score.'
+                        : 'Only job seekers can analyze resume match. This feature helps match your skills and experience with job requirements.'}
                     </p>
+
                     {!user && (
                       <button
                         onClick={handleAnalyzeClick}
-                        className="mt-4 px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                        className="mt-5 inline-flex items-center justify-center border border-[#2563EB] bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
                       >
                         Analyze My Match
                       </button>
                     )}
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Related Jobs */}
-        {relatedJobs.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Related Jobs</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {relatedJobs.map((relatedJob: Job) => (
-                <JobCard key={relatedJob._id} job={relatedJob} showMatchScore />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      {relatedJobs.length > 0 && (
+        <div className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+              Related Jobs
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {relatedJobs.map((relatedJob: Job) => (
+              <JobCard key={relatedJob._id} job={relatedJob} showMatchScore />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 
-  // Conditionally wrap with DashboardLayout only for authenticated job seekers
   const pageContent = user && user.role === 'job_seeker' ? (
     <DashboardLayout variant="job-seeker" title="Job Details">
       {jobDetailsContent}
     </DashboardLayout>
   ) : (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.08),_transparent_22%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_42%,_#f8fafc_100%)] px-4 py-8 dark:bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_22%),linear-gradient(180deg,_#020617_0%,_#0f172a_44%,_#020617_100%)]">
-      {/* Public Navbar */}
-      <nav className="mx-auto mb-8 flex max-w-7xl items-center justify-between border-b border-white/50 px-4 py-3 dark:border-slate-800/50">
-        <Link to="/" className="flex-shrink-0 flex items-center hover:opacity-80 transition-opacity">
-          <img
-            src={lakshyaLogo}
-            alt="Lakshya Logo"
-            className="h-8 w-auto"
-          />
+    <div className="min-h-screen bg-slate-50 px-4 py-8 dark:bg-slate-950">
+      <nav className="mx-auto mb-8 flex max-w-7xl items-center justify-between border-b border-slate-200 px-1 py-3 dark:border-slate-800">
+        <Link to="/" className="flex items-center transition-opacity hover:opacity-80">
+          <img src={lakshyaLogo} alt="Lakshya Logo" className="h-8 w-auto" />
         </Link>
+
         <div className="flex items-center gap-3">
           <ThemeToggle />
           {!user ? (
             <>
               <Link
                 to="/login"
-                className="px-4 py-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                className="px-4 py-2 text-sm font-medium text-[#2563EB] transition-colors hover:text-[#1D4ED8]"
               >
                 Login
               </Link>
               <Link
                 to="/signup-choice"
-                className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="inline-flex items-center justify-center border border-[#2563EB] bg-[#2563EB] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
               >
                 Sign Up
               </Link>
@@ -684,17 +734,20 @@ const JobDetails: React.FC = () => {
           ) : (
             <Link
               to={
-                user.role === 'admin' ? '/AdminDashboard' :
-                user.role === 'recruiter' ? '/recruiter/dashboard' :
-                '/job-seeker/dashboard'
+                user.role === 'admin'
+                  ? '/AdminDashboard'
+                  : user.role === 'recruiter'
+                  ? '/recruiter/dashboard'
+                  : '/job-seeker/dashboard'
               }
-              className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center justify-center border border-[#2563EB] bg-[#2563EB] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
             >
               Dashboard
             </Link>
           )}
         </div>
       </nav>
+
       {jobDetailsContent}
     </div>
   );
@@ -702,15 +755,19 @@ const JobDetails: React.FC = () => {
   return (
     <>
       {pageContent}
-      
-      {/* Apply Modal - rendered at top level */}
+
       {showApplyModal && (
         <div className="app-modal-overlay">
-          <div className="app-modal-panel max-w-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Apply for {job.title}</h3>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+          <div className="app-modal-panel max-w-lg border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <h3 className="mb-1 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+              Apply for {job.title}
+            </h3>
+            <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">
+              Add a brief note to support your application.
+            </p>
+
+            <div className="mb-5">
+              <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Cover Letter (Optional)
               </label>
               <textarea
@@ -718,21 +775,21 @@ const JobDetails: React.FC = () => {
                 onChange={(e) => setCoverLetter(e.target.value)}
                 rows={5}
                 placeholder="Write a brief cover letter explaining why you're a great fit for this role..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               />
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={() => setShowApplyModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950 transition-colors"
+                className="flex-1 border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>
               <button
                 onClick={handleApply}
                 disabled={applyMutation.isPending}
-                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="flex-1 border border-[#2563EB] bg-[#2563EB] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8] disabled:opacity-50"
               >
                 {applyMutation.isPending ? 'Submitting...' : 'Submit Application'}
               </button>
@@ -745,4 +802,3 @@ const JobDetails: React.FC = () => {
 };
 
 export default JobDetails;
-

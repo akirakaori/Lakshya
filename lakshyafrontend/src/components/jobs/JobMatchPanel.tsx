@@ -14,14 +14,14 @@ const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 1
   const offset = circumference - (score / 100) * circumference;
 
   const color =
-    score >= 75 ? 'text-green-500' : score >= 50 ? 'text-yellow-500' : 'text-red-400';
+    score >= 75 ? 'text-emerald-600' : score >= 50 ? 'text-amber-600' : 'text-rose-500';
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg className="w-full h-full" viewBox="0 0 100 100">
         <circle
-          className="text-gray-200 dark:text-slate-800"
-          strokeWidth="8"
+          className="text-slate-200 dark:text-slate-800"
+          strokeWidth="7"
           stroke="currentColor"
           fill="transparent"
           r={radius}
@@ -30,7 +30,7 @@ const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 1
         />
         <circle
           className={color}
-          strokeWidth="8"
+          strokeWidth="7"
           strokeDasharray={`${circumference}`}
           strokeDashoffset={offset}
           strokeLinecap="round"
@@ -44,7 +44,7 @@ const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 1
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className={`text-2xl font-bold ${color}`}>{score}%</span>
+        <span className={`text-4xl font-semibold tracking-tight ${color}`}>{score}%</span>
       </div>
     </div>
   );
@@ -57,14 +57,14 @@ const BreakdownBar: React.FC<{ label: string; percent: number; color: string }> 
   color,
 }) => (
   <div className="flex items-center gap-3">
-    <span className="text-xs text-gray-500 dark:text-slate-400 w-20 text-right">{label}</span>
-    <div className="flex-1 bg-gray-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+    <span className="w-20 text-[12px] font-medium text-slate-600 dark:text-slate-300">{label}</span>
+    <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
       <div
         className={`h-full rounded-full ${color}`}
         style={{ width: `${Math.min(percent, 100)}%`, transition: 'width 0.5s ease' }}
       />
     </div>
-    <span className="text-xs font-medium text-gray-700 dark:text-slate-300 w-10">{percent}%</span>
+    <span className="w-10 text-right text-[12px] font-medium text-slate-700 dark:text-slate-200">{percent}%</span>
   </div>
 );
 
@@ -75,11 +75,11 @@ const SkillChip: React.FC<{ skill: string; variant: 'matched' | 'missing' }> = (
 }) => {
   const cls =
     variant === 'matched'
-      ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/20'
-      : 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20';
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300'
+      : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300';
   return (
-    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${cls}`}>
-      {variant === 'matched' ? '✓ ' : '✗ '}
+    <span className={`inline-block rounded-full border px-2.5 py-1 text-xs font-medium ${cls}`}>
+      {variant === 'matched' ? '+ ' : 'x '}
       {skill}
     </span>
   );
@@ -287,24 +287,24 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
     matchScore >= 75
       ? 'Great match! Your profile aligns well with this role.'
       : matchScore >= 50
-        ? 'Moderate match — a few improvements can boost your fit.'
-        : 'Low match — consider updating your profile before applying.';
+        ? 'Moderate match - a few improvements can boost your fit.'
+        : 'Low match - consider updating your profile before applying.';
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6 space-y-5">
+    <div className="space-y-5 rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       {/* Header */}
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">AI Match Score</h3>
+      <h3 className="text-[22px] font-semibold tracking-tight text-slate-900 dark:text-slate-100">AI Match Score</h3>
 
       {/* Outdated banner */}
       {isOutdated && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-500/20 dark:bg-amber-500/10">
           <div className="flex items-start gap-2">
-            <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <div className="flex-1">
-              <h4 className="text-yellow-900 font-medium text-sm">Profile Updated</h4>
-              <p className="text-yellow-700 text-xs mt-0.5">
+              <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">Profile Updated</h4>
+              <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">
                 Your profile has changed. Recalculate match to see updated score.
               </p>
             </div>
@@ -312,7 +312,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
           <button
             onClick={handleAnalyze}
             disabled={analyzeMutation.isPending}
-            className="mt-2 w-full py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 text-sm font-medium"
+            className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-amber-600 bg-amber-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
           >
             {analyzeMutation.isPending ? 'Analyzing...' : 'Analyze Again'}
           </button>
@@ -320,21 +320,21 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
       )}
 
       {/* Score ring */}
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center gap-2">
         <ScoreRing score={matchScore} />
-        <p className="text-sm text-gray-500 dark:text-slate-400 text-center mt-2">{matchLabel}</p>
+        <p className="text-center text-sm leading-6 text-slate-600 dark:text-slate-300">{matchLabel}</p>
       </div>
 
       {/* Breakdown bars */}
       <div className="space-y-2">
-        <BreakdownBar label="Skills" percent={skillScorePercent} color="bg-indigo-500" />
-        <BreakdownBar label="Semantic" percent={semanticPercent} color="bg-purple-500" />
+        <BreakdownBar label="Skills" percent={skillScorePercent} color="bg-sky-600" />
+        <BreakdownBar label="Semantic" percent={semanticPercent} color="bg-violet-600" />
       </div>
 
       {/* Matched skills */}
       {matchedSkills.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Matched Skills</h4>
+          <h4 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Matched Skills</h4>
           <div className="flex flex-wrap gap-1.5">
             {matchedSkills.map((s, idx) => (
               <SkillChip key={`matched-${idx}-${s}`} skill={s} variant="matched" />
@@ -346,7 +346,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
       {/* Missing skills */}
       {missingSkills.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Missing Skills</h4>
+          <h4 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Missing Skills</h4>
           <div className="flex flex-wrap gap-1.5">
             {missingSkills.map((s, idx) => (
               <SkillChip key={`missing-${idx}-${s}`} skill={s} variant="missing" />
@@ -358,16 +358,16 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
       {/* Suggestions */}
       {suggestions.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+          <h4 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
             Suggestions
-            <span className="ml-1.5 text-xs font-normal text-gray-400">
+            <span className="ml-1.5 text-xs font-normal text-slate-400">
               ({suggestionSource === 'ollama' ? 'AI-powered' : 'Rule-based'})
             </span>
           </h4>
-          <ul className="space-y-1.5">
+          <ul className="space-y-2">
             {suggestions.map((tip, i) => (
-              <li key={`suggestion-${i}`} className="flex items-start gap-2 text-sm text-gray-600 dark:text-slate-300">
-                <span className="text-indigo-500 mt-0.5 flex-shrink-0">💡</span>
+              <li key={`suggestion-${i}`} className="flex items-start gap-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-slate-400 dark:bg-slate-500" />
                 <span>{tip}</span>
               </li>
             ))}
@@ -378,13 +378,13 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
       {/* Summary rewrite */}
       {summaryRewrite && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Suggested Summary</h4>
-          <div className="bg-gray-50 dark:bg-slate-950 rounded-lg p-3 text-sm text-gray-600 dark:text-slate-300 italic">
+          <h4 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Suggested Summary</h4>
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm italic text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
             "{summaryRewrite}"
           </div>
           <button
             onClick={() => handleCopy(summaryRewrite)}
-            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-950 transition-colors"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             {copied ? (
               <>
@@ -406,7 +406,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
       )}
 
       {/* Footer */}
-      <p className="text-xs text-gray-400 text-center">
+      <p className="text-center text-xs text-slate-400">
         Analyzed {new Date(analyzedAt).toLocaleDateString()}
       </p>
     </div>
@@ -414,5 +414,3 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
 };
 
 export default JobMatchPanel;
-
-
