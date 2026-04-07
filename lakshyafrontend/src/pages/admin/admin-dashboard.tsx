@@ -522,22 +522,6 @@ function AdminDashboard() {
 
         <div className="border-t border-slate-200 p-4 dark:border-slate-800">
           <button
-            onClick={() => navigate('/admin/profile')}
-            className={`mb-2 flex w-full items-center ${
-              isSidebarOpen ? 'space-x-3 px-4' : 'justify-center'
-            } rounded-sm py-3 text-slate-600 transition-all duration-200 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900`}
-          >
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
-              {adminAvatarUrl ? (
-                <img src={adminAvatarUrl} alt={adminDisplayName} className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-xs font-bold text-[#2563EB]">{adminInitials}</span>
-              )}
-            </div>
-            {isSidebarOpen && <span className="truncate text-sm font-medium">{adminDisplayName}</span>}
-          </button>
-
-          <button
             onClick={handleLogout}
             className={`w-full flex items-center ${
               isSidebarOpen ? 'space-x-3 px-4' : 'justify-center'
