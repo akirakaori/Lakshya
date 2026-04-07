@@ -56,6 +56,46 @@ const ensureApplicationIsActionable = (application) => {
   }
 };
 
+const ATS_ALLOWED_TRANSITIONS = {
+  applied: ['shortlisted', 'rejected'],
+  shortlisted: ['interview', 'rejected'],
+  interview: ['hired', 'rejected'],
+  hired: [],
+  rejected: [],
+};
+
+const normalizeAtsStatus = (status) => {
+  if (!status || typeof status !== 'string') return status;
+  return status.toLowerCase();
+};
+
+const getAllowedNextStatuses = (currentStatus) => {
+  const normalizedCurrent = normalizeAtsStatus(currentStatus);
+  return ATS_ALLOWED_TRANSITIONS[normalizedCurrent] || [];
+};
+
+const validateAtsStatusTransition = (currentStatus, nextStatus) => {
+  const normalizedCurrent = normalizeAtsStatus(currentStatus);
+  const normalizedNext = normalizeAtsStatus(nextStatus);
+
+  if (normalizedCurrent === normalizedNext) {
+    return;
+  }
+
+  const allowedNext = getAllowedNextStatuses(normalizedCurrent);
+  if (allowedNext.includes(normalizedNext)) {
+    return;
+  }
+
+  const error = new Error(
+    allowedNext.length > 0
+      ? `Invalid status transition from ${normalizedCurrent} to ${normalizedNext}. Allowed next statuses: ${allowedNext.join(', ')}`
+      : `Invalid status transition from ${normalizedCurrent} to ${normalizedNext}. ${normalizedCurrent} is a final stage and cannot be changed`
+  );
+  error.statusCode = 400;
+  throw error;
+};
+
 const parseTimeMinutes = (timeValue) => {
   if (!timeValue || typeof timeValue !== 'string') return null;
   const match = timeValue.match(/^(\d{1,2}):(\d{2})$/);
@@ -484,6 +524,7 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
     }
 
     ensureApplicationIsActionable(application);
+    validateAtsStatusTransition(application.status, newStatus);
 
     application.status = newStatus;
     await application.save();
@@ -637,6 +678,7 @@ const shortlistCandidate = async (applicationId, recruiterId) => {
     }
 
     ensureApplicationIsActionable(application);
+    validateAtsStatusTransition(application.status, 'shortlisted');
     
     application.status = 'shortlisted';
     await application.save();
@@ -673,6 +715,7 @@ const scheduleInterview = async (applicationId, recruiterId, interviewData) => {
     }
 
     ensureApplicationIsActionable(application);
+    validateAtsStatusTransition(application.status, 'interview');
     
     application.status = 'interview';
     application.interview = {
@@ -714,6 +757,9 @@ const scheduleInterviewRound = async (applicationId, recruiterId, interviewData)
     }
 
     ensureApplicationIsActionable(application);
+    if (application.status !== 'interview') {
+      validateAtsStatusTransition(application.status, 'interview');
+    }
     
     
     // Auto-compute round number if not provided

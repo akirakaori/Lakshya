@@ -3,6 +3,44 @@
  * Maps backend status values to user-friendly labels and badge styling.
  */
 
+export type AtsStatus = 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired';
+
+const ATS_ALLOWED_TRANSITIONS: Record<AtsStatus, AtsStatus[]> = {
+  applied: ['shortlisted', 'rejected'],
+  shortlisted: ['interview', 'rejected'],
+  interview: ['hired', 'rejected'],
+  rejected: [],
+  hired: [],
+};
+
+export function normalizeAtsStatus(status?: string): AtsStatus | undefined {
+  if (!status) return undefined;
+  const normalized = status.toLowerCase();
+  if (normalized === 'offer') return 'hired';
+  if (normalized === 'applied' || normalized === 'shortlisted' || normalized === 'interview' || normalized === 'rejected' || normalized === 'hired') {
+    return normalized;
+  }
+  return undefined;
+}
+
+export function getAllowedNextStatuses(status?: string): AtsStatus[] {
+  const normalized = normalizeAtsStatus(status);
+  if (!normalized) return [];
+  return ATS_ALLOWED_TRANSITIONS[normalized];
+}
+
+export function isFinalAtsStatus(status?: string): boolean {
+  return getAllowedNextStatuses(status).length === 0;
+}
+
+export function canTransitionApplicationStatus(currentStatus?: string, nextStatus?: string): boolean {
+  const normalizedCurrent = normalizeAtsStatus(currentStatus);
+  const normalizedNext = normalizeAtsStatus(nextStatus);
+  if (!normalizedCurrent || !normalizedNext) return false;
+  if (normalizedCurrent === normalizedNext) return true;
+  return ATS_ALLOWED_TRANSITIONS[normalizedCurrent].includes(normalizedNext);
+}
+
 /**
  * Get the display label for an application status
  * @param status - The application status from the backend

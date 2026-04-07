@@ -12,6 +12,12 @@ import { toast } from 'react-toastify';
 import { getFileUrl, getInitials } from '../../Utils';
 import type { RecruiterApplication } from '../../services';
 import { PaginationControls, PageSizeSelect } from '../../components/pagination';
+import {
+  canTransitionApplicationStatus,
+  getAllowedNextStatuses,
+  isFinalAtsStatus,
+  normalizeAtsStatus,
+} from '../../utils/applicationStatus';
 
 interface Applicant {
   _id: string;
@@ -37,6 +43,46 @@ const subtleButtonClass =
   'inline-flex items-center justify-center rounded-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800';
 const primaryButtonClass =
   'inline-flex items-center justify-center rounded-sm border border-[#3b4bb8] bg-[#3b4bb8] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2e3a94]';
+
+const bulkToolbarClass =
+  'mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-200/60 dark:border-slate-700 dark:bg-slate-900 dark:shadow-none';
+const bulkLabelClass =
+  'text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400';
+const bulkBadgeClass =
+  'inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold tracking-[0.02em] text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300';
+const bulkActionsWrapClass = 'flex flex-wrap items-center justify-start gap-2';
+const bulkActionBaseClass =
+  'inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-xs font-semibold tracking-[0.02em] transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-45';
+const bulkActionIndigoClass =
+  `${bulkActionBaseClass} border-indigo-200 bg-indigo-50 text-indigo-700 hover:-translate-y-[1px] hover:border-indigo-300 hover:bg-indigo-100 dark:border-indigo-400/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20`;
+const bulkActionGreenClass =
+  `${bulkActionBaseClass} border-emerald-200 bg-emerald-50 text-emerald-700 hover:-translate-y-[1px] hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20`;
+const bulkActionRedClass =
+  `${bulkActionBaseClass} border-rose-200 bg-rose-50 text-rose-700 hover:-translate-y-[1px] hover:border-rose-300 hover:bg-rose-100 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20`;
+const bulkActionNeutralClass =
+  `${bulkActionBaseClass} border-slate-200 bg-white text-slate-600 hover:-translate-y-[1px] hover:border-slate-300 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800`;
+
+type RecruiterStatusValue = 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer' | 'withdrawn';
+type RecruiterActionStatus = 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer';
+type RecruiterUpdatableStatus = Exclude<RecruiterStatusValue, 'withdrawn'>;
+
+const STATUS_LABELS: Record<RecruiterStatusValue, string> = {
+  applied: 'Applied',
+  shortlisted: 'Shortlisted',
+  interview: 'Interview',
+  rejected: 'Rejected',
+  hired: 'Hired',
+  offer: 'Offer',
+  withdrawn: 'Withdrawn',
+};
+
+const normalizeTargetStatus = (status: RecruiterActionStatus | RecruiterUpdatableStatus): RecruiterUpdatableStatus =>
+  status === 'offer' ? 'hired' : status;
+
+const extractApiErrorMessage = (error: unknown, fallback: string) => {
+  const maybeError = error as { response?: { data?: { message?: string } } };
+  return maybeError?.response?.data?.message || fallback;
+};
 
 const JobApplications: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -102,6 +148,19 @@ const JobApplications: React.FC = () => {
     total: 0
   };
   const applications = data?.data?.applications || [];
+  const selectedActionableApplications = applications.filter(
+    (app: RecruiterApplication) =>
+      selectedApplications.has(app._id) && app.status !== 'withdrawn' && !app.isWithdrawn
+  );
+
+  const canBulkMoveTo = (status: RecruiterActionStatus) => {
+    const targetStatus = normalizeTargetStatus(status);
+    if (selectedActionableApplications.length === 0) return false;
+
+    return selectedActionableApplications.every((app: RecruiterApplication) =>
+      canTransitionApplicationStatus(app.status, targetStatus)
+    );
+  };
 
   const handleSelectAll = () => {
     const selectableApplications = applications.filter((app: RecruiterApplication) => app.status !== 'withdrawn' && !app.isWithdrawn);
@@ -143,20 +202,35 @@ const JobApplications: React.FC = () => {
     });
   };
 
-  const handleBulkStatusUpdate = async (status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer') => {
+  const handleBulkStatusUpdate = async (status: RecruiterActionStatus) => {
     if (selectedApplications.size === 0) {
       toast.error('Please select at least one application');
       return;
     }
 
     try {
-      const actionableIds = Array.from(selectedApplications).filter((id) => {
-        const app = applications.find((item: RecruiterApplication) => item._id === id);
-        return !!app && app.status !== 'withdrawn' && !app.isWithdrawn;
-      });
+      const selectedApps = applications.filter((item: RecruiterApplication) => selectedApplications.has(item._id));
+
+      const actionableApps = selectedApps.filter(
+        (app: RecruiterApplication) => app.status !== 'withdrawn' && !app.isWithdrawn
+      );
+
+      const actionableIds = actionableApps.map((app: RecruiterApplication) => app._id);
 
       if (actionableIds.length === 0) {
         toast.error('Selected applications are withdrawn and cannot be updated');
+        return;
+      }
+
+      const targetStatus = normalizeTargetStatus(status);
+      const invalidTransitions = actionableApps.filter(
+        (app: RecruiterApplication) => !canTransitionApplicationStatus(app.status, targetStatus)
+      );
+
+      if (invalidTransitions.length > 0) {
+        toast.error(
+          `Invalid status transition for ${invalidTransitions.length} selected application(s). Only forward ATS transitions are allowed.`
+        );
         return;
       }
 
@@ -166,8 +240,8 @@ const JobApplications: React.FC = () => {
       });
       toast.success(`${result.data.modifiedCount} application(s) updated to ${result.data.status}`);
       setSelectedApplications(new Set());
-    } catch {
-      toast.error('Failed to update applications');
+    } catch (error) {
+      toast.error(extractApiErrorMessage(error, 'Failed to update applications'));
     }
   };
 
@@ -214,12 +288,24 @@ const JobApplications: React.FC = () => {
     (appliedMissing ? 1 : 0) +
     (appliedAnalysisStatus ? 1 : 0);
 
-  const handleStatusChange = async (applicationId: string, status: 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer') => {
+  const handleStatusChange = async (
+    applicationId: string,
+    status: RecruiterUpdatableStatus,
+    currentStatus: string
+  ) => {
+    const targetStatus = normalizeTargetStatus(status);
+    if (!canTransitionApplicationStatus(currentStatus, targetStatus)) {
+      const allowed = getAllowedNextStatuses(currentStatus);
+      const allowedText = allowed.length > 0 ? allowed.map((item) => STATUS_LABELS[item]).join(', ') : 'none (final stage)';
+      toast.error(`Invalid transition. Allowed next statuses from ${currentStatus}: ${allowedText}`);
+      return;
+    }
+
     try {
-      await updateStatusMutation.mutateAsync({ applicationId, status });
+      await updateStatusMutation.mutateAsync({ applicationId, status: targetStatus });
       toast.success('Status updated successfully');
-    } catch {
-      toast.error('Failed to update status');
+    } catch (error) {
+      toast.error(extractApiErrorMessage(error, 'Failed to update status'));
     }
   };
 
@@ -506,51 +592,57 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
 
             {/* Bulk Actions */}
             {selectedApplications.size > 0 && (
-              <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {selectedApplications.size} selected
-                </span>
-                <button
-                  onClick={() => handleBulkStatusUpdate('shortlisted')}
-                  disabled={bulkUpdateMutation.isPending}
-                  className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-50"
-                >
-                  Shortlist
-                </button>
-                <button
-                  onClick={() => handleBulkStatusUpdate('interview')}
-                  disabled={bulkUpdateMutation.isPending}
-                  className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-50"
-                >
-                  Interview
-                </button>
-                <button
-                  onClick={() => handleBulkStatusUpdate('hired')}
-                  disabled={bulkUpdateMutation.isPending}
-                  className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-50"
-                >
-                  Hire
-                </button>
-                <button
-                  onClick={() => handleBulkStatusUpdate('offer')}
-                  disabled={bulkUpdateMutation.isPending}
-                  className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-50"
-                >
-                  Offer
-                </button>
-                <button
-                  onClick={() => handleBulkStatusUpdate('rejected')}
-                  disabled={bulkUpdateMutation.isPending}
-                  className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-50"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={() => setSelectedApplications(new Set())}
-                  className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-                >
-                  Clear
-                </button>
+              <div className={bulkToolbarClass}>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span className={bulkLabelClass}>Bulk actions</span>
+                  <span className={bulkBadgeClass}>
+                    {selectedApplications.size} selected
+                  </span>
+                </div>
+
+                <div className={bulkActionsWrapClass}>
+                  <button
+                    onClick={() => handleBulkStatusUpdate('shortlisted')}
+                    disabled={bulkUpdateMutation.isPending || !canBulkMoveTo('shortlisted')}
+                    className={bulkActionIndigoClass}
+                  >
+                    Shortlist
+                  </button>
+                  <button
+                    onClick={() => handleBulkStatusUpdate('interview')}
+                    disabled={bulkUpdateMutation.isPending || !canBulkMoveTo('interview')}
+                    className={bulkActionIndigoClass}
+                  >
+                    Interview
+                  </button>
+                  <button
+                    onClick={() => handleBulkStatusUpdate('hired')}
+                    disabled={bulkUpdateMutation.isPending || !canBulkMoveTo('hired')}
+                    className={bulkActionGreenClass}
+                  >
+                    Hire
+                  </button>
+                  <button
+                    onClick={() => handleBulkStatusUpdate('offer')}
+                    disabled={bulkUpdateMutation.isPending || !canBulkMoveTo('offer')}
+                    className={bulkActionIndigoClass}
+                  >
+                    Offer
+                  </button>
+                  <button
+                    onClick={() => handleBulkStatusUpdate('rejected')}
+                    disabled={bulkUpdateMutation.isPending || !canBulkMoveTo('rejected')}
+                    className={bulkActionRedClass}
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => setSelectedApplications(new Set())}
+                    className={bulkActionNeutralClass}
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -617,6 +709,16 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                     const initials = applicant ? getInitials(applicant.fullName || applicant.name || 'U') : 'U';
                     const isSelected = selectedApplications.has(application._id);
                     const isWithdrawn = application.status === 'withdrawn' || application.isWithdrawn;
+                    const normalizedCurrentStatus = isWithdrawn
+                      ? 'withdrawn'
+                      : (normalizeAtsStatus(application.status) || 'applied');
+                    const selectableStatuses: RecruiterStatusValue[] = isWithdrawn
+                      ? ['withdrawn']
+                      : [
+                          normalizedCurrentStatus,
+                          ...getAllowedNextStatuses(normalizedCurrentStatus),
+                        ];
+                    const isFinalStage = isFinalAtsStatus(normalizedCurrentStatus);
                     const isAnalyzed = application.analysisStatus === 'analyzed' || application.hasMatchAnalysis === true;
                     const matchScoreValue = typeof application.matchScore === 'number' ? application.matchScore : 0;
 
@@ -718,20 +820,27 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
 
                         <td className="px-4 py-4">
                           <select
-                            value={application.status}
-                            onChange={(e) => handleStatusChange(
-                              application._id,
-                              e.target.value as 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'offer'
-                            )}
-                            disabled={updateStatusMutation.isPending || isWithdrawn}
+                            value={normalizedCurrentStatus}
+                            onChange={(e) => {
+                              const nextStatus = e.target.value as RecruiterStatusValue;
+                              if (nextStatus === 'withdrawn') {
+                                return;
+                              }
+
+                              handleStatusChange(
+                                application._id,
+                                nextStatus,
+                                application.status
+                              );
+                            }}
+                            disabled={updateStatusMutation.isPending || isWithdrawn || isFinalStage}
                             className={`rounded-sm px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.04em] outline-none ${getStatusBadgeClass(application.status)} disabled:opacity-50`}
                           >
-                            <option value="applied">Applied</option>
-                            <option value="shortlisted">Shortlisted</option>
-                            <option value="interview">Interview</option>
-                            <option value="rejected">Rejected</option>
-                            <option value="hired">Hired</option>
-                            {isWithdrawn && <option value="withdrawn">Withdrawn</option>}
+                            {selectableStatuses.map((statusValue) => (
+                              <option key={statusValue} value={statusValue}>
+                                {STATUS_LABELS[statusValue]}
+                              </option>
+                            ))}
                           </select>
                         </td>
 
@@ -921,28 +1030,36 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                       </p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
-                        {['shortlisted', 'interview', 'rejected'].map((status) => (
+                        {getAllowedNextStatuses(viewingDetails.status).map((status) => (
                           <button
                             key={status}
                             onClick={() => {
                               handleStatusChange(
                                 viewingDetails._id,
-                                status as 'shortlisted' | 'interview' | 'rejected'
+                                status,
+                                viewingDetails.status
                               );
                               setViewingDetailsId(null);
                             }}
-                            disabled={viewingDetails.status === status}
+                            disabled={updateStatusMutation.isPending || viewingDetails.status === status}
                             className={`rounded-sm border px-4 py-2 text-sm font-medium transition-colors ${
                               viewingDetails.status === status
                                 ? 'cursor-not-allowed border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-400'
                                 : status === 'rejected'
                                   ? 'border-red-600 bg-red-600 text-white hover:bg-red-700'
+                                  : status === 'hired'
+                                    ? 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700'
                                   : 'border-[#3b4bb8] bg-[#3b4bb8] text-white hover:bg-[#2e3a94]'
                             }`}
                           >
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                            {STATUS_LABELS[status]}
                           </button>
                         ))}
+                        {getAllowedNextStatuses(viewingDetails.status).length === 0 && (
+                          <p className="rounded-sm border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-sm text-slate-600 dark:text-slate-400">
+                            This application is in a final stage and cannot be moved to another status.
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

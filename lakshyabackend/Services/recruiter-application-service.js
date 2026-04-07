@@ -76,6 +76,47 @@ const ensureApplicationIsActionable = (application) => {
   }
 };
 
+const ATS_ALLOWED_TRANSITIONS = {
+  applied: ['shortlisted', 'rejected'],
+  shortlisted: ['interview', 'rejected'],
+  interview: ['hired', 'rejected'],
+  hired: [],
+  rejected: [],
+};
+
+const normalizeAtsStatus = (status) => {
+  if (!status || typeof status !== 'string') return status;
+  if (status.toLowerCase() === 'offer') return 'hired';
+  return status.toLowerCase();
+};
+
+const getAllowedNextStatuses = (currentStatus) => {
+  const normalizedCurrent = normalizeAtsStatus(currentStatus);
+  return ATS_ALLOWED_TRANSITIONS[normalizedCurrent] || [];
+};
+
+const validateAtsStatusTransition = (currentStatus, nextStatus) => {
+  const normalizedCurrent = normalizeAtsStatus(currentStatus);
+  const normalizedNext = normalizeAtsStatus(nextStatus);
+
+  if (normalizedCurrent === normalizedNext) {
+    return;
+  }
+
+  const allowedNext = getAllowedNextStatuses(normalizedCurrent);
+  if (allowedNext.includes(normalizedNext)) {
+    return;
+  }
+
+  throw {
+    statusCode: 400,
+    message:
+      allowedNext.length > 0
+        ? `Invalid status transition from ${normalizedCurrent} to ${normalizedNext}. Allowed next statuses: ${allowedNext.join(', ')}`
+        : `Invalid status transition from ${normalizedCurrent} to ${normalizedNext}. ${normalizedCurrent} is a final stage and cannot be changed`,
+  };
+};
+
 /**
  * Normalize skill for matching (lowercase, trim)
  */
@@ -284,6 +325,7 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
   }
 
   ensureApplicationIsActionable(application);
+  validateAtsStatusTransition(application.status, normalizedStatus);
   const oldStatus = application.status;
 
   // Update status
@@ -357,6 +399,38 @@ const bulkUpdateApplicationStatus = async (jobId, recruiterId, applicationIds, n
     throw {
       statusCode: 400,
       message: 'One or more selected applications were withdrawn and cannot be updated',
+    };
+  }
+
+  const transitionViolations = applicationsToNotify
+    .map((application) => {
+      const currentStatus = normalizeAtsStatus(application.status);
+      const targetStatus = normalizeAtsStatus(normalizedStatus);
+      const allowedNext = getAllowedNextStatuses(currentStatus);
+      const isValid = currentStatus === targetStatus || allowedNext.includes(targetStatus);
+
+      if (isValid) {
+        return null;
+      }
+
+      return {
+        applicationId: application._id.toString(),
+        currentStatus,
+        targetStatus,
+        allowedNext,
+      };
+    })
+    .filter(Boolean);
+
+  if (transitionViolations.length > 0) {
+    const sampleViolation = transitionViolations[0];
+    const allowedText = sampleViolation.allowedNext.length > 0
+      ? sampleViolation.allowedNext.join(', ')
+      : 'none (final stage)';
+
+    throw {
+      statusCode: 400,
+      message: `Invalid status transition for ${transitionViolations.length} selected application(s). Example: ${sampleViolation.currentStatus} -> ${sampleViolation.targetStatus}. Allowed next statuses from ${sampleViolation.currentStatus}: ${allowedText}`,
     };
   }
 
