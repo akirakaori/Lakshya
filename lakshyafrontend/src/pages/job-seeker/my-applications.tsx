@@ -9,9 +9,9 @@ import {
   ConfirmModal,
   type PaginationMeta
 } from '../../components';
+import { ApplicationListItem } from '../../components/applications';
 import { useMyApplications, useJobMatchScores, useWithdrawApplication } from '../../hooks';
 import type { Application, Job, Interview } from '../../services';
-import { getStatusLabel } from '../../utils/applicationStatus';
 import { handleError, handleSuccess } from '../../Utils';
 import {
   formatInterviewTimeRange,
@@ -309,17 +309,7 @@ const MyApplications: React.FC = () => {
           />
         ) : (
           <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <div className="hidden border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 lg:block">
-              <div className="grid grid-cols-12 gap-4 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
-                <div className="col-span-5">Application</div>
-                <div className="col-span-2">Status</div>
-                <div className="col-span-2">Interview</div>
-                <div className="col-span-1">Match</div>
-                <div className="col-span-2 text-right">Actions</div>
-              </div>
-            </div>
-
-            <div className="divide-y divide-slate-200 dark:divide-slate-800 py-1">
+            <div className="space-y-2 p-2">
               {applications.map((application) => {
                 const job = typeof application.jobId === 'object' ? (application.jobId as Job) : null;
                 const jobId = typeof application.jobId === 'string' ? application.jobId : job?._id;
@@ -341,257 +331,104 @@ const MyApplications: React.FC = () => {
 
                 return (
                   <React.Fragment key={application._id}>
-                    <div
-                      onClick={() =>
-                        setActiveCardId(isActive ? null : application._id)
-                      }
-                      className={`group relative mx-2 my-1 cursor-pointer overflow-hidden rounded-md border transition-all duration-200 ${
-                        isActive
-                          ? 'z-10 -translate-y-[2px] scale-[1.01] border-amber-200 bg-white dark:bg-slate-900 shadow-md'
-                          : 'border-transparent bg-white dark:bg-slate-900 hover:border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/70 hover:shadow-sm'
-                      }`}
-                    >
-                      {isActive && (
-                        <span className="absolute left-0 top-0 h-full w-[3px] rounded-l-md bg-amber-500" />
-                      )}
-                      <div className="px-5 py-5">
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-center">
-                          <div className="lg:col-span-5">
-                            <div className="flex items-start gap-3">
-                              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400">
-                                <svg
-                                  className="h-5 w-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={1.8}
-                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-16 0H3m4-14h10M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"
-                                  />
-                                </svg>
-                              </div>
-
-                              <div className="min-w-0">
-                                <h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
-                                  {job?.title || 'Job Title'}
-                                </h3>
-
-                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
-                                  <span className="font-medium text-slate-700 dark:text-slate-300">
-                                    {job?.companyName || 'Company'}
-                                  </span>
-                                  {job?.location && <span>{job.location}</span>}
-                                  <span>Applied {formatDate(application.createdAt)}</span>
-                                </div>
-
-                                {isJobInactive && (
-                                  <span className="mt-2 inline-flex items-center border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
-                                    Job Removed
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                    <ApplicationListItem
+                      application={application}
+                      job={job}
+                      jobId={jobId}
+                      isActive={isActive}
+                      isExpanded={isExpanded}
+                      hasInterviews={hasInterviews}
+                      interviews={interviews}
+                      canWithdraw={canWithdraw}
+                      isJobInactive={!!isJobInactive}
+                      hasMatchScore={hasMatchScore}
+                      matchScore={matchData?.matchScore}
+                      statusClassName={getHumanStatusBadgeClass(application.status)}
+                      appliedDateText={formatDate(application.createdAt)}
+                      withdrawPending={withdrawMutation.isPending}
+                      onToggleActive={() => setActiveCardId(isActive ? null : application._id)}
+                      onToggleInterviews={() => setExpandedAppId(isExpanded ? null : application._id)}
+                      onWithdraw={() => setWithdrawTargetId(application._id)}
+                      interviewDetails={
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/60">
+                          <div className="mb-2">
+                            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Interview Schedule</h4>
                           </div>
 
-                          <div className="lg:col-span-2">
-                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400 lg:hidden">
-                              Status
-                            </p>
-                            <span
-                              className={`inline-flex items-center px-2.5 py-1 text-[11px] font-medium transition-colors ${getHumanStatusBadgeClass(
-                                application.status
-                              )}`}
-                            >
-                              {getStatusLabel(application.status)}
-                            </span>
-                          </div>
+                          <div className="space-y-2">
+                            {interviews.map((interview: Interview, idx: number) => {
+                              const interviewStatus = getInterviewDisplayStatusMeta(interview);
+                              const interviewOutcome = getInterviewOutcomeMeta(interview);
+                              const timeRange = formatInterviewTimeRange(interview);
 
-                          <div className="lg:col-span-2">
-                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400 lg:hidden">
-                              Interview
-                            </p>
-                            {hasInterviews ? (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setExpandedAppId(isExpanded ? null : application._id);
-                                }}
-                                className="inline-flex items-center gap-1 text-sm font-medium text-[#3b4bb8] hover:text-[#2e3a94]"
-                              >
-                                {interviews.length} Round{interviews.length > 1 ? 's' : ''}
-                                <svg
-                                  className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 9l-7 7-7-7"
-                                  />
-                                </svg>
-                              </button>
-                            ) : (
-                              <span className="text-sm text-slate-400">—</span>
-                            )}
-                          </div>
+                              return (
+                                <div key={idx} className="border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex border border-indigo-100 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-700">
+                                      Round {interview.roundNumber}
+                                    </span>
+                                    <span className="inline-flex border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium capitalize text-slate-600 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
+                                      {interview.mode}
+                                    </span>
+                                    <span className={`inline-flex px-2 py-1 text-[11px] font-medium ${interviewStatus.colorClass}`}>
+                                      {interviewStatus.label}
+                                    </span>
+                                    <span className={`inline-flex px-2 py-1 text-[11px] font-medium ${interviewOutcome.colorClass}`}>
+                                      {interviewOutcome.label}
+                                    </span>
+                                  </div>
 
-                          <div className="lg:col-span-1">
-                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400 lg:hidden">
-                              Match
-                            </p>
-                            {hasMatchScore ? (
-                              <span className="inline-flex border border-indigo-100 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-700">
-                                {matchData.matchScore}% Match
-                              </span>
-                            ) : (
-                              <span className="text-sm text-slate-400">—</span>
-                            )}
-                          </div>
-
-                          <div className="lg:col-span-2">
-                            <div className="flex flex-wrap items-center gap-3 lg:justify-end">
-                              {job && jobId ? (
-                                <Link
-                                  to={`/job-seeker/jobs/${jobId}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-sm font-medium text-[#3b4bb8] hover:text-[#2e3a94]"
-                                >
-                                  View Job
-                                </Link>
-                              ) : (
-                                <span className="text-sm text-slate-400">N/A</span>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setWithdrawTargetId(application._id);
-                                }}
-                                disabled={!canWithdraw || withdrawMutation.isPending}
-                                title={
-                                  canWithdraw
-                                    ? 'Withdraw Application'
-                                    : 'Withdrawal is only allowed for applied or shortlisted applications'
-                                }
-                                className={`inline-flex items-center justify-center border px-3 py-1.5 text-xs font-medium transition-colors ${
-                                  canWithdraw
-                                    ? 'border-red-300 text-red-600 hover:bg-red-50'
-                                    : 'cursor-not-allowed border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-400'
-                                }`}
-                              >
-                                Withdraw
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {isExpanded && hasInterviews && (
-                      <div className="mx-2 mb-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-5 py-4">
-                        <div className="mb-3">
-                          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Interview Schedule</h4>
-                        </div>
-
-                        <div className="space-y-3">
-                          {interviews.map((interview: Interview, idx: number) => {
-                            const interviewStatus = getInterviewDisplayStatusMeta(interview);
-                            const interviewOutcome = getInterviewOutcomeMeta(interview);
-                            const timeRange = formatInterviewTimeRange(interview);
-
-                            return (
-                              <div key={idx} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                  <div className="space-y-2">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <span className="inline-flex border border-indigo-100 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-700">
-                                        Round {interview.roundNumber}
-                                      </span>
-                                      <span className="inline-flex border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-2 py-1 text-[11px] font-medium capitalize text-slate-600 dark:text-slate-400">
-                                        {interview.mode}
-                                      </span>
-                                      <span
-                                        className={`inline-flex px-2 py-1 text-[11px] font-medium ${interviewStatus.colorClass}`}
-                                      >
-                                        {interviewStatus.label}
-                                      </span>
+                                  <div className="mt-2 space-y-1 text-sm text-slate-700 dark:text-slate-300">
+                                    <div>
+                                      {new Date(interview.date).toLocaleDateString('en-US', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                      })}
                                     </div>
 
-                                    <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-xs text-slate-500 dark:text-slate-400">Result:</span>
-                                        <span
-                                          className={`inline-flex px-2 py-1 text-[11px] font-medium ${interviewOutcome.colorClass}`}
-                                        >
-                                          {interviewOutcome.label}
-                                        </span>
+                                    {timeRange && (
+                                      <div className="text-slate-600 dark:text-slate-400">
+                                        {timeRange} {interview.timezone && `(${interview.timezone})`}
                                       </div>
+                                    )}
 
-                                      <div>
-                                        {new Date(interview.date).toLocaleDateString('en-US', {
-                                          weekday: 'long',
-                                          year: 'numeric',
-                                          month: 'long',
-                                          day: 'numeric'
-                                        })}
+                                    {interview.linkOrLocation && (
+                                      <div className="text-slate-600 dark:text-slate-400">
+                                        {interview.mode === 'online' ? (
+                                          <a
+                                            href={interview.linkOrLocation}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="break-all text-[#3b4bb8] hover:underline"
+                                          >
+                                            {interview.linkOrLocation}
+                                          </a>
+                                        ) : (
+                                          <span>{interview.linkOrLocation}</span>
+                                        )}
                                       </div>
+                                    )}
+                                  </div>
 
-                                      {timeRange && (
-                                        <div className="text-slate-600 dark:text-slate-400">
-                                          {timeRange} {interview.timezone && `(${interview.timezone})`}
-                                        </div>
-                                      )}
-
-                                      {interview.linkOrLocation && (
-                                        <div className="text-slate-600 dark:text-slate-400">
-                                          {interview.mode === 'online' ? (
-                                            <a
-                                              href={interview.linkOrLocation}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="break-all text-[#3b4bb8] hover:underline"
-                                            >
-                                              {interview.linkOrLocation}
-                                            </a>
-                                          ) : (
-                                            <span>{interview.linkOrLocation}</span>
-                                          )}
-                                        </div>
-                                      )}
+                                  {interview.messageToCandidate && (
+                                    <div className="mt-2 border border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-800/60">
+                                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                        Message from Recruiter
+                                      </p>
+                                      <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                                        {interview.messageToCandidate}
+                                      </p>
                                     </div>
-                                  </div>
-                                </div>
-
-                                {interview.messageToCandidate && (
-                                  <div className="mt-3 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-3">
-                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                      Message from Recruiter
-                                    </p>
-                                    <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                                      {interview.messageToCandidate}
-                                    </p>
-                                  </div>
-                                )}
-
-                                {interviewStatus.value === 'completed' &&
-                                  interviewOutcome.value === 'pending' && (
-                                    <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                                      Awaiting recruiter decision
-                                    </p>
                                   )}
-                              </div>
-                            );
-                          })}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      }
+                    />
                   </React.Fragment>
                 );
               })}

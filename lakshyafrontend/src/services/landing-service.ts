@@ -15,6 +15,25 @@ export interface LandingJob {
   jobType: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Freelance';
   createdAt: string;
   status: 'open' | 'closed';
+  createdBy?: {
+    _id?: string;
+    name?: string;
+    profileImage?: string | null;
+    profileImageUrl?: string | null;
+    recruiter?: {
+      position?: string;
+    };
+    jobSeeker?: {
+      title?: string;
+    };
+  };
+  recruiter?: {
+    _id?: string;
+    name?: string;
+    profileImage?: string | null;
+    profileImageUrl?: string | null;
+    title?: string | null;
+  } | null;
 }
 
 export interface LandingData {

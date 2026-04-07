@@ -32,9 +32,24 @@ export interface Job {
   createdBy: {
     _id: string;
     name: string;
-    email: string;
+    email?: string;
     companyName?: string;
+    profileImage?: string | null;
+    profileImageUrl?: string | null;
+    recruiter?: {
+      position?: string;
+    };
+    jobSeeker?: {
+      title?: string;
+    };
   };
+  recruiter?: {
+    _id: string;
+    name?: string;
+    profileImage?: string | null;
+    profileImageUrl?: string | null;
+    title?: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }

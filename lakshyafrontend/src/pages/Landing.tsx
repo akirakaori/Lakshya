@@ -5,6 +5,7 @@ import { Footer, PageSizeSelect, PaginationControls, type PaginationMeta } from 
 import BlogCard from "../components/blog-card";
 import { blogPosts } from "../data/blog-data";
 import { getLandingData, searchPublicJobs } from "../services/landing-service";
+import { getFileUrl, getInitials } from "../utils/image-utils";
 import { useAuth } from "../context/auth-context";
 import { toast } from "react-toastify";
 import { motion, type Variants } from "framer-motion";
@@ -393,7 +394,7 @@ function Landing() {
         >
           <motion.div
             variants={fadeUp}
-            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6"
+            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5"
           >
             <h2 className="select-none text-2xl font-bold text-gray-900 md:text-3xl dark:text-slate-100">
               {appliedSearch ? (
@@ -420,7 +421,7 @@ function Landing() {
             </div>
           </motion.div>
 
-          <motion.div variants={fadeUp} className="flex gap-3 mb-8">
+          <motion.div variants={fadeUp} className="flex gap-3 mb-6">
             {appliedSearch && (
               <motion.button
                 whileHover={{ y: -2 }}
@@ -476,113 +477,120 @@ function Landing() {
           {/* Jobs Grid */}
           {!isLoading && !isError && displayJobs && displayJobs.length > 0 && (
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
               variants={staggerContainer}
               initial="hidden"
               animate={jobsInView ? "visible" : "hidden"}
             >
               {displayJobs.map((job) => {
                 const isSaved = savedJobs.has(job._id);
+                const recruiter = job.recruiter || {
+                  name: job.createdBy?.name,
+                  profileImage: job.createdBy?.profileImage,
+                  profileImageUrl: job.createdBy?.profileImageUrl,
+                };
+                const recruiterName = recruiter?.name?.trim() || "Recruiter";
+                const recruiterAvatarUrl = getFileUrl(recruiter?.profileImageUrl || recruiter?.profileImage || null);
                 return (
                   <motion.div
                     key={job._id}
                     variants={fadeUp}
                     whileHover={{ y: -6 }}
                     transition={{ duration: 0.25 }}
-                    className="rounded-lg border border-gray-200 bg-white p-6 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-xl active:translate-y-0 active:shadow-lg dark:border-slate-800 dark:bg-slate-950 dark:hover:border-indigo-400 dark:hover:shadow-[0_22px_60px_-28px_rgba(99,102,241,0.55)]"
+                    className="rounded-xl border border-gray-200 bg-white p-4 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary hover:shadow-lg active:translate-y-0 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-indigo-400 dark:hover:shadow-[0_18px_46px_-26px_rgba(99,102,241,0.5)]"
                   >
-                    {/* Header with Save Button */}
-                    <div className="flex items-start justify-between mb-2 gap-3">
-                      <h3 className="line-clamp-2 flex-1 select-none text-lg font-semibold text-gray-900 dark:text-slate-100">
-                        {job.title}
-                      </h3>
-
-                      <motion.button
-                        whileHover={{ scale: 1.08 }}
-                        whileTap={{ scale: 0.95 }}
-                        type="button"
-                        onClick={(e) => handleToggleSaveJob(e, job._id)}
-                        title={isSaved ? "Saved" : "Save Job"}
-                        className={`flex-shrink-0 flex items-center justify-center p-2 rounded-lg transition ${
-                          isSaved
-                            ? "text-yellow-600 dark:text-amber-300"
-                            : "text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                        }`}
-                        aria-label={isSaved ? "Remove from saved jobs" : "Save this job"}
-                      >
-                        {!isSaved && (
-                          <svg
-                            className="w-6 h-6"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                    <div className="mb-3 flex items-start gap-3">
+                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 ring-1 ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-700">
+                        {recruiterAvatarUrl ? (
+                          <>
+                            <img
+                              src={recruiterAvatarUrl}
+                              alt={recruiterName}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                                const fallbackNode = e.currentTarget.nextElementSibling as HTMLElement | null;
+                                if (fallbackNode) fallbackNode.style.display = "flex";
+                              }}
                             />
-                          </svg>
+                            <span className="hidden h-full w-full items-center justify-center text-xs font-semibold text-slate-600 dark:text-slate-200">
+                              {getInitials(recruiterName)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-200">
+                            {getInitials(recruiterName)}
+                          </span>
                         )}
-                        {isSaved && (
-                          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                          </svg>
-                        )}
-                      </motion.button>
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h3 className="line-clamp-2 select-none text-[16px] font-semibold leading-5 text-gray-900 dark:text-slate-100">
+                              {job.title}
+                            </h3>
+                            <p className="mt-0.5 line-clamp-1 text-[13px] font-medium text-slate-700 dark:text-slate-300">
+                              {job.companyName}
+                            </p>
+                            <p className="mt-0.5 line-clamp-1 text-[12px] text-slate-500 dark:text-slate-400">
+                              {job.location}
+                            </p>
+                            <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-500 dark:text-slate-400">
+                              Posted by {recruiterName}
+                            </p>
+                            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                              <span className="inline-block rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
+                                {job.jobType}
+                              </span>
+                              <span>Posted {formatDate(job.createdAt)}</span>
+                            </div>
+                          </div>
+
+                          <motion.button
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={(e) => handleToggleSaveJob(e, job._id)}
+                            title={isSaved ? "Saved" : "Save Job"}
+                            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition ${
+                              isSaved
+                                ? "text-yellow-600 dark:text-amber-300"
+                                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                            }`}
+                            aria-label={isSaved ? "Remove from saved jobs" : "Save this job"}
+                          >
+                            {!isSaved && (
+                              <svg
+                                className="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                                />
+                              </svg>
+                            )}
+                            {isSaved && (
+                              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                              </svg>
+                            )}
+                          </motion.button>
+                        </div>
+                      </div>
                     </div>
-
-                    {/* Company Name */}
-                    <p className="mb-1 flex items-center gap-1 select-none text-sm text-gray-600 dark:text-slate-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                        />
-                      </svg>
-                      {job.companyName}
-                    </p>
-
-                    {/* Location */}
-                    <p className="mb-2 flex items-center gap-1 select-none text-sm text-gray-600 dark:text-slate-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                      {job.location}
-                    </p>
-
-                    {/* Job Type */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-600 select-none dark:bg-blue-500/15 dark:text-blue-300">
-                        {job.jobType}
-                      </span>
-                    </div>
-
-                    {/* Posted Date */}
-                    <p className="mb-4 select-none text-xs text-gray-500 dark:text-slate-500">
-                      Posted {formatDate(job.createdAt)}
-                    </p>
 
                     {/* View Details Button */}
                     <motion.button
                       whileHover={{ y: -2 }}
                       whileTap={{ scale: 0.99 }}
                       onClick={() => handleJobClick(job._id)}
-                      className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                      className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
                     >
                       View Details
                     </motion.button>

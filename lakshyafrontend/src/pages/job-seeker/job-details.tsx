@@ -3,6 +3,7 @@ import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'reac
 import { DashboardLayout, LoadingSpinner, EmptyState, ErrorBoundary } from '../../components';
 import { JobCard } from '../../components/jobs';
 import JobMatchPanel from '../../components/jobs/JobMatchPanel';
+import RecruiterBadge from '../../components/jobs/recruiter-badge';
 import {
   useJob,
   useJobs,
@@ -441,6 +442,7 @@ const JobDetails: React.FC = () => {
                 <p className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">{formatSalary(job.salary) || 'Not specified'}</p>
               </div>
             </div>
+
           </div>
 
           {/* Description */}
@@ -605,27 +607,14 @@ const JobDetails: React.FC = () => {
         {/* Sidebar */}
         <div className="space-y-5 lg:col-span-4">
 
-          {/* Company info */}
+          {/* Recruiter info */}
           <div className={surfaceClass}>
             <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-              <h3 className={sectionTitleClass}>About {job.companyName}</h3>
+              <h3 className={sectionTitleClass}>Recruiter</h3>
             </div>
 
             <div className="p-5">
-              <div className="mb-4 flex items-start gap-3">
-                <div className="flex h-14 w-14 items-center justify-center border border-slate-200 bg-slate-100 text-lg font-semibold text-[#2563EB] dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300">
-                  {job.companyName?.charAt(0)}
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{job.companyName}</h4>
-                  <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">Software Development</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">50–200 employees</p>
-                </div>
-              </div>
-
-              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-                A leading company dedicated to developing cutting-edge solutions for global and local clients.
-              </p>
+              <RecruiterBadge recruiter={job.recruiter} label="Posted by" size="md" />
             </div>
           </div>
 

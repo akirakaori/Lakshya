@@ -13,6 +13,54 @@ const INTERNAL_TEST_JOB_EXCLUSION = {
   ],
 };
 
+const RECRUITER_POPULATE_FIELDS = [
+  'name',
+  'profileImage',
+  'profileImageUrl',
+  'recruiter.position',
+  'jobSeeker.title',
+].join(' ');
+
+const BACKEND_BASE_URL = (process.env.PUBLIC_BACKEND_URL || process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
+
+const normalizeProfileImageUrl = (value) => {
+  if (!value || typeof value !== 'string') return null;
+
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return null;
+
+  if (/^https?:\/\//i.test(trimmedValue) || trimmedValue.startsWith('data:')) {
+    return trimmedValue;
+  }
+
+  const normalizedPath = trimmedValue.startsWith('/') ? trimmedValue : `/${trimmedValue}`;
+  return `${BACKEND_BASE_URL}${normalizedPath}`;
+};
+
+const buildRecruiterPayload = (createdBy) => {
+  if (!createdBy) return null;
+
+  const profileImageUrl = normalizeProfileImageUrl(createdBy.profileImageUrl || createdBy.profileImage || null);
+
+  return {
+    _id: createdBy._id,
+    name: createdBy.name || '',
+    profileImage: profileImageUrl,
+    profileImageUrl,
+    title: createdBy.recruiter?.position || createdBy.jobSeeker?.title || '',
+  };
+};
+
+const attachRecruiterToJob = (job) => {
+  if (!job) return job;
+
+  const jobObject = typeof job.toObject === 'function' ? job.toObject() : { ...job };
+  jobObject.recruiter = buildRecruiterPayload(jobObject.createdBy);
+  return jobObject;
+};
+
+const attachRecruiterToJobs = (jobs = []) => jobs.map(attachRecruiterToJob);
+
 /**
  * Get landing page data (stats + recent jobs)
  * Public endpoint - no authentication required
@@ -40,10 +88,10 @@ const getLandingData = async () => {
       
       // Get recent active jobs
       JobModel.find(activeJobFilter)
-        .select('title companyName location jobType createdAt status')
+        .select('title companyName location jobType createdAt status createdBy')
+        .populate('createdBy', RECRUITER_POPULATE_FIELDS)
         .sort({ createdAt: -1 })
         .limit(8)
-        .lean()
     ]);
 
     return {
@@ -52,7 +100,7 @@ const getLandingData = async () => {
         totalUsers: totalUsersCount,
         totalCompanies: totalCompaniesArray.length
       },
-      jobs: recentJobs
+      jobs: attachRecruiterToJobs(recentJobs)
     };
   } catch (error) {
     throw error;
@@ -91,16 +139,16 @@ const searchPublicJobs = async (keyword = '', page = 1, limit = 8) => {
     // Execute queries in parallel
     const [jobs, totalCount] = await Promise.all([
       JobModel.find(searchFilter)
-        .select('title companyName location jobType description skillsRequired createdAt status')
+        .select('title companyName location jobType description skillsRequired createdAt status createdBy')
+        .populate('createdBy', RECRUITER_POPULATE_FIELDS)
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit)
-        .lean(),
+        .limit(limit),
       JobModel.countDocuments(searchFilter)
     ]);
 
     return {
-      jobs,
+      jobs: attachRecruiterToJobs(jobs),
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(totalCount / limit),

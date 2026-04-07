@@ -27,6 +27,52 @@ const statusNotificationMap = {
   },
 };
 
+const RECRUITER_POPULATE_FIELDS = [
+  'name',
+  'profileImage',
+  'profileImageUrl',
+  'recruiter.position',
+  'jobSeeker.title',
+].join(' ');
+
+const BACKEND_BASE_URL = (process.env.PUBLIC_BACKEND_URL || process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
+
+const normalizeProfileImageUrl = (value) => {
+  if (!value || typeof value !== 'string') return null;
+
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return null;
+
+  if (/^https?:\/\//i.test(trimmedValue) || trimmedValue.startsWith('data:')) {
+    return trimmedValue;
+  }
+
+  const normalizedPath = trimmedValue.startsWith('/') ? trimmedValue : `/${trimmedValue}`;
+  return `${BACKEND_BASE_URL}${normalizedPath}`;
+};
+
+const buildRecruiterPayload = (createdBy) => {
+  if (!createdBy) return null;
+
+  const profileImageUrl = normalizeProfileImageUrl(createdBy.profileImageUrl || createdBy.profileImage || null);
+
+  return {
+    _id: createdBy._id,
+    name: createdBy.name || '',
+    profileImage: profileImageUrl,
+    profileImageUrl,
+    title: createdBy.recruiter?.position || createdBy.jobSeeker?.title || '',
+  };
+};
+
+const attachRecruiterToJob = (job) => {
+  if (!job || typeof job !== 'object') return job;
+
+  const jobObject = typeof job.toObject === 'function' ? job.toObject() : { ...job };
+  jobObject.recruiter = buildRecruiterPayload(jobObject.createdBy);
+  return jobObject;
+};
+
 const createApplicantStatusNotification = async (application, status) => {
   const config = statusNotificationMap[status];
   if (!config) {
@@ -219,6 +265,10 @@ const sanitizeApplicationForCandidate = (applicationDoc) => {
   const applicationObject = typeof applicationDoc.toObject === 'function'
     ? applicationDoc.toObject()
     : { ...applicationDoc };
+
+  if (applicationObject.jobId && typeof applicationObject.jobId === 'object') {
+    applicationObject.jobId = attachRecruiterToJob(applicationObject.jobId);
+  }
 
   if (Array.isArray(applicationObject.interviews)) {
     applicationObject.interviews = applicationObject.interviews.map(sanitizeCandidateInterview);
@@ -417,7 +467,11 @@ const getMyApplications = async (applicantId, filters = {}) => {
     
     const populateConfig = {
       path: 'jobId',
-      select: 'title companyName location salary jobType status isActive isDeleted deletedAt deletedBy deletedByRole'
+      select: 'title companyName location salary jobType status isActive isDeleted deletedAt deletedBy deletedByRole createdBy',
+      populate: {
+        path: 'createdBy',
+        select: RECRUITER_POPULATE_FIELDS,
+      },
     };
 
     let filteredApplications = [];
@@ -566,7 +620,14 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
 const getApplicationById = async (applicationId, requester = null) => {
   try {
     const application = await ApplicationModel.findById(applicationId)
-      .populate('jobId', 'title companyName location salary jobType isActive isDeleted deletedAt')
+      .populate({
+        path: 'jobId',
+        select: 'title companyName location salary jobType isActive isDeleted deletedAt createdBy',
+        populate: {
+          path: 'createdBy',
+          select: RECRUITER_POPULATE_FIELDS,
+        },
+      })
       .populate('applicant', 'name email number resume');
     
     if (!application) {

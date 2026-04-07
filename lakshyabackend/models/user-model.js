@@ -129,6 +129,13 @@ userSchema.virtual('phone').get(function() {
   this.number = value;
 });
 
+// Virtual alias to support legacy profileImage field name.
+userSchema.virtual('profileImage').get(function() {
+  return this.profileImageUrl;
+}).set(function(value) {
+  this.profileImageUrl = value;
+});
+
 // Index for faster queries (email already has index from unique: true)
 userSchema.index({ role: 1 });
 

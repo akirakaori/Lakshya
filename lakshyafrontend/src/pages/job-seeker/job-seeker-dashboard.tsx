@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner } from '../../components';
+import RecruiterBadge from '../../components/jobs/recruiter-badge';
 import { useAuth } from '../../context/auth-context';
 import { useMyApplications, useSavedJobs } from '../../hooks';
 import { getStatusLabel } from '../../utils/applicationStatus';
@@ -266,6 +267,20 @@ const JobSeekerDashboard: React.FC = () => {
                                   <span>{job?.companyName || 'Company'}</span>
                                   {job?.location && <span>{job.location}</span>}
                                 </div>
+                                {job && typeof job === 'object' && (
+                                  <div className="mt-2">
+                                    <RecruiterBadge
+                                      recruiter={job.recruiter || {
+                                        name: job.createdBy?.name,
+                                        profileImage: job.createdBy?.profileImage,
+                                        profileImageUrl: job.createdBy?.profileImageUrl,
+                                        title: job.createdBy?.recruiter?.position || job.createdBy?.jobSeeker?.title,
+                                      }}
+                                      label="Posted by"
+                                      size="sm"
+                                    />
+                                  </div>
+                                )}
                               </div>
 
                               <div className="text-sm text-slate-500 dark:text-slate-400">

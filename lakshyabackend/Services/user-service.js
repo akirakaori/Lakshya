@@ -16,6 +16,52 @@ const INTERNAL_TEST_JOB_EXCLUSION = {
   ],
 };
 
+const RECRUITER_POPULATE_FIELDS = [
+  'name',
+  'profileImage',
+  'profileImageUrl',
+  'recruiter.position',
+  'jobSeeker.title',
+].join(' ');
+
+const BACKEND_BASE_URL = (process.env.PUBLIC_BACKEND_URL || process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
+
+const normalizeProfileImageUrl = (value) => {
+  if (!value || typeof value !== 'string') return null;
+
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return null;
+
+  if (/^https?:\/\//i.test(trimmedValue) || trimmedValue.startsWith('data:')) {
+    return trimmedValue;
+  }
+
+  const normalizedPath = trimmedValue.startsWith('/') ? trimmedValue : `/${trimmedValue}`;
+  return `${BACKEND_BASE_URL}${normalizedPath}`;
+};
+
+const buildRecruiterPayload = (createdBy) => {
+  if (!createdBy) return null;
+
+  const profileImageUrl = normalizeProfileImageUrl(createdBy.profileImageUrl || createdBy.profileImage || null);
+
+  return {
+    _id: createdBy._id,
+    name: createdBy.name || '',
+    profileImage: profileImageUrl,
+    profileImageUrl,
+    title: createdBy.recruiter?.position || createdBy.jobSeeker?.title || '',
+  };
+};
+
+const attachRecruiterToJob = (job) => {
+  if (!job) return job;
+
+  const jobObject = typeof job.toObject === 'function' ? job.toObject() : { ...job };
+  jobObject.recruiter = buildRecruiterPayload(jobObject.createdBy);
+  return jobObject;
+};
+
 // Note: URL parsing for resumes removed. Use resumePublicId instead.
 // Avatar logic remains untouched.
 
@@ -461,6 +507,10 @@ const getSavedJobsForUser = async (userId, options = {}) => {
       .populate({
         path: 'savedJobs',
         match: { isDeleted: false, isActive: true, ...INTERNAL_TEST_JOB_EXCLUSION },
+        populate: {
+          path: 'createdBy',
+          select: RECRUITER_POPULATE_FIELDS,
+        },
       });
 
     if (!user) {
@@ -470,7 +520,7 @@ const getSavedJobsForUser = async (userId, options = {}) => {
     }
 
     // Filter out any nulls that may result from populate match
-    const jobs = (user.savedJobs || []).filter(Boolean);
+    const jobs = (user.savedJobs || []).filter(Boolean).map(attachRecruiterToJob);
 
     const total = jobs.length;
     const pages = total === 0 ? 1 : Math.ceil(total / limit);

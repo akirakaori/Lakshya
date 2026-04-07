@@ -12,6 +12,54 @@ const PUBLIC_JOB_FILTER = {
   ],
 };
 
+const RECRUITER_POPULATE_FIELDS = [
+  'name',
+  'profileImage',
+  'profileImageUrl',
+  'recruiter.position',
+  'jobSeeker.title',
+].join(' ');
+
+const BACKEND_BASE_URL = (process.env.PUBLIC_BACKEND_URL || process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
+
+const normalizeProfileImageUrl = (value) => {
+  if (!value || typeof value !== 'string') return null;
+
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return null;
+
+  if (/^https?:\/\//i.test(trimmedValue) || trimmedValue.startsWith('data:')) {
+    return trimmedValue;
+  }
+
+  const normalizedPath = trimmedValue.startsWith('/') ? trimmedValue : `/${trimmedValue}`;
+  return `${BACKEND_BASE_URL}${normalizedPath}`;
+};
+
+const buildRecruiterPayload = (createdBy) => {
+  if (!createdBy) return null;
+
+  const profileImageUrl = normalizeProfileImageUrl(createdBy.profileImageUrl || createdBy.profileImage || null);
+
+  return {
+    _id: createdBy._id,
+    name: createdBy.name || '',
+    profileImage: profileImageUrl,
+    profileImageUrl,
+    title: createdBy.recruiter?.position || createdBy.jobSeeker?.title || '',
+  };
+};
+
+const attachRecruiterToJob = (job) => {
+  if (!job) return job;
+
+  const jobObject = typeof job.toObject === 'function' ? job.toObject() : { ...job };
+  jobObject.recruiter = buildRecruiterPayload(jobObject.createdBy);
+  return jobObject;
+};
+
+const attachRecruiterToJobs = (jobs = []) => jobs.map(attachRecruiterToJob);
+
 /**
  * Create a new job posting (recruiter only)
  */
@@ -251,10 +299,10 @@ const getRecruiterJobs = async (recruiterId, options = {}) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('createdBy', 'name email companyName');
+      .populate('createdBy', RECRUITER_POPULATE_FIELDS);
     
     return {
-      jobs,
+      jobs: attachRecruiterToJobs(jobs),
       pagination: { total, page, limit, pages }
     };
   } catch (error) {
@@ -268,7 +316,7 @@ const getRecruiterJobs = async (recruiterId, options = {}) => {
 const getJobById = async (jobId) => {
   try {
     const job = await JobModel.findOne({ _id: jobId, ...PUBLIC_JOB_FILTER })
-      .populate('createdBy', 'name email companyName location');
+      .populate('createdBy', RECRUITER_POPULATE_FIELDS);
     
     if (!job) {
       const error = new Error('Job not found');
@@ -276,7 +324,7 @@ const getJobById = async (jobId) => {
       throw error;
     }
     
-    return job;
+    return attachRecruiterToJob(job);
   } catch (error) {
     throw error;
   }
@@ -494,14 +542,14 @@ const searchJobs = async (filters) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .populate('createdBy', 'name companyName');
+      .populate('createdBy', RECRUITER_POPULATE_FIELDS);
     
     const total = await JobModel.countDocuments(query);
     
     console.log('[searchJobs] Found', total, 'jobs');
     
     return {
-      jobs,
+      jobs: attachRecruiterToJobs(jobs),
       pagination: {
         total,
         page: parseInt(page),

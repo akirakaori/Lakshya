@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { Application } from '../../services';
 import type { Job } from '../../services/job-service';
 import { getPreviewText } from '../../utils/richText';
+import { getFileUrl, getInitials } from '../../utils/image-utils';
 import { useAuth } from '../../context/auth-context';
 import { useIsJobSaved, useSaveJob, useRemoveSavedJob } from '../../hooks';
 import { toast } from 'react-toastify';
@@ -79,10 +80,18 @@ const JobCard: React.FC<JobCardProps> = ({
   const appliedBadgeClass = statusBadgeStyles[normalizedStatus] || statusBadgeStyles.applied;
   const appliedStatusLabel = statusLabels[normalizedStatus] || 'Applied';
   const skillsToShow = (job.skillsRequired?.length ? job.skillsRequired : job.skills) || [];
+  const recruiterName = job.recruiter?.name?.trim() || job.createdBy?.name?.trim() || 'Recruiter';
+  const recruiterImage = job.recruiter?.profileImageUrl || job.recruiter?.profileImage || job.createdBy?.profileImageUrl || job.createdBy?.profileImage || null;
+  const recruiterAvatarUrl = getFileUrl(recruiterImage);
+  const [avatarFailed, setAvatarFailed] = React.useState(false);
   const baseTagClass = 'mb-[6px] mr-[6px] inline-flex items-center gap-1.5 border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-1 text-[12px] font-medium text-[#374151] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200';
   const neutralTagClass = baseTagClass;
   const jobTypeTagClass = 'mb-[6px] mr-[6px] inline-flex items-center gap-1.5 border border-[#E5E7EB] bg-[#EFF6FF] px-2 py-1 text-[12px] font-medium text-[#1D4ED8] dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300';
   const salaryTagClass = 'mb-[6px] mr-[6px] inline-flex items-center gap-1.5 border border-[#E5E7EB] bg-[#F0FDF4] px-2 py-1 text-[12px] font-medium text-[#166534] dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300';
+
+  React.useEffect(() => {
+    setAvatarFailed(false);
+  }, [recruiterImage]);
 
   const postedTimeAgo = React.useMemo(() => {
     if (!job.createdAt) return null;
@@ -161,28 +170,45 @@ const JobCard: React.FC<JobCardProps> = ({
 
   return (
     <div
-      className="group border border-[#E5E7EB] bg-white dark:border-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:bg-slate-900 transition-colors hover:border-[#D1D5DB] dark:hover:border-slate-700"
+      className="group rounded-xl border border-[#E5E7EB] bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-colors hover:border-[#D1D5DB] dark:hover:border-slate-700"
     >
-      <div className="p-5">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center border border-[#E5E7EB] bg-white dark:border-slate-700 dark:bg-slate-900">
-            <span className="text-lg font-bold text-[#2563EB]">
-              {job.companyName?.charAt(0) || 'C'}
-            </span>
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 ring-1 ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-700">
+            {recruiterAvatarUrl && !avatarFailed ? (
+              <img
+                src={recruiterAvatarUrl}
+                alt={recruiterName}
+                className="h-full w-full object-cover"
+                onError={() => setAvatarFailed(true)}
+              />
+            ) : (
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+                {getInitials(recruiterName)}
+              </span>
+            )}
           </div>
 
-          <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-1 text-[17px] font-semibold leading-6 text-[#111827] dark:text-slate-100 transition group-hover:text-[#2563EB]">
+          <div className="min-w-0 flex-1 space-y-1">
+            <h3 className="line-clamp-1 text-[16px] font-semibold leading-5 text-[#111827] dark:text-slate-100 transition group-hover:text-[#2563EB]">
               {job.title}
             </h3>
-            <p className="mt-1 text-[13px] font-normal text-[#6B7280] dark:text-slate-400">{job.companyName}</p>
+            <p className="line-clamp-1 text-[13px] font-medium text-[#374151] dark:text-slate-200">{job.companyName}</p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-[#6B7280] dark:text-slate-400">
+              <span className="line-clamp-1">{job.location}</span>
+              {postedTimeAgo && <span>• Posted {postedTimeAgo}</span>}
+              {job.jobType && <span>• {job.jobType}</span>}
+            </div>
+            <p className="text-[12px] font-medium text-slate-600 dark:text-slate-300">
+              Posted by {recruiterName}
+            </p>
           </div>
 
           <button
             type="button"
             onClick={handleToggleSave}
             title={isSaved ? 'Saved' : 'Save Job'}
-            className={`inline-flex shrink-0 items-center justify-center gap-1.5 border px-3 py-1.5 text-[12px] font-medium transition-colors ${
+            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center border transition-colors ${
               isSaved
                 ? 'border-[#D1D5DB] bg-[#F9FAFB] text-[#374151] hover:bg-slate-100'
                 : 'border-[#D1D5DB] dark:border-slate-700 bg-white dark:bg-slate-900 text-[#6B7280] dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -198,26 +224,10 @@ const JobCard: React.FC<JobCardProps> = ({
                 <path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
             )}
-            <span>{isSaved ? 'Saved' : 'Save'}</span>
           </button>
         </div>
 
-        <div className="mt-4 space-y-2">
-          <div className="flex items-center gap-1.5 text-[13px] font-normal text-[#6B7280] dark:text-slate-400">
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span className="line-clamp-1">{job.location}</span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-[6px] text-[12px] font-normal text-[#6B7280]">
-            {postedTimeAgo && <span>Posted {postedTimeAgo}</span>}
-            {job.remoteType && <span className={neutralTagClass}>{job.remoteType}</span>}
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-[6px]">
+        <div className="mt-3 flex flex-wrap gap-[6px]">
           {hasApplicationHistory && (
             <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-[12px] font-medium ${appliedBadgeClass}`}>
               <span className="h-1.5 w-1.5 bg-current opacity-80" aria-hidden="true"></span>
@@ -233,6 +243,9 @@ const JobCard: React.FC<JobCardProps> = ({
             <span className={neutralTagClass}>
               {job.experienceLevel}
             </span>
+          )}
+          {job.remoteType && (
+            <span className={neutralTagClass}>{job.remoteType}</span>
           )}
           {salaryDisplay && (
             <span className={salaryTagClass}>
@@ -259,18 +272,18 @@ const JobCard: React.FC<JobCardProps> = ({
           </div>
         )}
 
-        <p className="mt-4 line-clamp-2 text-[14px] font-normal leading-6 text-[#4B5563] dark:text-slate-300">
+        <p className="mt-3 line-clamp-2 text-[13px] font-normal leading-5 text-[#4B5563] dark:text-slate-300">
           {getPreviewText(job.description, 130)}
         </p>
 
-        <div className="mt-5 space-y-3 border-t border-[#E5E7EB] dark:border-slate-800 pt-4">
+        <div className="mt-4 space-y-2 border-t border-[#E5E7EB] dark:border-slate-800 pt-3">
           <div className="flex items-center justify-between gap-3">
             {showMatchScore && matchScore !== undefined ? (
-              <div className={`mr-[6px] mb-[6px] px-2 py-1 text-[12px] font-medium ${getMatchScoreColor(matchScore)}`}>
+              <div className={`px-2 py-1 text-[11px] font-medium ${getMatchScoreColor(matchScore)}`}>
                 {matchScore}% Match
               </div>
             ) : (
-              <span className="text-[12px] font-normal text-[#6B7280] dark:text-slate-400">No match score yet</span>
+              <span className="text-[11px] font-normal text-[#6B7280] dark:text-slate-400">No match score yet</span>
             )}
 
             {job.category && (
@@ -278,18 +291,18 @@ const JobCard: React.FC<JobCardProps> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {hasActiveApplication ? (
               <Link
                 to="/job-seeker/my-applications"
-                className="w-full border border-[#2563EB] bg-white dark:bg-slate-900 px-4 py-2.5 text-center text-[14px] font-medium text-[#2563EB] dark:text-indigo-300 transition-colors hover:bg-blue-50 dark:hover:bg-indigo-500/10"
+                className="w-full border border-[#2563EB] bg-white dark:bg-slate-900 px-3 py-2 text-center text-[13px] font-medium text-[#2563EB] dark:text-indigo-300 transition-colors hover:bg-blue-50 dark:hover:bg-indigo-500/10"
               >
                 View Application
               </Link>
             ) : (
               <Link
                 to={applyPath}
-                className="w-full border border-[#2563EB] bg-white dark:bg-slate-900 px-4 py-2.5 text-center text-[14px] font-medium text-[#2563EB] dark:text-indigo-300 transition-colors hover:bg-blue-50 dark:hover:bg-indigo-500/10"
+                className="w-full border border-[#2563EB] bg-white dark:bg-slate-900 px-3 py-2 text-center text-[13px] font-medium text-[#2563EB] dark:text-indigo-300 transition-colors hover:bg-blue-50 dark:hover:bg-indigo-500/10"
               >
                 {isWithdrawnApplication ? 'Reapply' : 'Apply Now'}
               </Link>
@@ -297,7 +310,7 @@ const JobCard: React.FC<JobCardProps> = ({
 
             <Link
               to={detailsPath}
-              className="w-full border border-[#2563EB] bg-[#2563EB] px-4 py-2.5 text-center text-[14px] font-medium text-white transition-colors hover:bg-blue-700"
+              className="w-full border border-[#2563EB] bg-[#2563EB] px-3 py-2 text-center text-[13px] font-medium text-white transition-colors hover:bg-blue-700"
             >
               View Details
             </Link>
