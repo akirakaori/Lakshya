@@ -93,23 +93,45 @@ const JobCard: React.FC<JobCardProps> = ({
     setAvatarFailed(false);
   }, [recruiterImage]);
 
-  const postedTimeAgo = React.useMemo(() => {
-    if (!job.createdAt) return null;
+  const [postedTimeAgo, setPostedTimeAgo] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!job.createdAt) {
+      setPostedTimeAgo(null);
+      return;
+    }
     const createdAt = new Date(job.createdAt).getTime();
-    if (Number.isNaN(createdAt)) return null;
+    if (Number.isNaN(createdAt)) {
+      setPostedTimeAgo(null);
+      return;
+    }
 
     const diffMs = Date.now() - createdAt;
     const minutes = Math.floor(diffMs / (1000 * 60));
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (minutes < 60) return `${Math.max(minutes, 1)}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 30) return `${days}d ago`;
+    if (minutes < 60) {
+      setPostedTimeAgo(`${Math.max(minutes, 1)}m ago`);
+      return;
+    }
+    if (hours < 24) {
+      setPostedTimeAgo(`${hours}h ago`);
+      return;
+    }
+    if (days < 30) {
+      setPostedTimeAgo(`${days}d ago`);
+      return;
+    }
+
     const months = Math.floor(days / 30);
-    if (months < 12) return `${months}mo ago`;
+    if (months < 12) {
+      setPostedTimeAgo(`${months}mo ago`);
+      return;
+    }
+
     const years = Math.floor(months / 12);
-    return `${years}y ago`;
+    setPostedTimeAgo(`${years}y ago`);
   }, [job.createdAt]);
 
   const handleToggleSave = async (e: React.MouseEvent) => {

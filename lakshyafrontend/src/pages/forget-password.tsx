@@ -9,6 +9,11 @@ type ForgotPasswordFormData = {
   email: string;
 };
 
+type ForgotPasswordResponse = {
+  success: boolean;
+  message?: string;
+};
+
 function ForgotPassword() {
   const navigate = useNavigate();
 
@@ -23,9 +28,9 @@ function ForgotPassword() {
     },
   });
 
-  const forgotPasswordMutation = useMutation({
+  const forgotPasswordMutation = useMutation<ForgotPasswordResponse, Error, string>({
     mutationFn: authApi.forgotPassword,
-    onSuccess: (data: any, variables) => {
+    onSuccess: (data, variables) => {
       if (data.success) {
         // Navigate to reset password page with email
         navigate("/reset-password", {

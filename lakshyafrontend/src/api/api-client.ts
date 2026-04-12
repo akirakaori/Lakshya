@@ -55,8 +55,8 @@ export const authApi = {
       body: JSON.stringify(userData),
     }),
 
-  forgotPassword: (email: string) =>
-    apiRequest('/auth/forgot-password', {
+  forgotPassword: (email: string): Promise<{ success: boolean; message?: string }> =>
+    apiRequest<{ success: boolean; message?: string }>('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),

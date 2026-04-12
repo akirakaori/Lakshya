@@ -7,7 +7,7 @@ dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 
 const mongo_url = process.env.MONGO_CONN;
 
-if (!mongo_url) {
+if (!mongo_url && process.env.NODE_ENV !== 'test') {
     console.error('MONGO_CONN is not set in environment variables.');
 }
 
@@ -17,13 +17,18 @@ const mongooseOptions = {
     family: 4, // Force IPv4
 };
 
-mongoose.connect(mongo_url, mongooseOptions)
-    .then(() => {
-        console.log('Connected to MongoDB...');
-    }).catch((err) => {
-        if (err?.code === 'ECONNREFUSED' && err?.syscall === 'querySrv') {
-            console.error('Error connecting to MongoDB: DNS SRV lookup failed.');
-            console.error('Check internet/DNS access, or use a non-SRV MongoDB URI in MONGO_CONN.');
-        }
-        console.error('Error connecting to MongoDB', err);
-    })
+// Only connect automatically if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+    mongoose.connect(mongo_url, mongooseOptions)
+        .then(() => {
+            console.log('Connected to MongoDB...');
+        }).catch((err) => {
+            if (err?.code === 'ECONNREFUSED' && err?.syscall === 'querySrv') {
+                console.error('Error connecting to MongoDB: DNS SRV lookup failed.');
+                console.error('Check internet/DNS access, or use a non-SRV MongoDB URI in MONGO_CONN.');
+            }
+            console.error('Error connecting to MongoDB', err);
+        });
+}
+
+module.exports = mongoose;

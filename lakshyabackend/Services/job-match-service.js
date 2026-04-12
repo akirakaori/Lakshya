@@ -20,7 +20,7 @@ const SEMANTIC_TIMEOUT = 7000; // 7 seconds
 const CACHE_DAYS = 7;
 
 // Startup diagnostic — log Ollama config so it's visible in server logs
-console.log(`[job-match] Ollama config → URL=${OLLAMA_URL}  MODEL=${OLLAMA_MODEL}  TIMEOUT=${OLLAMA_TIMEOUT}ms`);
+// console.log(`[job-match] Ollama config → URL=${OLLAMA_URL}  MODEL=${OLLAMA_MODEL}  TIMEOUT=${OLLAMA_TIMEOUT}ms`);
 
 // --------------- Helpers -----------------
 
