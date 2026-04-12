@@ -1,49 +1,87 @@
-describe('Lakshya User Flow', () => {
+describe("Lakshya End-to-End User Flow", () => {
+  it("logs in, searches Cloud Engineer, opens details, analyzes, and applies", () => {
+    const email = "cr7@gmail.com";
+    const password = "cr7sujal";
+    const jobKeyword = "Cloud Engineer";
 
-  it('Logs in, searches jobs, views details, and applies', () => {
+    // 1. Login
+    cy.visit("http://localhost:5173/login");
 
-    // 1. Visit Login Page
-    cy.visit('http://localhost:5173/login');
+    cy.get('input[type="email"]').first().should("be.visible").clear().type(email);
+    cy.get('input[type="password"]').first().should("be.visible").clear().type(password);
 
-    // 2. Enter Credentials
-    cy.get('input[type="email"]').should('be.visible').type('aayu@gmail.com');
-    cy.get('input[type="password"]').should('be.visible').type('aayu1234');
+    cy.contains(/^login$/i).click();
+    cy.url().should("not.include", "/login");
 
-    // 3. Click Login Button
-    cy.contains('button', /login/i).click();
+    // 2. Browse jobs
+    cy.visit("http://localhost:5173/job-seeker/browse-jobs");
 
-    // 4. Verify Login Success (URL change)
-    cy.url().should('not.include', '/login');
-
-    // 5. Navigate to Browse Jobs
-    cy.visit('http://localhost:5173/job-seeker/browse-jobs');
-
-    // 6. Search for Job
-    cy.get('input[placeholder*="Find"]')
-      .should('be.visible')
-      .clear()
-      .type('full stack developer');
-
-    // 7. Wait for search results
-    cy.wait(1000); // optional (replace with intercept if API)
-
-    // 8. Click "View Details" (first job)
-    cy.contains('View Details')
-      .should('be.visible')
+    // 3. Search job
+    cy.get('input[placeholder*="Find"], input[placeholder*="Search"], input[type="text"]')
       .first()
-      .click();
+      .should("be.visible")
+      .clear()
+      .type(jobKeyword);
 
-    // 9. Verify Job Details Page Opened
-    cy.url().should('include', '/jobs');
+    // click search button if present
+    cy.get("body").then(($body) => {
+      if ($body.text().match(/search|find jobs|apply filter/i)) {
+        cy.contains(/search|find jobs|apply filter/i).first().click({ force: true });
+      }
+    });
 
-    // 10. Click Apply Button
-    cy.contains('Apply')
-      .should('be.visible')
-      .click();
+    // 4. Confirm searched title exists in DOM
+    cy.contains(new RegExp(jobKeyword, "i"), { timeout: 10000 }).should("exist");
 
-    // 11. Optional: Verify Application Success Message
-    cy.contains(/applied|success/i).should('exist');
+    // 5. Click first visible View Details
+    cy.contains(/view details/i, { timeout: 10000 })
+      .first()
+      .should("exist")
+      .click({ force: true });
 
+    // 6. Confirm detail page opened for searched job
+    cy.contains(new RegExp(jobKeyword, "i"), { timeout: 10000 }).should("exist");
+
+    // 7. Click Analyze if present
+    cy.get("body", { timeout: 10000 }).then(($body) => {
+      const text = $body.text();
+
+      if (/analy[sz]e/i.test(text)) {
+        cy.contains(/analy[sz]e/i).first().click({ force: true });
+      }
+    });
+
+    // 8. Handle resume analysis modal / continue buttons
+    cy.get("body", { timeout: 20000 }).then(($body) => {
+      const text = $body.text();
+
+      if (/resume analysis required/i.test(text)) {
+        cy.contains(/resume analysis required/i).should("exist");
+      }
+
+      if (/continue anyway/i.test(text)) {
+        cy.contains(/continue anyway/i).click({ force: true });
+      } else if (/continue/i.test(text)) {
+        cy.contains(/^continue$/i).click({ force: true });
+      }
+    });
+
+    // 9. Final submit/apply
+    cy.get("body", { timeout: 15000 }).then(($body) => {
+      const text = $body.text();
+
+      if (/submit application/i.test(text)) {
+        cy.contains(/submit application/i).click({ force: true });
+      } else if (/apply now/i.test(text)) {
+        cy.contains(/apply now/i).first().click({ force: true });
+      } else if (/apply/i.test(text)) {
+        cy.contains(/^apply$/i).first().click({ force: true });
+      }
+    });
+
+    // 10. Success check
+    cy.contains(/application submitted successfully|applied successfully|already applied/i, {
+      timeout: 15000,
+    }).should("exist");
   });
-
 });

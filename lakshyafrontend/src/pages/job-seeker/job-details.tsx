@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState, ErrorBoundary } from '../../components';
 import { JobCard } from '../../components/jobs';
@@ -16,7 +16,7 @@ import {
 } from '../../hooks';
 import { useAuth } from '../../context/auth-context';
 import { toast } from 'react-toastify';
-import type { Job } from '../../services';
+import type { Application, Job } from '../../services';
 import { getCategoryMeta } from '../../constants/jobCategories';
 import { ThemeToggle, AnalysisRequiredModal } from '../../components/ui';
 import lakshyaLogo from '../../assets/lakhsya-logo.svg';
@@ -91,6 +91,27 @@ const JobDetails: React.FC = () => {
 
   const job = jobData?.data;
   const relatedJobs = relatedJobsData?.data?.filter((j: Job) => j._id !== safeJobId).slice(0, 4) || [];
+
+  const appliedJobLookup = useMemo(() => {
+    const lookup = new Map<string, Application['status']>();
+    const applications = myApplicationsData?.data ?? [];
+
+    applications.forEach((application) => {
+      if (!application || !application.jobId) return;
+
+      const normalizedJobId =
+        typeof application.jobId === 'string'
+          ? application.jobId
+          : application.jobId?._id;
+
+      if (!normalizedJobId || !application.status) return;
+
+      lookup.set(normalizedJobId, application.status);
+    });
+
+    return lookup;
+  }, [myApplicationsData]);
+
   const currentApplication = myApplicationsData?.data?.find((app) => {
     if (!app?.jobId) return false;
     if (typeof app.jobId === 'string') return app.jobId === safeJobId;
@@ -106,6 +127,11 @@ const JobDetails: React.FC = () => {
   const isJobSeeker = user?.role === 'job_seeker';
   const hasAnalysis = !!matchData?.data;
   const isAnalysisOutdated = matchData?.isOutdated || false;
+
+  useEffect(() => {
+    if (!jobId) return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [jobId]);
 
   useEffect(() => {
     const action = searchParams.get('action');
@@ -692,9 +718,20 @@ const JobDetails: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {relatedJobs.map((relatedJob: Job) => (
-              <JobCard key={relatedJob._id} job={relatedJob} showMatchScore />
-            ))}
+            {relatedJobs.map((relatedJob: Job) => {
+              const applicationStatus = appliedJobLookup.get(relatedJob._id);
+              const isApplied = !!applicationStatus;
+
+              return (
+                <JobCard
+                  key={relatedJob._id}
+                  job={relatedJob}
+                  showMatchScore
+                  isApplied={isApplied}
+                  applicationStatus={applicationStatus}
+                />
+              );
+            })}
           </div>
         </div>
       )}

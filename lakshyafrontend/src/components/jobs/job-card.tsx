@@ -63,7 +63,7 @@ const JobCard: React.FC<JobCardProps> = ({
   const isSaved = useIsJobSaved(job._id);
   const isJobSeeker = user?.role === 'job_seeker';
   const detailsPath = isJobSeeker ? `/job-seeker/jobs/${job._id}` : `/jobs/${job._id}`;
-  const applyPath = isJobSeeker ? `/job-seeker/jobs/${job._id}` : `/jobs/${job._id}?action=apply`;
+  const applyPath = isJobSeeker ? `/job-seeker/jobs/${job._id}?action=apply` : `/jobs/${job._id}?action=apply`;
   const saveJobMutation = useSaveJob();
   const removeSavedJobMutation = useRemoveSavedJob();
 
