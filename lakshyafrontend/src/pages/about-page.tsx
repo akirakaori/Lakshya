@@ -82,54 +82,13 @@ const AboutPage: React.FC = () => {
     <div className="min-h-screen bg-[#f6f7fb] text-slate-900">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2">
+        <div className="mx-auto flex max-w-7xl items-center px-6 py-4">
+          <Link to={user ? dashboardPath : '/'} className="flex items-center gap-2">
             <img src={lakshyaLogo} alt="Lakshya Logo" className="h-7 w-auto" />
             <div>
               <p className="text-sm font-semibold tracking-tight text-slate-900">Lakshya</p>
             </div>
           </Link>
-
-          <nav className="hidden items-center gap-8 md:flex">
-            <Link to="/" className="text-sm text-slate-500 transition hover:text-slate-900">
-              Home
-            </Link>
-            <Link to="/about" className="text-sm font-medium text-[#5a5ee6]">
-              About
-            </Link>
-            <Link to="/careers" className="text-sm text-slate-500 transition hover:text-slate-900">
-              Careers
-            </Link>
-            <Link to="/contact" className="text-sm text-slate-500 transition hover:text-slate-900">
-              Contact
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            {!user ? (
-              <>
-                <Link
-                  to="/login"
-                  className="hidden text-sm text-slate-500 transition hover:text-slate-900 sm:inline-flex"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/signup"
-                  className="inline-flex items-center rounded-md bg-[#4f5bd5] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#4450c4]"
-                >
-                  Get Started
-                </Link>
-              </>
-            ) : (
-              <Link
-                to={dashboardPath}
-                className="inline-flex items-center rounded-md bg-[#4f5bd5] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#4450c4]"
-              >
-                Dashboard
-              </Link>
-            )}
-          </div>
         </div>
       </header>
 
