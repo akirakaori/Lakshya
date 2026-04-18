@@ -128,6 +128,14 @@ const loginService = async (data) => {
     throw error;
   }
 
+  if (user.isDeleted || user.isActive === false) {
+    const error = new Error("Your account is deactivated. Please contact support or an administrator.");
+    error.statusCode = 403;
+    error.success = false;
+    error.errorField = "message";
+    throw error;
+  }
+
   // Compare passwords
   const isPassEqual = await bcrypt.compare(password, user.password);
   if (!isPassEqual) {

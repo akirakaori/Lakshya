@@ -2,7 +2,16 @@ const router = require("express").Router();
 const authenticate = require("../Middleware/auth-middleware");
 const authorizeRoles = require("../Middleware/role-middleware");
 const ROLES = require("../Library/roles").ROLES;
-const { getAllUsers, getAllPosts, deletePost, editUser, deleteUser, editPost } = require("../Controller/admin-controller");
+const {
+  getAllUsers,
+  getAllPosts,
+  deletePost,
+  editUser,
+  deleteUser,
+  softDeleteUser,
+  restoreUser,
+  editPost,
+} = require("../Controller/admin-controller");
 const adminJobController = require("../Controller/admin-job-controller");
 const { getAdminAnalytics } = require("../Controller/admin-analytics-controller");
 
@@ -36,6 +45,22 @@ router.delete(
   authenticate,
   authorizeRoles(ROLES.ADMIN),
   deleteUser
+);
+
+// Preferred soft-delete user endpoint
+router.patch(
+  "/users/:userId/soft-delete",
+  authenticate,
+  authorizeRoles(ROLES.ADMIN),
+  softDeleteUser
+);
+
+// Restore soft-deleted/deactivated user
+router.patch(
+  "/users/:userId/restore",
+  authenticate,
+  authorizeRoles(ROLES.ADMIN),
+  restoreUser
 );
 
 // Get all posts

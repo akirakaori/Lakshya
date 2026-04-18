@@ -30,6 +30,7 @@ interface User {
   email: string;
   role: string;
   isActive: boolean;
+  isDeleted?: boolean;
   createdAt: string;
 }
 
@@ -137,10 +138,12 @@ function AdminDashboard() {
     return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200';
   };
 
-  const getStatusBadgeClass = (isActive: boolean) =>
-    isActive
+  const getStatusBadgeClass = (isActive: boolean, isDeleted?: boolean) =>
+    isActive && !isDeleted
       ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300'
       : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300';
+
+  const getUserDisplayStatus = (user: User) => (user.isActive && !user.isDeleted ? 'Active' : 'Deactivated');
 
   const getJobStatusBadgeClass = (status: string) =>
     status === 'open'
@@ -278,17 +281,18 @@ function AdminDashboard() {
   const deleteMutation = useMutation({
     mutationFn: ({ type, id, reason }: { type: 'user' | 'post'; id: string; reason?: string }) => {
       if (type === 'user') {
-        return adminApi.deleteUser(id, reason || '');
+        return adminApi.softDeleteUser(id, reason || 'Deactivated by admin');
       }
       return adminApi.deleteJob(id);
     },
     onSuccess: (_, variables) => {
-      handleSuccess(`${variables.type === 'user' ? 'User' : 'Job'} deleted successfully`);
+      handleSuccess(`${variables.type === 'user' ? 'User deactivated' : 'Job deleted'} successfully`);
       setShowDeleteConfirm(false);
       setDeleteTarget(null);
       setDeleteReason('');
       if (variables.type === 'user') {
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-preview-users'] });
       } else {
         queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
         queryClient.invalidateQueries({ queryKey: ['jobs'] });
@@ -298,6 +302,18 @@ function AdminDashboard() {
     onError: (error: Error & { response?: { data?: { message?: string } } }) => {
       handleError(error.response?.data?.message || error.message || 'Failed to delete');
       console.error('Delete error:', error);
+    },
+  });
+
+  const restoreUserMutation = useMutation({
+    mutationFn: ({ userId, reason }: { userId: string; reason?: string }) => adminApi.restoreUser(userId, reason),
+    onSuccess: () => {
+      handleSuccess('User restored successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-preview-users'] });
+    },
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
+      handleError(error.response?.data?.message || error.message || 'Failed to restore user');
     },
   });
 
@@ -438,6 +454,10 @@ function AdminDashboard() {
       id: deleteTarget.id,
       reason: deleteTarget.type === 'user' ? deleteReason : undefined,
     });
+  };
+
+  const handleRestoreUser = (userId: string) => {
+    restoreUserMutation.mutate({ userId, reason: 'Restored by admin' });
   };
 
   const formatDate = (dateString: string) => {
@@ -989,8 +1009,8 @@ function AdminDashboard() {
                                     </span>
                                   </td>
                                   <td className="px-6 py-4">
-                                    <span className={`inline-flex px-3 py-1 text-xs font-medium ${getStatusBadgeClass(user.isActive)}`}>
-                                      {user.isActive ? 'Active' : 'Suspended'}
+                                    <span className={`inline-flex px-3 py-1 text-xs font-medium ${getStatusBadgeClass(user.isActive, user.isDeleted)}`}>
+                                      {getUserDisplayStatus(user)}
                                     </span>
                                   </td>
                                   <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
@@ -1004,12 +1024,21 @@ function AdminDashboard() {
                                       >
                                         Edit
                                       </button>
-                                      <button
-                                        onClick={() => handleDeleteClick('user', user._id)}
-                                        className="rounded-sm px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-500/10"
-                                      >
-                                        Delete
-                                      </button>
+                                      {user.isActive && !user.isDeleted ? (
+                                        <button
+                                          onClick={() => handleDeleteClick('user', user._id)}
+                                          className="rounded-sm px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-500/10"
+                                        >
+                                          Deactivate
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleRestoreUser(user._id)}
+                                          className="rounded-sm px-3 py-2 text-sm font-medium text-green-700 transition hover:bg-green-50 hover:text-green-800 dark:text-green-300 dark:hover:bg-green-500/10"
+                                        >
+                                          Restore
+                                        </button>
+                                      )}
                                     </div>
                                   </td>
                                 </tr>
@@ -1281,8 +1310,8 @@ function AdminDashboard() {
                                 </span>
                               </td>
                               <td className="px-6 py-4">
-                                <span className={`inline-flex px-3 py-1 text-xs font-medium ${getStatusBadgeClass(user.isActive)}`}>
-                                  {user.isActive ? 'Active' : 'Suspended'}
+                                <span className={`inline-flex px-3 py-1 text-xs font-medium ${getStatusBadgeClass(user.isActive, user.isDeleted)}`}>
+                                  {getUserDisplayStatus(user)}
                                 </span>
                               </td>
                               <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
@@ -1296,12 +1325,21 @@ function AdminDashboard() {
                                   >
                                     Edit
                                   </button>
-                                  <button
-                                    onClick={() => handleDeleteClick('user', user._id)}
-                                    className="rounded-sm px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-500/10"
-                                  >
-                                    Delete
-                                  </button>
+                                  {user.isActive && !user.isDeleted ? (
+                                    <button
+                                      onClick={() => handleDeleteClick('user', user._id)}
+                                      className="rounded-sm px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-500/10"
+                                    >
+                                      Deactivate
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleRestoreUser(user._id)}
+                                      className="rounded-sm px-3 py-2 text-sm font-medium text-green-700 transition hover:bg-green-50 hover:text-green-800 dark:text-green-300 dark:hover:bg-green-500/10"
+                                    >
+                                      Restore
+                                    </button>
+                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -1617,9 +1655,13 @@ function AdminDashboard() {
       {showDeleteConfirm && deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
           <div className="w-full max-w-md border border-slate-200 bg-white p-7 shadow-xl dark:border-slate-800 dark:bg-slate-950">
-            <h3 className="text-xl font-bold text-red-600 dark:text-red-400">Confirm Deletion</h3>
+            <h3 className="text-xl font-bold text-red-600 dark:text-red-400">
+              {deleteTarget.type === 'user' ? 'Confirm Deactivation' : 'Confirm Deletion'}
+            </h3>
             <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-              Are you sure you want to delete this {deleteTarget.type}?
+              {deleteTarget.type === 'user'
+                ? 'Are you sure you want to deactivate this user account?'
+                : `Are you sure you want to delete this ${deleteTarget.type}?`}
             </p>
 
             <div className="mt-5">
@@ -1640,7 +1682,7 @@ function AdminDashboard() {
                 onClick={handleConfirmDelete}
                 className="inline-flex flex-1 items-center justify-center rounded-sm bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700"
               >
-                Delete
+                {deleteTarget.type === 'user' ? 'Deactivate' : 'Delete'}
               </button>
               <button onClick={() => setShowDeleteConfirm(false)} className={`${secondaryButtonClass} flex-1`}>
                 Cancel

@@ -24,6 +24,8 @@ interface Applicant {
   name?: string;
   fullName?: string;
   email: string;
+  isActive?: boolean;
+  isDeleted?: boolean;
   number?: string;
   phone?: string;
   profileImageUrl?: string;
@@ -707,6 +709,8 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
 
                     const avatarUrl = applicant?.profileImageUrl ? getFileUrl(applicant.profileImageUrl) : null;
                     const initials = applicant ? getInitials(applicant.fullName || applicant.name || 'U') : 'U';
+                    const isApplicantDeactivated =
+                      !!applicant && (applicant.isDeleted === true || applicant.isActive === false);
                     const isSelected = selectedApplications.has(application._id);
                     const isWithdrawn = application.status === 'withdrawn' || application.isWithdrawn;
                     const normalizedCurrentStatus = isWithdrawn
@@ -750,6 +754,11 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                               <div className="font-medium text-slate-900 dark:text-slate-100">
                                 {applicant?.fullName || applicant?.name || 'Unknown'}
                               </div>
+                              {isApplicantDeactivated && (
+                                <span className="mt-1 inline-flex rounded-sm border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
+                                  Deactivated Account
+                                </span>
+                              )}
                               <div className="text-sm text-slate-500 dark:text-slate-400">{applicant?.email}</div>
                               {applicant?.jobSeeker?.title && (
                                 <div className="text-xs text-slate-400">{applicant.jobSeeker.title}</div>
@@ -907,6 +916,8 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
 
           const viewingDetails = drawerData?.data?.application;
           const applicant = drawerData?.data?.candidate;
+          const isApplicantDeactivated =
+            !!applicant && (applicant?.isDeleted === true || applicant?.isActive === false);
           const detailsAnalyzed = viewingDetails?.analysisStatus === 'analyzed' || viewingDetails?.hasMatchAnalysis === true;
           const detailsMatchScore = typeof viewingDetails?.matchScore === 'number' ? viewingDetails.matchScore : 0;
 
@@ -934,6 +945,11 @@ const missingSkillClass = 'inline-flex items-center rounded-sm border border-red
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                       {applicant?.fullName || applicant?.name || 'Candidate'}
                     </h3>
+                    {isApplicantDeactivated && (
+                      <span className="mt-1 inline-flex rounded-sm border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
+                        Deactivated Account
+                      </span>
+                    )}
                     <p className="text-sm text-slate-500 dark:text-slate-400">{applicant?.email}</p>
                   </div>
                   <button

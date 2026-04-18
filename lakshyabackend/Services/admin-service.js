@@ -236,6 +236,15 @@ const editUserService = async (data) => {
   if (typeof isActive !== 'undefined' && isActive !== user.isActive) {
     oldValues.isActive = user.isActive;
     user.isActive = isActive;
+    if (isActive) {
+      user.isDeleted = false;
+      user.deletedAt = null;
+      user.deletedBy = null;
+    } else {
+      user.isDeleted = true;
+      user.deletedAt = new Date();
+      user.deletedBy = adminUser.id;
+    }
     changes.isActive = isActive ? 'Account activated' : 'Account suspended';
   }
   
@@ -294,10 +303,38 @@ const deleteUserService = async (data) => {
     error.statusCode = 403;
     throw error;
   }
+
+  if (adminUser.id && user._id.toString() === adminUser.id.toString()) {
+    const error = new Error("You cannot deactivate your own admin account");
+    error.statusCode = 403;
+    throw error;
+  }
   
   // Soft delete
   user.isActive = false;
+  user.isDeleted = true;
+  user.deletedAt = new Date();
+  user.deletedBy = adminUser.id;
   await user.save();
+
+  // If recruiter is deactivated, cascade deactivate all recruiter jobs.
+  let recruiterJobsUpdated = 0;
+  if (user.role === 'recruiter') {
+    const jobsUpdate = await JobModel.updateMany(
+      { createdBy: user._id, isDeleted: { $ne: true } },
+      {
+        $set: {
+          isDeleted: true,
+          isActive: false,
+          status: 'closed',
+          deletedAt: new Date(),
+          deletedBy: adminUser.id,
+          deletedByRole: 'admin',
+        },
+      }
+    );
+    recruiterJobsUpdated = jobsUpdate.modifiedCount || 0;
+  }
   
   // Create audit log
   await createAuditLog(
@@ -307,12 +344,64 @@ const deleteUserService = async (data) => {
     'User',
     'delete_user',
     reason || 'User deleted by admin',
-    { userName: user.name, email: user.email, role: user.role }
+    {
+      userName: user.name,
+      email: user.email,
+      role: user.role,
+      isDeleted: user.isDeleted,
+      recruiterJobsUpdated,
+    }
   );
   
   return {
     success: true,
-    message: "User deleted successfully",
+    message: user.role === 'recruiter'
+      ? `User deactivated successfully. ${recruiterJobsUpdated} recruiter job(s) were deactivated.`
+      : 'User deactivated successfully',
+  };
+};
+
+/**
+ * Service function to restore a soft-deleted user
+ * @param {Object} data - { adminUser: { id, name }, id, reason }
+ * @returns {Promise<Object>} - { success: true, message: "..." }
+ */
+const restoreUserService = async (data) => {
+  const { adminUser, id, reason } = data;
+
+  const user = await UserModel.findById(id);
+
+  if (!user) {
+    const error = new Error('User not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (user.role === 'admin') {
+    const error = new Error('Admin users cannot be restored via this endpoint');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  user.isDeleted = false;
+  user.isActive = true;
+  user.deletedAt = null;
+  user.deletedBy = null;
+  await user.save();
+
+  await createAuditLog(
+    adminUser.id,
+    adminUser.name || 'Admin',
+    id,
+    'User',
+    'restore_user',
+    reason || 'User restored by admin',
+    { userName: user.name, email: user.email, role: user.role }
+  );
+
+  return {
+    success: true,
+    message: 'User restored successfully',
   };
 };
 
@@ -399,5 +488,6 @@ module.exports = {
   deletePostService,
   editUserService,
   deleteUserService,
+  restoreUserService,
   editPostService,
 };

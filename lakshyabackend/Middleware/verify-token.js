@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken');
+const UserModel = require('../models/user-model');
 
 /**
  * Middleware to verify JWT token
  */
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     
@@ -18,9 +19,22 @@ const verifyToken = (req, res, next) => {
     
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
+      const dbUser = await UserModel.findById(decoded.id).select('_id role name email isActive isDeleted');
+
+      if (!dbUser || dbUser.isDeleted || dbUser.isActive === false) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized: Account is deactivated',
+        });
+      }
+
       // Attach user info to request
-      req.user = decoded;
+      req.user = {
+        id: dbUser._id.toString(),
+        role: dbUser.role,
+        name: dbUser.name,
+        email: dbUser.email,
+      };
       next();
     } catch (err) {
       return res.status(401).json({

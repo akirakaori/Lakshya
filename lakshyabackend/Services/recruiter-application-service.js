@@ -208,7 +208,7 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
   let applications = await ApplicationModel.find(query)
     .populate({
       path: 'applicant',
-      select: 'fullName name email profileImageUrl jobSeeker.skills jobSeeker.title jobSeeker.resumeUrl'
+      select: 'fullName name email profileImageUrl isActive isDeleted jobSeeker.skills jobSeeker.title jobSeeker.resumeUrl'
     })
     .sort(sortCriteria)
     .lean();
@@ -241,6 +241,8 @@ const getJobApplications = async (jobId, recruiterId, filters = {}) => {
     return {
       ...app,
       analysisStatus: normalizedStatus,
+      applicantDeleted:
+        !!app.applicant && (app.applicant.isDeleted === true || app.applicant.isActive === false),
     };
   });
 
@@ -359,9 +361,15 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
   const updatedApplication = await ApplicationModel.findById(applicationId)
     .populate({
       path: 'applicant',
-      select: 'fullName name email profileImageUrl jobSeeker.skills jobSeeker.title jobSeeker.resumeUrl'
+      select: 'fullName name email profileImageUrl isActive isDeleted jobSeeker.skills jobSeeker.title jobSeeker.resumeUrl'
     })
     .lean();
+
+  if (updatedApplication) {
+    updatedApplication.applicantDeleted =
+      !!updatedApplication.applicant &&
+      (updatedApplication.applicant.isDeleted === true || updatedApplication.applicant.isActive === false);
+  }
 
   return updatedApplication;
 };
@@ -491,7 +499,7 @@ const getApplicationDetails = async (applicationId, recruiterId) => {
     .populate('jobId')
     .populate({
       path: 'applicant',
-      select: 'fullName name email phone profileImageUrl jobSeeker createdAt'
+      select: 'fullName name email phone profileImageUrl isActive isDeleted jobSeeker createdAt'
     })
     .lean();
 
@@ -544,6 +552,9 @@ const getApplicationDetails = async (applicationId, recruiterId) => {
       } // Include jobId with interview rounds info
     },
     candidate: application.applicant,
+    applicantDeleted:
+      !!application.applicant &&
+      (application.applicant.isDeleted === true || application.applicant.isActive === false),
     job: {
       _id: application.jobId._id,
       title: application.jobId.title,

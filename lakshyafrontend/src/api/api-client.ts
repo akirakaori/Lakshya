@@ -174,9 +174,22 @@ export const adminApi = {
       body: JSON.stringify(postData),
     }),
 
+  softDeleteUser: (userId: string, reason: string): Promise<{ success: boolean; message: string }> =>
+    apiRequest(`/admin/users/${userId}/soft-delete`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason }),
+    }),
+
+  restoreUser: (userId: string, reason?: string): Promise<{ success: boolean; message: string }> =>
+    apiRequest(`/admin/users/${userId}/restore`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason }),
+    }),
+
+  // Backward-compatible alias
   deleteUser: (userId: string, reason: string): Promise<{ success: boolean; message: string }> =>
-    apiRequest(`/admin/users/${userId}`, {
-      method: 'DELETE',
+    apiRequest(`/admin/users/${userId}/soft-delete`, {
+      method: 'PATCH',
       body: JSON.stringify({ reason }),
     }),
 

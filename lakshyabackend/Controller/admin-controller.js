@@ -131,6 +131,57 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// Preferred soft-delete endpoint
+const softDeleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { reason } = req.body;
+
+    const result = await adminService.deleteUserService({
+      adminUser: {
+        id: req.user.id,
+        name: req.user.name,
+      },
+      id: userId,
+      reason,
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error soft deleting user:", error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Error soft deleting user",
+      error: error.message,
+    });
+  }
+};
+
+const restoreUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { reason } = req.body;
+
+    const result = await adminService.restoreUserService({
+      adminUser: {
+        id: req.user.id,
+        name: req.user.name,
+      },
+      id: userId,
+      reason,
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error restoring user:", error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Error restoring user",
+      error: error.message,
+    });
+  }
+};
+
 // Edit post
 const editPost = async (req, res) => {
   try {
@@ -162,4 +213,13 @@ const editPost = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, getAllPosts, deletePost, editUser, deleteUser, editPost };
+module.exports = {
+  getAllUsers,
+  getAllPosts,
+  deletePost,
+  editUser,
+  deleteUser,
+  softDeleteUser,
+  restoreUser,
+  editPost,
+};
