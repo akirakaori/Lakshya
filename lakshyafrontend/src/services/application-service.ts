@@ -64,6 +64,7 @@ export interface Application {
 export interface ApplyJobData {
   coverLetter?: string;
   resume?: string;
+  suggestionSource?: 'ollama' | 'rule';
 }
 
 export interface ApplicationFilters {
@@ -171,7 +172,19 @@ export interface ApplicationsResponse {
 export const applicationService = {
   // Apply for a job (job seeker only)
   applyForJob: async (jobId: string, data: ApplyJobData = {}): Promise<{ success: boolean; data: Application }> => {
-    const response = await axiosInstance.post(`/applications/${jobId}`, data);
+    const sanitizedData: Partial<ApplyJobData> = Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== null && value !== undefined)
+    );
+
+    if (
+      'suggestionSource' in sanitizedData &&
+      sanitizedData.suggestionSource !== 'ollama' &&
+      sanitizedData.suggestionSource !== 'rule'
+    ) {
+      delete sanitizedData.suggestionSource;
+    }
+
+    const response = await axiosInstance.post(`/applications/${jobId}`, sanitizedData);
     return response.data;
   },
 

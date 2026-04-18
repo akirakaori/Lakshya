@@ -358,7 +358,12 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
         target.matchedSkills = Array.isArray(analysisSnapshot.matchedSkills) ? analysisSnapshot.matchedSkills : [];
         target.missingSkills = Array.isArray(analysisSnapshot.missingSkills) ? analysisSnapshot.missingSkills : [];
         target.matchAnalyzedAt = analysisSnapshot.analyzedAt || null;
-        target.suggestionSource = analysisSnapshot.suggestionSource || null;
+        const source = analysisSnapshot.suggestionSource;
+        if (source === 'ollama' || source === 'rule') {
+          target.suggestionSource = source;
+        } else {
+          target.suggestionSource = undefined;
+        }
         target.profileUpdatedAtUsed = analysisSnapshot.profileUpdatedAtUsed || null;
         target.resumeParsedAtUsed = analysisSnapshot.resumeParsedAtUsed || null;
       } else {
@@ -366,7 +371,7 @@ const applyForJob = async (jobId, applicantId, applicationData) => {
         target.matchedSkills = [];
         target.missingSkills = [];
         target.matchAnalyzedAt = null;
-        target.suggestionSource = null;
+        target.suggestionSource = undefined;
         target.profileUpdatedAtUsed = null;
         target.resumeParsedAtUsed = null;
       }
