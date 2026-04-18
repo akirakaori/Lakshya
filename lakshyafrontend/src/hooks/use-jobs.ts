@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobService } from '../services';
-import type { JobFilters, CreateJobData } from '../services';
+import type { JobFilters, CreateJobData, Job, JobsResponse } from '../services';
 
 // Query keys
 export const jobKeys = {
@@ -130,9 +130,33 @@ export const useToggleJobStatus = () => {
   
   return useMutation({
     mutationFn: (jobId: string) => jobService.toggleJobStatus(jobId),
-    onSuccess: (_, jobId) => {
+    onSuccess: (response, jobId) => {
+      const updatedJob = response.data;
+
+      queryClient.setQueriesData<JobsResponse>(
+        { queryKey: jobKeys.myJobs() },
+        (previous) => {
+          if (!previous?.data) return previous;
+
+          return {
+            ...previous,
+            data: previous.data.map((job: Job) =>
+              job._id === updatedJob._id
+                ? {
+                    ...job,
+                    ...updatedJob,
+                    isActive: updatedJob.isActive,
+                    status: updatedJob.status,
+                  }
+                : job
+            ),
+          };
+        }
+      );
+
       queryClient.invalidateQueries({ queryKey: jobKeys.detail(jobId) });
       queryClient.invalidateQueries({ queryKey: jobKeys.myJobs() });
+      queryClient.refetchQueries({ queryKey: jobKeys.myJobs(), type: 'active' });
     },
   });
 };

@@ -575,7 +575,10 @@ const toggleJobStatus = async (jobId, recruiterId) => {
       throw error;
     }
     
-    job.status = job.status === 'open' ? 'closed' : 'open';
+    // Keep both fields in sync so frontend state always reflects latest toggle.
+    const nextIsActive = !job.isActive;
+    job.isActive = nextIsActive;
+    job.status = nextIsActive ? 'open' : 'closed';
     await job.save();
     
     return job;
