@@ -108,6 +108,12 @@ const CandidateProfile: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [isDirty, setIsDirty] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [selectedApplicationForReject, setSelectedApplicationForReject] = useState<{
+    applicationId: string;
+    candidateName: string;
+    jobTitle?: string;
+  } | null>(null);
   const [showHireConfirm, setShowHireConfirm] = useState(false);
   const [interviewToEdit, setInterviewToEdit] = useState<Interview | undefined>(undefined);
 
@@ -307,22 +313,40 @@ const CandidateProfile: React.FC = () => {
     }
   };
 
-  const handleReject = async () => {
+  const handleOpenRejectModal = () => {
     if (!application?._id) {
       toast.error('Application not found');
       return;
     }
 
-    if (!window.confirm('Are you sure you want to reject this candidate?')) {
+    const jobTitle =
+      typeof application.jobId === 'object'
+        ? application.jobId?.title
+        : undefined;
+
+    setSelectedApplicationForReject({
+      applicationId: application._id,
+      candidateName: candidate?.fullName || 'this candidate',
+      jobTitle,
+    });
+    setIsRejectModalOpen(true);
+  };
+
+  const handleConfirmReject = async () => {
+    if (!selectedApplicationForReject?.applicationId) {
+      toast.error('Application not found');
       return;
     }
 
     try {
       await updateStatusMutation.mutateAsync({
-        applicationId: application._id,
+        applicationId: selectedApplicationForReject.applicationId,
         status: 'rejected',
       });
       toast.success('Candidate rejected');
+      setIsRejectModalOpen(false);
+      setSelectedApplicationForReject(null);
+      await refetch();
     } catch {
       toast.error('Failed to reject candidate');
     }
@@ -805,7 +829,7 @@ const CandidateProfile: React.FC = () => {
                         Shortlist Candidate
                       </button>
                       <button
-                        onClick={handleReject}
+                        onClick={handleOpenRejectModal}
                         disabled={updateStatusMutation.isPending}
                         className={`w-full ${getDangerButtonClass(updateStatusMutation.isPending)}`}
                       >
@@ -831,7 +855,7 @@ const CandidateProfile: React.FC = () => {
                         Schedule Interview (Round 1 of {interviewProgress.required})
                       </button>
                       <button
-                        onClick={handleReject}
+                        onClick={handleOpenRejectModal}
                         disabled={updateStatusMutation.isPending}
                         className={`w-full ${getDangerButtonClass(updateStatusMutation.isPending)}`}
                       >
@@ -879,7 +903,7 @@ const CandidateProfile: React.FC = () => {
                         </div>
                       )}
                       <button
-                        onClick={handleReject}
+                        onClick={handleOpenRejectModal}
                         disabled={updateStatusMutation.isPending}
                         className={`w-full ${getDangerButtonClass(updateStatusMutation.isPending)}`}
                       >
@@ -1164,6 +1188,27 @@ const CandidateProfile: React.FC = () => {
             isEditMode={!!interviewToEdit}
           />
         )}
+
+        <ConfirmModal
+          isOpen={isRejectModalOpen}
+          onClose={() => {
+            setIsRejectModalOpen(false);
+            setSelectedApplicationForReject(null);
+          }}
+          onConfirm={handleConfirmReject}
+          title="Reject Application"
+          message={`Are you sure you want to reject ${
+            selectedApplicationForReject?.candidateName ?? 'this candidate'
+          }${
+            selectedApplicationForReject?.jobTitle
+              ? ` for ${selectedApplicationForReject.jobTitle}`
+              : ''
+          }? This action will move the application to Rejected.`}
+          confirmText="Confirm Reject"
+          cancelText="Cancel"
+          confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
+          isLoading={updateStatusMutation.isPending}
+        />
 
         <ConfirmModal
           isOpen={showHireConfirm}
