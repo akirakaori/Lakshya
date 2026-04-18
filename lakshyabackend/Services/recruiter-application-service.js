@@ -328,14 +328,24 @@ const updateApplicationStatus = async (applicationId, recruiterId, newStatus) =>
   validateAtsStatusTransition(application.status, normalizedStatus);
   const oldStatus = application.status;
 
-  // Update status
+  // Update only status field to avoid failing on unrelated legacy subdocument validation.
+  const updatedStatusDoc = await ApplicationModel.findByIdAndUpdate(
+    applicationId,
+    { $set: { status: normalizedStatus } },
+    { new: true }
+  );
+
+  if (!updatedStatusDoc) {
+    throw { statusCode: 404, message: 'Application not found' };
+  }
+
+  // Keep local doc in sync for notification payload and logs.
   application.status = normalizedStatus;
-  await application.save();
   console.log('[RECRUITER STATUS][SERVICE] Application status saved:', {
     applicationId,
     recruiterId,
     oldStatus,
-    newStatus: application.status,
+    newStatus: updatedStatusDoc.status,
     notificationAttempted: !!statusNotificationMap[normalizedStatus],
   });
 

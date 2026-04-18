@@ -347,8 +347,12 @@ const CandidateProfile: React.FC = () => {
       setIsRejectModalOpen(false);
       setSelectedApplicationForReject(null);
       await refetch();
-    } catch {
-      toast.error('Failed to reject candidate');
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (error instanceof Error ? error.message : undefined) ||
+        'Failed to reject candidate';
+      toast.error(message);
     }
   };
 
