@@ -29,12 +29,7 @@ const normalizeProfileImageUrl = (value) => {
   const trimmedValue = value.trim();
   if (!trimmedValue) return null;
 
-  if (/^https?:\/\//i.test(trimmedValue) || trimmedValue.startsWith('data:')) {
-    return trimmedValue;
-  }
-
-  const normalizedPath = trimmedValue.startsWith('/') ? trimmedValue : `/${trimmedValue}`;
-  return `${BACKEND_BASE_URL}${normalizedPath}`;
+  return trimmedValue;
 };
 
 const buildRecruiterPayload = (createdBy) => {
