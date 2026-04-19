@@ -8,11 +8,16 @@ export const getFileUrl = (path: string | null | undefined): string | null => {
   
   // If it's already a full URL, return as is
   if (path.startsWith('http://') || path.startsWith('https://')) {
+    // Avoid mixed content errors in production by upgrading Cloudinary HTTP URLs to HTTPS
+    if (path.startsWith('http://res.cloudinary.com')) {
+      return path.replace('http://', 'https://');
+    }
     return path;
   }
   
-  // Otherwise, prepend the server base URL (without /api)
-  const serverBaseUrl = 'http://localhost:3000';
+  // Otherwise, prepend the server base URL (remove trailing /api if present)
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+  const serverBaseUrl = apiUrl.endsWith('/api') ? apiUrl.substring(0, apiUrl.length - 4) : apiUrl;
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${serverBaseUrl}${cleanPath}`;
 };
