@@ -272,6 +272,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
   const suggestions = Array.isArray(analysis?.suggestions) ? analysis.suggestions : [];
   const summaryRewrite = typeof analysis?.summaryRewrite === 'string' ? analysis.summaryRewrite : '';
   const suggestionSource = analysis?.suggestionSource || 'rule';
+  const isAiPowered = suggestionSource !== 'rule';
   const analyzedAt = analysis?.analyzedAt || new Date().toISOString();
   const isOutdated = data.isOutdated || false;
 
@@ -361,7 +362,7 @@ const JobMatchPanel: React.FC<JobMatchPanelProps> = ({ jobId }) => {
           <h4 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
             Suggestions
             <span className="ml-1.5 text-xs font-normal text-slate-400">
-              ({suggestionSource === 'ollama' ? 'AI-powered' : 'Rule-based'})
+              ({isAiPowered ? 'AI-powered' : 'Rule-based'})
             </span>
           </h4>
           <ul className="space-y-2">

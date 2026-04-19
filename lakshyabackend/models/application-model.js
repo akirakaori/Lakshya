@@ -94,7 +94,7 @@ const applicationSchema = new Schema({
   },
   suggestionSource: {
     type: String,
-    enum: ['ollama', 'rule'],
+    enum: ['ollama','groq', 'rule'],
     default: undefined,
   },
   experienceYears: {
