@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api-client';
 import { Footer } from '../components';
+import ThemeToggle from '../components/ui/theme-toggle';
 import { useForm } from 'react-hook-form';
 import lakshyaLogo from '../assets/lakhsya-logo.svg';
 
@@ -56,95 +57,91 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
-      <div className="h-full overflow-y-auto">
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="w-full max-w-md">
-        {/* Card Container */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-8 space-y-6">
-          {/* Logo Section */}
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-white/10 rounded-xl mb-2">
-              <img src={lakshyaLogo} alt="Lakshya Logo" className="h-9 w-auto" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Lakshya</h2>
-            <Link
-              to="/"
-              className="text-sm text-indigo-600 hover:text-indigo-700 transition-colors duration-300 inline-block"
-            >
-              Back to Home
-            </Link>
+    <div className="app-auth-shell overflow-hidden">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 pt-6">
+        <Link to="/" className="inline-flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 shadow-lg shadow-indigo-500/20">
+            <img src={lakshyaLogo} alt="Lakshya Logo" className="h-8 w-auto" />
           </div>
-
-          {/* Page Title */}
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Forgot Password</h1>
-            <p className="text-sm text-gray-600 dark:text-slate-300 mt-2">
-              Enter your email to receive an OTP for password reset.
-            </p>
+          <div>
+            <p className="app-heading text-lg font-semibold">Lakshya</p>
+            <p className="app-soft-text text-xs">Career intelligence platform</p>
           </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Email Field */}
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                {...register('email', {
-                  required: 'Email is required',
-                  pattern: {
-                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: 'Please enter a valid email address',
-                  },
-                })}
-                className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border ${
-                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 dark:border-slate-800 focus:ring-indigo-500'
-                } rounded-lg text-gray-900 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={forgotPasswordMutation.isPending}
-                className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out"
-              >
-                {forgotPasswordMutation.isPending ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Sending OTP...
-                  </span>
-                ) : 'Send OTP'}
-              </button>
-            </div>
-
-            {/* Back to Login Link */}
-            <div className="text-center pt-2">
-              <Link
-                to="/login"
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors duration-300"
-              >
-                Back to login
-              </Link>
-            </div>
-          </form>
-        </div>
-          </div>
-        </div>
-        <Footer variant="public" />
+        </Link>
+        <ThemeToggle />
       </div>
+
+      <div className="flex min-h-screen items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <div className="app-auth-card space-y-6">
+              <div className="space-y-2 text-center">
+                <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-lg shadow-indigo-500/20">
+                  <img src={lakshyaLogo} alt="Lakshya Logo" className="h-9 w-auto" />
+                </div>
+                <h2 className="app-heading text-2xl font-bold">Lakshya</h2>
+                <Link to="/" className="app-auth-link inline-block text-sm">
+                  Back to Home
+                </Link>
+              </div>
+
+              <div className="text-center">
+                <h1 className="app-heading text-3xl font-bold">Forgot Password</h1>
+                <p className="app-body-text mt-2 text-sm">
+                  Enter your email to receive an OTP for password reset.
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                <div className="space-y-2">
+                  <label htmlFor="email" className="app-label block text-sm font-medium">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    {...register('email', {
+                      required: 'Email is required',
+                      pattern: {
+                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                        message: 'Please enter a valid email address',
+                      },
+                    })}
+                    className={`app-auth-input ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  />
+                  {errors.email && (
+                    <p className="text-sm text-red-600">{errors.email.message}</p>
+                  )}
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={forgotPasswordMutation.isPending}
+                    className="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 ease-in-out hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {forgotPasswordMutation.isPending ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="-ml-1 mr-3 h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sending OTP...
+                      </span>
+                    ) : 'Send OTP'}
+                  </button>
+                </div>
+
+                <div className="pt-2 text-center">
+                  <Link to="/login" className="app-auth-link text-sm">
+                    Back to login
+                  </Link>
+                </div>
+              </form>
+            </div>
+          </div>
+      </div>
+      <Footer variant="public" />
     </div>
   );
 }
