@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { authApi } from '../api/api-client';
+import { ApiError, authApi } from '../api/api-client';
 import { Footer } from '../components';
 import ThemeToggle from '../components/ui/theme-toggle';
 import { useForm } from 'react-hook-form';
@@ -53,19 +53,21 @@ function ResetPassword() {
         });
       }
     },
-    onError: () => {
+    onError: (error: unknown) => {
+      const apiError = error as ApiError;
       setError('email', {
         type: 'manual',
-        message: 'Something went wrong. Please try again.',
+        message: apiError?.message || 'Something went wrong. Please try again.',
       });
     },
   });
 
   const onSubmit = (data: ResetPasswordFormData) => {
     resetPasswordMutation.mutate({
-      email: data.email,
-      otp: data.otp,
+      email: data.email.trim().toLowerCase(),
+      otp: data.otp.trim(),
       newPassword: data.newPassword,
+      confirmPassword: data.confirmPassword,
     });
   };
 
@@ -154,7 +156,10 @@ function ResetPassword() {
                     id="otp"
                     type="text"
                     placeholder="Enter OTP from email"
-                    {...register('otp', { required: 'OTP is required' })}
+                    {...register('otp', {
+                      required: 'OTP is required',
+                      validate: (value) => /^\d{6}$/.test(value.trim()) || 'OTP must be 6 digits',
+                    })}
                     className={`app-auth-input ${errors.otp ? 'border-red-500 focus:ring-red-500' : ''}`}
                   />
                   {errors.otp && <p className="text-sm text-red-600">{errors.otp.message}</p>}

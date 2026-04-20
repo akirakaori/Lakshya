@@ -1,5 +1,17 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+export class ApiError extends Error {
+  status?: number;
+  data?: unknown;
+
+  constructor(message: string, status?: number, data?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.data = data;
+  }
+}
+
 // Helper function to get auth headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
@@ -24,10 +36,15 @@ async function apiRequest<T>(
   };
 
   const response = await fetch(url, config);
-  const data = await response.json();
+  const contentType = response.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
+  const data = isJson ? await response.json() : await response.text();
 
   if (!response.ok) {
-    throw new Error(data.message || data.error || 'API request failed');
+    const payload = typeof data === 'object' && data !== null ? (data as Record<string, any>) : null;
+    const joiDetailMessage = payload?.error?.details?.[0]?.message;
+    const message = payload?.message || payload?.error || joiDetailMessage || 'API request failed';
+    throw new ApiError(message, response.status, data);
   }
 
   return data;
@@ -61,7 +78,7 @@ export const authApi = {
       body: JSON.stringify({ email }),
     }),
 
-  resetPassword: (data: { email: string; otp: string; newPassword: string }) =>
+  resetPassword: (data: { email: string; otp: string; newPassword: string; confirmPassword?: string }) =>
     apiRequest('/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify(data),

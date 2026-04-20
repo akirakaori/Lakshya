@@ -1,7 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../Controller/auth-controller');
-const { signupValidation, loginValidation } = require('../Middleware/auth-validation');
+const {
+	signupValidation,
+	loginValidation,
+	forgotPasswordValidation,
+	resetPasswordValidation,
+} = require('../Middleware/auth-validation');
 
 /**
  * @route   POST /api/auth/register
@@ -22,13 +27,13 @@ router.post('/login', loginValidation, authController.login);
  * @desc    Request password reset OTP
  * @access  Public
  */
-router.post('/forgot-password', authController.forgotPassword);
+router.post('/forgot-password', forgotPasswordValidation, authController.forgotPassword);
 
 /**
  * @route   POST /api/auth/reset-password
  * @desc    Reset password with OTP
  * @access  Public
  */
-router.post('/reset-password', authController.resetPassword);
+router.post('/reset-password', resetPasswordValidation, authController.resetPassword);
 
 module.exports = router;

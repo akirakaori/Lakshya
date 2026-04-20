@@ -217,13 +217,41 @@ const forgotPasswordService = async (data) => {
 const resetPasswordService = async (data) => {
   ensureDatabaseConnection();
 
-  const { email, otp, newPassword } = data;
+  const { email, otp, newPassword, confirmPassword } = data;
+
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const normalizedOtp = String(otp || '').trim();
+
+  if (!normalizedEmail || !normalizedOtp || !newPassword) {
+    const error = new Error('Email, OTP, and new password are required');
+    error.statusCode = 400;
+    error.success = false;
+    error.errorField = 'message';
+    throw error;
+  }
+
+  if (confirmPassword !== undefined && newPassword !== confirmPassword) {
+    const error = new Error('Passwords do not match');
+    error.statusCode = 400;
+    error.success = false;
+    error.errorField = 'message';
+    throw error;
+  }
+
+  if (newPassword.length < 8) {
+    const error = new Error('Password must be at least 8 characters');
+    error.statusCode = 400;
+    error.success = false;
+    error.errorField = 'message';
+    throw error;
+  }
 
   // Find user and validate OTP
-  const user = await UserModel.findOne({ email });
+  const user = await UserModel.findOne({ email: normalizedEmail }).select('+resetOTP +resetOTPExpiry');
   if (
     !user ||
-    user.resetOTP !== otp ||
+    user.resetOTP !== normalizedOtp ||
+    !user.resetOTPExpiry ||
     user.resetOTPExpiry < Date.now()
   ) {
     const error = new Error("Invalid or expired OTP");

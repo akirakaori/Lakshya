@@ -54,7 +54,46 @@ const loginValidation = (req, res, next) => {
     }
     next();
 }
+
+const forgotPasswordValidation = (req, res, next) => {
+  const schema = joi.object({
+    email: joi.string().email().required(),
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.details?.[0]?.message || 'Bad request',
+      error,
+    });
+  }
+
+  next();
+};
+
+const resetPasswordValidation = (req, res, next) => {
+  const schema = joi.object({
+    email: joi.string().email().required(),
+    otp: joi.string().trim().pattern(/^\d{6}$/).required(),
+    newPassword: joi.string().min(8).max(100).required(),
+    confirmPassword: joi.string().valid(joi.ref('newPassword')).optional(),
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.details?.[0]?.message || 'Bad request',
+      error,
+    });
+  }
+
+  next();
+};
 module.exports= { 
     signupValidation,
-     loginValidation 
+     loginValidation,
+     forgotPasswordValidation,
+     resetPasswordValidation 
 };
