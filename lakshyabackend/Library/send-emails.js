@@ -19,7 +19,7 @@ const sendEmail = async (to, subject, text) => {
   });
 
   const mailOptions = {
-    from: process.env.BREVO_FROM,
+    from: `"Lakshya" <${process.env.BREVO_FROM}>`,
     to,
     subject,
     text,
