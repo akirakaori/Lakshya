@@ -21,8 +21,10 @@ export const useJobs = (filters: JobFilters = {}) => {
     queryKey: jobKeys.list(filters),
     queryFn: () => {
       console.log('[useJobs] queryFn executing with filters:', filters);
+      //This is where frontend talks to backend.
       return jobService.getJobs(filters);
     },
+    //stale time is the time for which the data is considered fresh and will not be refetched in the background when component mounts again or when user comes back to the page after some time. Here we are setting it to 5 minutes, which means that if user comes back to the page within 5 minutes, it will show the cached data and will not make a new request to the backend. After 5 minutes, it will consider the data as stale and will make a new request to fetch fresh data from the backend.
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

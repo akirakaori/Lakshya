@@ -20,9 +20,9 @@ try {
   const bullmq = require('bullmq');
   Queue = bullmq.Queue;
   Worker = bullmq.Worker;
-  console.log('✅ BullMQ detected - Redis queue available');
+  console.log(' BullMQ detected - Redis queue available');
 } catch (error) {
-  console.log('ℹ️  BullMQ not installed - using in-memory queue fallback');
+  console.log('  BullMQ not installed - using in-memory queue fallback');
 }
 
 /**

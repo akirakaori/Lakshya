@@ -50,7 +50,8 @@ except OSError:
 
 # Load MiniLM sentence-transformer model (singleton, loaded once at startup)
 try:
-    st_model = SentenceTransformer("all-MiniLM-L6-v2")
+    # Prefer the locally cached model so startup also works without network.
+    st_model = SentenceTransformer("all-MiniLM-L6-v2", local_files_only=True)
     logger.info("✓ MiniLM sentence-transformer model loaded successfully")
 except Exception as e:
     logger.error(f"✗ Failed to load sentence-transformer model: {e}")

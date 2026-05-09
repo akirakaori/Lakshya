@@ -62,6 +62,7 @@ const BrowseJobs: React.FC = () => {
 
   const isAuthenticatedJobSeeker = user?.role === 'job_seeker';
   const initialFilters = urlParamsToFilters(searchParams);
+  //stores the filter applied by user and also the search keyword entered by user in the search bar
   const [appliedFilters, setAppliedFilters] = useState<JobFilters>(initialFilters);
   const [searchKeyword, setSearchKeyword] = useState(initialFilters.keyword || '');
 
@@ -75,6 +76,9 @@ const BrowseJobs: React.FC = () => {
   }, [appliedFilters]);
 
   console.log('[BrowseJobs] About to call useJobs with:', appliedFilters);
+  //it applies filter and gets the data from backend based on the filters applied by user
+  //filter change and usejob fetches the job again 
+  //This line is the frontend calling the API through your custom hook.
   const { data, isLoading, isFetching } = useJobs(appliedFilters);
 
   const { data: applicationsResponse } = useMyApplications(
