@@ -22,6 +22,7 @@ export interface ResumeParseStatus {
     bioFilled: boolean;
     titleFilled: boolean;
   } | null;
+  parsedData?: any;
 }
 
 export interface ResumeParseStatusResponse {
@@ -135,7 +136,7 @@ export const useResumeParseStatus = (options: {
  * Uses lastAutofillAt timestamp to detect new parse+autofill completions
  */
 export const useResumeParsePolling = (callbacks?: {
-  onParseComplete?: (summary: ResumeParseStatus['summary']) => void;
+  onParseComplete?: (summary: ResumeParseStatus['summary'], parsedData?: any) => void;
   onParseError?: (error: string) => void;
 }) => {
   const queryClient = useQueryClient();
@@ -176,7 +177,7 @@ export const useResumeParsePolling = (callbacks?: {
           console.log('✅ NEW autofill detected - triggering callback');
           
           if (callbacks?.onParseComplete) {
-            callbacks.onParseComplete(data.parseStatus.summary);
+            callbacks.onParseComplete(data.parseStatus.summary, data.parseStatus.parsedData);
           }
           
           // Update last seen timestamp

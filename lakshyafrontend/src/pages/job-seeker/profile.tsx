@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { DashboardLayout, LoadingSpinner } from '../../components';
 import {
   useProfile,
@@ -29,9 +29,40 @@ const Profile: React.FC = () => {
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
   const { parseStatus, startPolling } = useResumeParsePolling({
-    onParseComplete: (summary) => {
-      console.log('Resume parsing + autofill completed:', summary);
-      toast.success('Resume parsed and profile auto-filled successfully!', {
+    onParseComplete: (summary, parsedData) => {
+      console.log('Resume parsing completed:', summary, parsedData);
+      
+      if (parsedData) {
+        setFormData(prev => {
+          const newSkills = Array.isArray(parsedData.skills) ? parsedData.skills : [];
+          const uniqueSkills = Array.from(new Set([...prev.jobSeeker.skills, ...newSkills]));
+          
+          return {
+            ...prev,
+            fullName: parsedData.name || prev.fullName,
+            phone: parsedData.phone || prev.phone,
+            jobSeeker: {
+              ...prev.jobSeeker,
+              title: parsedData.title || prev.jobSeeker.title,
+              bio: parsedData.summary || prev.jobSeeker.bio,
+              skills: uniqueSkills,
+              experience: parsedData.experience 
+                ? (prev.jobSeeker.experience ? prev.jobSeeker.experience + '\n\n' + parsedData.experience : parsedData.experience)
+                : prev.jobSeeker.experience,
+              education: parsedData.education 
+                ? (prev.jobSeeker.education ? prev.jobSeeker.education + '\n\n' + parsedData.education : parsedData.education)
+                : prev.jobSeeker.education,
+            }
+          };
+        });
+        
+        setIsDirty(true);
+        if (!isEditing) {
+          enterEditMode();
+        }
+      }
+      
+      toast.success('Resume parsed! Please review and save changes.', {
         autoClose: 5000
       });
     },

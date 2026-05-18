@@ -13,6 +13,7 @@ import axiosInstance from '../../services/axios-instance';
 import { toast } from 'react-toastify';
 import { getFileUrl, getInitials } from '../../Utils';
 import type { Interview } from '../../services';
+import { socketService } from '../../services/socket-service';
 import {
   formatInterviewTimeRange,
   getInterviewDisplayStatusMeta,
@@ -116,6 +117,7 @@ const CandidateProfile: React.FC = () => {
   } | null>(null);
   const [showHireConfirm, setShowHireConfirm] = useState(false);
   const [interviewToEdit, setInterviewToEdit] = useState<Interview | undefined>(undefined);
+  const [nowTick, setNowTick] = useState(() => Date.now());
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['recruiterApplication', applicationId],
@@ -148,6 +150,32 @@ const CandidateProfile: React.FC = () => {
       : application?.jobId?._id || '';
 
   const rawInterviews = application?.interviews;
+  const now = new Date(nowTick);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowTick(Date.now());
+    }, 30_000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!jobId) return;
+    socketService.joinJobRoom(jobId);
+    return () => {
+      socketService.leaveJobRoom(jobId);
+    };
+  }, [jobId]);
+
+  useEffect(() => {
+    if (!applicationId) return;
+    socketService.joinApplicationRoom(applicationId);
+    return () => {
+      socketService.leaveApplicationRoom(applicationId);
+    };
+  }, [applicationId]);
+
   const normalizedInterviews = React.useMemo(() => {
     if (!rawInterviews || !Array.isArray(rawInterviews)) {
       return [];
@@ -956,7 +984,7 @@ const CandidateProfile: React.FC = () => {
                     let latestRoundNumber = -1;
 
                     normalizedInterviews.forEach((interview: Interview) => {
-                      const displayStatus = getInterviewDisplayStatusMeta(interview);
+                      const displayStatus = getInterviewDisplayStatusMeta(interview, now);
                       const outcomeMeta = getInterviewOutcomeMeta(interview);
 
                       if (displayStatus.value === 'completed' && outcomeMeta.value === 'pending') {
@@ -978,7 +1006,7 @@ const CandidateProfile: React.FC = () => {
                     return normalizedInterviews.map((interview: Interview) => {
                       console.log('[INTERVIEW RAW]', { roundNumber: interview.roundNumber, raw: interview });
 
-                      const displayStatus = getInterviewDisplayStatusMeta(interview);
+                      const displayStatus = getInterviewDisplayStatusMeta(interview, now);
                       const outcomeMeta = getInterviewOutcomeMeta(interview);
                       const timeRange = formatInterviewTimeRange(interview);
                       const interviewId = (interview._id ?? '').toString().trim();

@@ -76,6 +76,26 @@ class SocketService {
     return this.socket;
   }
 
+  joinJobRoom(jobId: string): void {
+    if (!this.socket || !jobId) return;
+    this.socket.emit('room:join', { type: 'job', id: jobId });
+  }
+
+  leaveJobRoom(jobId: string): void {
+    if (!this.socket || !jobId) return;
+    this.socket.emit('room:leave', { type: 'job', id: jobId });
+  }
+
+  joinApplicationRoom(applicationId: string): void {
+    if (!this.socket || !applicationId) return;
+    this.socket.emit('room:join', { type: 'application', id: applicationId });
+  }
+
+  leaveApplicationRoom(applicationId: string): void {
+    if (!this.socket || !applicationId) return;
+    this.socket.emit('room:leave', { type: 'application', id: applicationId });
+  }
+
   getConnectionStatus(): SocketConnectionStatus {
     return this.connectionStatus;
   }

@@ -207,35 +207,6 @@ const parseAndAutofillProfile = async (userId, resumeData, options = {}) => {
     const userObj = user.toObject();
     const { updatedProfile, changes } = mergeProfile(userObj, parsedData);
     
-    // Prepare database updates from merged profile
-    const updates = {};
-    
-    // Map top-level fields
-    if (updatedProfile.name !== userObj.name) {
-      updates.name = updatedProfile.name;
-    }
-    if (updatedProfile.email !== userObj.email) {
-      updates.email = updatedProfile.email;
-    }
-    if (updatedProfile.number !== userObj.number) {
-      updates.number = updatedProfile.number;
-    }
-    
-    // Map jobSeeker fields using dot notation
-    const jobSeekerFields = ['title', 'bio', 'skills', 'experience', 'education'];
-    for (const field of jobSeekerFields) {
-      const newValue = updatedProfile.jobSeeker?.[field];
-      const oldValue = userObj.jobSeeker?.[field];
-      
-      const hasChanged = Array.isArray(newValue)
-        ? JSON.stringify(newValue) !== JSON.stringify(oldValue)
-        : newValue !== oldValue;
-      
-      if (hasChanged) {
-        updates[`jobSeeker.${field}`] = newValue;
-      }
-    }
-    
     // Generate summary from changes
     const summary = {
       skillsAdded: 0,
@@ -260,11 +231,15 @@ const parseAndAutofillProfile = async (userId, resumeData, options = {}) => {
     });
     
     // Update status and timestamp fields
+    const updates = {};
     updates['jobSeeker.resumeParseStatus'] = 'done';
     updates['jobSeeker.resumeParseError'] = null;
     updates['jobSeeker.resumeParsedAt'] = new Date();
     updates['jobSeeker.lastAutofillAt'] = new Date();
     updates['jobSeeker.resumeParseResultSummary'] = summary;
+    
+    // Save raw parsed data for the frontend to apply to formData
+    updates['jobSeeker.parsedData'] = parsedData;
     
     console.log('\n💾 ========================================');
     console.log('💾 APPLYING AUTOFILL UPDATES TO DATABASE');

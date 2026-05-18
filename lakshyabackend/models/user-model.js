@@ -83,7 +83,8 @@ const userSchema = new Schema({
       experienceFilled: { type: Boolean, default: false },
       bioFilled: { type: Boolean, default: false },
       titleFilled: { type: Boolean, default: false }
-    }
+    },
+    parsedData: { type: mongoose.Schema.Types.Mixed, default: null }
   },
   recruiter: {
     companyDescription: { type: String, default: '' },

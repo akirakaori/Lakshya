@@ -27,6 +27,40 @@ const invalidateApplicationQueries = async (queryClient: ReturnType<typeof useQu
   await queryClient.invalidateQueries({ queryKey: applicationKeys.all });
 };
 
+const invalidateRealtimeApplicationQueries = async (
+  queryClient: ReturnType<typeof useQueryClient>,
+  payload?: { applicationId?: string; jobId?: string }
+) => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['applications'] }),
+    queryClient.invalidateQueries({ queryKey: ['recruiter-job-applications'] }),
+  ]);
+
+  if (payload?.applicationId) {
+    await queryClient.invalidateQueries({ queryKey: ['recruiterApplication', payload.applicationId] });
+    await queryClient.invalidateQueries({ queryKey: ['applications', 'detail', payload.applicationId] });
+  }
+
+  if (payload?.jobId) {
+    await queryClient.invalidateQueries({ queryKey: ['jobs', 'detail', payload.jobId] });
+    await queryClient.invalidateQueries({ queryKey: ['jobs', 'my-jobs'] });
+  }
+};
+
+const invalidateRecruiterProfileQueries = async (
+  queryClient: ReturnType<typeof useQueryClient>,
+  payload?: { recruiterId?: string }
+) => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['jobs'] }),
+    queryClient.invalidateQueries({ queryKey: ['applications'] }),
+  ]);
+
+  if (payload?.recruiterId) {
+    await queryClient.invalidateQueries({ queryKey: ['profile', 'candidate', payload.recruiterId] });
+  }
+};
+
 export const useNotificationSocket = () => {
   const queryClient = useQueryClient();
   const { isReady, isAuthenticated, user } = useAuth();
@@ -56,16 +90,43 @@ export const useNotificationSocket = () => {
       }
     };
 
+    const handleInterviewUpdated = (payload?: { applicationId?: string; jobId?: string }) => {
+      void invalidateRealtimeApplicationQueries(queryClient, payload);
+    };
+
+    const handleApplicationStatusUpdated = (payload?: { applicationId?: string; jobId?: string }) => {
+      void invalidateRealtimeApplicationQueries(queryClient, payload);
+    };
+
+    const handleRecruiterProfileUpdated = (payload?: { recruiterId?: string }) => {
+      void invalidateRecruiterProfileQueries(queryClient, payload);
+    };
+
+    const handleJobUpdated = (payload?: { jobId?: string }) => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      if (payload?.jobId) {
+        void queryClient.invalidateQueries({ queryKey: ['jobs', 'detail', payload.jobId] });
+      }
+    };
+
     socket.on('notification:new', handleNewNotificationEvent);
     socket.on('notification:count-updated', handleNotificationEvent);
     socket.on('notification:read', handleNotificationEvent);
     socket.on('notification:read-all', handleNotificationEvent);
+    socket.on('interview:updated', handleInterviewUpdated);
+    socket.on('application:statusUpdated', handleApplicationStatusUpdated);
+    socket.on('recruiter:profileUpdated', handleRecruiterProfileUpdated);
+    socket.on('job:updated', handleJobUpdated);
 
     return () => {
       socket.off('notification:new', handleNewNotificationEvent);
       socket.off('notification:count-updated', handleNotificationEvent);
       socket.off('notification:read', handleNotificationEvent);
       socket.off('notification:read-all', handleNotificationEvent);
+      socket.off('interview:updated', handleInterviewUpdated);
+      socket.off('application:statusUpdated', handleApplicationStatusUpdated);
+      socket.off('recruiter:profileUpdated', handleRecruiterProfileUpdated);
+      socket.off('job:updated', handleJobUpdated);
     };
   }, [isReady, isAuthenticated, user?._id, queryClient]);
 };

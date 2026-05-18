@@ -1,4 +1,56 @@
 const applicationService = require('../Services/application-service');
+const {
+  emitToRoom,
+  emitToUser,
+  getApplicationRoom,
+  getJobRoom,
+} = require('../socket/socket-server');
+
+const toIdString = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    if (value._id) return String(value._id);
+    if (value.id) return String(value.id);
+  }
+  return String(value);
+};
+
+const emitApplicationRealtimeUpdate = ({ application, eventName, actorId }) => {
+  if (!application || !eventName) return;
+
+  const applicationId = toIdString(application._id);
+  const jobId = toIdString(application.jobId);
+  const applicantId = toIdString(application.applicant);
+  const recruiterId = toIdString(application.jobId?.createdBy) || toIdString(actorId);
+
+  const payload = {
+    event: eventName,
+    applicationId,
+    jobId,
+    applicantId,
+    recruiterId,
+    status: application.status,
+    interviews: application.interviews || [],
+    updatedAt: application.updatedAt || new Date(),
+  };
+
+  if (applicantId) {
+    emitToUser(applicantId, eventName, payload);
+  }
+
+  if (recruiterId && recruiterId !== applicantId) {
+    emitToUser(recruiterId, eventName, payload);
+  }
+
+  if (jobId) {
+    emitToRoom(getJobRoom(jobId), eventName, payload);
+  }
+
+  if (applicationId) {
+    emitToRoom(getApplicationRoom(applicationId), eventName, payload);
+  }
+};
 
 /**
  * Apply for a job (job_seeker only)
@@ -10,6 +62,11 @@ const applyForJob = async (req, res) => {
     const applicationData = req.body;
     
     const application = await applicationService.applyForJob(jobId, applicantId, applicationData);
+    emitApplicationRealtimeUpdate({
+      application,
+      eventName: 'application:statusUpdated',
+      actorId: applicantId,
+    });
     
     res.status(201).json({
       success: true,
@@ -93,6 +150,11 @@ const updateApplicationStatus = async (req, res) => {
     }
     
     const application = await applicationService.updateApplicationStatus(applicationId, recruiterId, status);
+    emitApplicationRealtimeUpdate({
+      application,
+      eventName: 'application:statusUpdated',
+      actorId: recruiterId,
+    });
     
     res.status(200).json({
       success: true,
@@ -140,6 +202,15 @@ const withdrawApplication = async (req, res) => {
     const applicationId = req.params.id;
     
     const result = await applicationService.withdrawApplication(applicationId, applicantId);
+    emitApplicationRealtimeUpdate({
+      application: {
+        _id: applicationId,
+        applicant: applicantId,
+        status: 'withdrawn',
+      },
+      eventName: 'application:statusUpdated',
+      actorId: applicantId,
+    });
     
     res.status(200).json({
       success: true,
@@ -162,6 +233,11 @@ const shortlistCandidate = async (req, res) => {
     const applicationId = req.params.id;
     
     const application = await applicationService.shortlistCandidate(applicationId, recruiterId);
+    emitApplicationRealtimeUpdate({
+      application,
+      eventName: 'application:statusUpdated',
+      actorId: recruiterId,
+    });
     
     res.status(200).json({
       success: true,
@@ -186,6 +262,11 @@ const scheduleInterview = async (req, res) => {
     const interviewData = req.body;
     
     const application = await applicationService.scheduleInterview(applicationId, recruiterId, interviewData);
+    emitApplicationRealtimeUpdate({
+      application,
+      eventName: 'interview:updated',
+      actorId: recruiterId,
+    });
     
     res.status(200).json({
       success: true,
@@ -210,6 +291,11 @@ const scheduleInterviewRound = async (req, res) => {
     const interviewData = req.body;
     
     const application = await applicationService.scheduleInterviewRound(applicationId, recruiterId, interviewData);
+    emitApplicationRealtimeUpdate({
+      application,
+      eventName: 'interview:updated',
+      actorId: recruiterId,
+    });
     
     res.status(201).json({
       success: true,
@@ -239,6 +325,11 @@ const updateInterviewRound = async (req, res) => {
       recruiterId,
       interviewData
     );
+    emitApplicationRealtimeUpdate({
+      application,
+      eventName: 'interview:updated',
+      actorId: recruiterId,
+    });
     
     res.status(200).json({
       success: true,
@@ -275,6 +366,11 @@ const updateInterviewFeedback = async (req, res) => {
       recruiterId,
       feedbackData
     );
+    emitApplicationRealtimeUpdate({
+      application,
+      eventName: 'interview:updated',
+      actorId: recruiterId,
+    });
     
     res.status(200).json({
       success: true,

@@ -3,6 +3,26 @@ const resumeParserService = require('../Services/resume-parser-service');
 const { queueResumeParseJob } = require('../Services/resume-parse-queue');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
+const { emitToAll, emitToUser } = require('../socket/socket-server');
+
+const emitRecruiterProfileUpdated = ({ recruiter }) => {
+  if (!recruiter || recruiter.role !== 'recruiter') return;
+
+  const recruiterId = recruiter._id?.toString?.() || recruiter._id;
+  const payload = {
+    recruiterId,
+    profileImageUrl: recruiter.profileImageUrl || null,
+    recruiter: recruiter.recruiter || null,
+    companyName: recruiter.companyName || null,
+    updatedAt: recruiter.updatedAt || new Date(),
+  };
+
+  if (recruiterId) {
+    emitToUser(recruiterId, 'recruiter:profileUpdated', payload);
+  }
+
+  emitToAll('recruiter:profileUpdated', payload);
+};
 
 /**
  * Get user profile
@@ -55,6 +75,7 @@ const updateProfile = async (req, res) => {
     const updateData = req.body;
     
     const user = await userService.updateUserProfile(userId, updateData);
+    emitRecruiterProfileUpdated({ recruiter: user });
     
     res.status(200).json({
       success: true,
@@ -185,6 +206,7 @@ const uploadAvatar = async (req, res) => {
     
     const user = await userService.updateUserProfileImage(userId, imagePath);
     console.log('Updated user profileImageUrl:', user.profileImageUrl);
+    emitRecruiterProfileUpdated({ recruiter: user });
     
     res.status(200).json({
       success: true,
@@ -309,7 +331,8 @@ const getResumeParseStatus = async (req, res) => {
         error: user.jobSeeker.resumeParseError || null,
         parsedAt: user.jobSeeker.resumeParsedAt || null,
         resumeParseRunId: user.jobSeeker.resumeParseRunId || null,
-        summary: user.jobSeeker.resumeParseResultSummary || null
+        summary: user.jobSeeker.resumeParseResultSummary || null,
+        parsedData: user.jobSeeker.parsedData || null
       },
       profile: {
         title: user.jobSeeker.title || '',

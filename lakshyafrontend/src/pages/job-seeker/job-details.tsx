@@ -23,6 +23,7 @@ import lakshyaLogo from '../../assets/lakhsya-logo.svg';
 import DOMPurify from 'dompurify';
 import { normalizeRichContent } from '../../utils/rich-text';
 import { getStatusBadgeClass, getStatusLabel } from '../../utils/applicationStatus';
+import { socketService } from '../../services/socket-service';
 
 import type { Config as DOMPurifyConfig } from 'dompurify';
 
@@ -78,6 +79,14 @@ const JobDetails: React.FC = () => {
 
   const { data: jobData, isLoading, error } = useJob(safeJobId);
   const { data: relatedJobsData } = useJobs({ limit: 4 });
+
+  useEffect(() => {
+    if (!safeJobId) return;
+    socketService.joinJobRoom(safeJobId);
+    return () => {
+      socketService.leaveJobRoom(safeJobId);
+    };
+  }, [safeJobId]);
   const applyMutation = useApplyForJob();
   const { user } = useAuth();
   const { data: myApplicationsData } = useMyApplications(

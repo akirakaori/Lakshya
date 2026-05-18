@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { DashboardLayout, LoadingSpinner, EmptyState } from '../../components';
 import {
@@ -8,6 +8,7 @@ import {
 } from '../../hooks';
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '../../services/axios-instance';
+import { socketService } from '../../services/socket-service';
 import { toast } from 'react-toastify';
 import { getFileUrl, getInitials } from '../../Utils';
 import type { RecruiterApplication } from '../../services';
@@ -108,6 +109,14 @@ const JobApplications: React.FC = () => {
   const [appliedAnalysisStatus, setAppliedAnalysisStatus] = useState<'analyzed' | 'not_analyzed' | undefined>(undefined);
 
   const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (!jobId) return;
+    socketService.joinJobRoom(jobId);
+    return () => {
+      socketService.leaveJobRoom(jobId);
+    };
+  }, [jobId]);
 
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '10', 10);

@@ -2,6 +2,9 @@ const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
 
 const USER_ROOM_PREFIX = 'user:';
+const RECRUITER_ROOM_PREFIX = 'recruiter:';
+const JOB_ROOM_PREFIX = 'job:';
+const APPLICATION_ROOM_PREFIX = 'application:';
 let ioInstance = null;
 
 const parseAllowedOrigins = (value) => {
@@ -13,6 +16,9 @@ const parseAllowedOrigins = (value) => {
 };
 
 const getUserRoom = (userId) => `${USER_ROOM_PREFIX}${String(userId)}`;
+const getRecruiterRoom = (recruiterId) => `${RECRUITER_ROOM_PREFIX}${String(recruiterId)}`;
+const getJobRoom = (jobId) => `${JOB_ROOM_PREFIX}${String(jobId)}`;
+const getApplicationRoom = (applicationId) => `${APPLICATION_ROOM_PREFIX}${String(applicationId)}`;
 
 const extractToken = (socket) => {
   const authToken = socket.handshake.auth?.token;
@@ -66,6 +72,31 @@ const initializeSocket = (httpServer, allowedOrigins = []) => {
     }
 
     socket.join(getUserRoom(userId));
+    if (socket.user?.role === 'recruiter') {
+      socket.join(getRecruiterRoom(userId));
+    }
+
+    socket.on('room:join', (payload = {}) => {
+      const { type, id } = payload;
+      if (!id || typeof id !== 'string') return;
+
+      if (type === 'job') {
+        socket.join(getJobRoom(id));
+      } else if (type === 'application') {
+        socket.join(getApplicationRoom(id));
+      }
+    });
+
+    socket.on('room:leave', (payload = {}) => {
+      const { type, id } = payload;
+      if (!id || typeof id !== 'string') return;
+
+      if (type === 'job') {
+        socket.leave(getJobRoom(id));
+      } else if (type === 'application') {
+        socket.leave(getApplicationRoom(id));
+      }
+    });
 
     socket.on('disconnect', () => {
       // No-op hook kept for future debugging/metrics.
@@ -83,10 +114,27 @@ const emitToUser = (userId, eventName, payload) => {
   return true;
 };
 
+const emitToRoom = (roomName, eventName, payload) => {
+  if (!ioInstance || !roomName) return false;
+  ioInstance.to(roomName).emit(eventName, payload);
+  return true;
+};
+
+const emitToAll = (eventName, payload) => {
+  if (!ioInstance) return false;
+  ioInstance.emit(eventName, payload);
+  return true;
+};
+
 module.exports = {
   emitToUser,
+  emitToRoom,
+  emitToAll,
   getIO,
   getUserRoom,
+  getRecruiterRoom,
+  getJobRoom,
+  getApplicationRoom,
   initializeSocket,
   parseAllowedOrigins,
 };

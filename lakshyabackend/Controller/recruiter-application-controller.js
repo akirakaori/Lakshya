@@ -1,4 +1,55 @@
 const recruiterApplicationService = require('../Services/recruiter-application-service');
+const {
+  emitToRoom,
+  emitToUser,
+  getApplicationRoom,
+  getJobRoom,
+} = require('../socket/socket-server');
+
+const toIdString = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    if (value._id) return String(value._id);
+    if (value.id) return String(value.id);
+  }
+  return String(value);
+};
+
+const emitRecruiterApplicationUpdate = ({ application, eventName, recruiterId }) => {
+  if (!application || !eventName) return;
+
+  const applicationId = toIdString(application._id);
+  const jobId = toIdString(application.jobId);
+  const applicantId = toIdString(application.applicant);
+
+  const payload = {
+    event: eventName,
+    applicationId,
+    jobId,
+    applicantId,
+    recruiterId: toIdString(recruiterId),
+    status: application.status,
+    interviews: application.interviews || [],
+    updatedAt: application.updatedAt || new Date(),
+  };
+
+  if (applicantId) {
+    emitToUser(applicantId, eventName, payload);
+  }
+
+  if (recruiterId) {
+    emitToUser(recruiterId, eventName, payload);
+  }
+
+  if (jobId) {
+    emitToRoom(getJobRoom(jobId), eventName, payload);
+  }
+
+  if (applicationId) {
+    emitToRoom(getApplicationRoom(applicationId), eventName, payload);
+  }
+};
 
 /**
  * @route GET /api/recruiter/jobs/:jobId/applications
@@ -53,6 +104,11 @@ const updateApplicationStatus = async (req, res, next) => {
       recruiterId,
       status
     );
+    emitRecruiterApplicationUpdate({
+      application: updatedApplication,
+      eventName: 'application:statusUpdated',
+      recruiterId,
+    });
 
     res.status(200).json({
       success: true,
@@ -101,6 +157,16 @@ const bulkUpdateApplicationStatus = async (req, res, next) => {
       applicationIds,
       status
     );
+    const payload = {
+      event: 'application:statusUpdated',
+      recruiterId,
+      jobId,
+      applicationIds,
+      status: result.status,
+      updatedAt: new Date(),
+    };
+    emitToUser(recruiterId, 'application:statusUpdated', payload);
+    emitToRoom(getJobRoom(jobId), 'application:statusUpdated', payload);
 
     res.status(200).json({
       success: true,
