@@ -38,7 +38,7 @@ const authenticate = async (req, res, next) => {
         console.log('✅ Auth successful:', { userId: dbUser._id.toString(), role: dbUser.role, path: req.path });
         next();
     } catch (error) {
-        console.warn('⚠️ Auth failed: Invalid token', {
+        console.warn(' Auth failed: Invalid token', {
             path: req.path,
             method: req.method,
             error: error.message
