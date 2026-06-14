@@ -1,78 +1,188 @@
 # Lakshya
 
-Lakshya is a full-stack job portal built to connect **job seekers, recruiters, and admins** in one workflow. It combines job discovery, application tracking, recruiter hiring tools, and an AI-assisted resume parsing pipeline that can autofill profile data after upload.
+Lakshya is a full-stack job portal that connects job seekers, recruiters, and admins in a single hiring workflow. It goes beyond standard CRUD screens by combining role-based access control, job discovery, application tracking, resume intelligence, real-time notifications, and a background resume parsing service.
 
-## Why this project stands out
+## Why this project is recruiter-friendly
 
-- **Role-based experience** for job seekers, recruiters, and admins
-- **AI-powered resume parsing** with background processing and profile autofill
-- **Job matching and recommendations** to help candidates find relevant roles faster
-- **Recruiter hiring workflow** with application filtering, bulk status updates, and candidate profiles
-- **Real-time notifications** with Socket.IO
-- **Modern production stack** using React, Node.js, MongoDB, Cloudinary, and a Python NLP service
+- It shows end-to-end product thinking, not just isolated UI pages.
+- It uses a realistic hiring flow with job posting, applications, shortlisting, interviews, and hiring outcomes.
+- It includes a Python microservice for resume parsing, which makes the architecture feel production-ready.
+- It uses JWT authentication, role-based authorization, and protected API routes.
+- It stores structured business data in MongoDB with Mongoose models and indexed query paths.
 
-## Core features
+## Core Capabilities
 
-### For job seekers
+### Job Seekers
 
-- Browse and search jobs with filters
-- View job details and save jobs
-- Apply and track application status
-- See dashboard stats for applications, interviews, saved jobs, and hiring progress
-- Upload a resume and automatically extract profile data
-- Get job match analysis with skills, missing skills, and suggestions
+- Browse and search jobs with filters.
+- Save jobs and track applications.
+- Upload a resume and let the system extract profile data automatically.
+- View job match analysis with matched skills, missing skills, and suggestions.
+- Receive notifications when application status changes.
 
-### For recruiters
+### Recruiters
 
-- Post, edit, and manage jobs
-- View and filter applications by status, match score, and experience
-- Shortlist, reject, or move candidates through the hiring pipeline
-- Review candidate profiles and match snapshots
-- Perform bulk status updates
-- Monitor recent hiring activity
+- Create, edit, publish, and close jobs.
+- Review applications with match score, experience, and skill insights.
+- Move candidates through application stages.
+- Schedule interviews and manage outcomes.
+- Monitor candidate activity with application and job analytics.
 
-### For admins
+### Admins
 
-- Access dedicated admin dashboard and profile pages
-- Manage platform-level oversight
+- Access platform-level dashboards and oversight routes.
+- Manage system-wide job and user workflows.
+- Support moderation and operational control across the platform.
 
-## AI and automation
+## Tech Stack
 
-Lakshya uses a separate **resume parser microservice** built with **FastAPI + spaCy**. When a candidate uploads a resume:
+### Frontend
 
-1. The backend uploads the file to Cloudinary
-2. A background job sends the resume to the parser service
-3. Parsed skills, title, education, experience, and summary are merged into the profile
-4. Match analysis and recommendation data are updated for better job discovery
+- React 19
+- TypeScript
+- Vite
+- React Router
+- React Query
+- React Hook Form
+- Socket.IO client
+- Tailwind CSS
+- Framer Motion
+- Recharts
 
-## Tech stack
+### Backend
 
-| Layer | Technologies |
-|---|---|
-| Frontend | React 19, TypeScript, Vite, React Router, React Query, Tailwind CSS, Socket.IO client |
-| Backend | Node.js, Express, MongoDB, Mongoose, Socket.IO, BullMQ |
-| AI service | Python, FastAPI, spaCy, pdfplumber, docx2txt |
-| Storage & media | MongoDB, Cloudinary |
-| UI/UX | Framer Motion, React Toastify, Recharts |
+- Node.js
+- Express.js
+- Mongoose
+- MongoDB Atlas
+- JWT authentication
+- bcrypt password hashing
+- Multer file uploads
+- Socket.IO
+- BullMQ background jobs
+- Cloudinary storage
 
-## Project structure
+### Resume Parser Service
+
+- Python
+- FastAPI
+- spaCy
+- sentence-transformers
+- pdfplumber
+- docx2txt
+
+## System Architecture
+
+```mermaid
+flowchart LR
+		U[Browser: React + TypeScript] -->|REST /api requests| B[Express API]
+		U <-->|WebSocket events| S[Socket.IO]
+		B --> A[Auth Middleware]
+		A --> R[Role Middleware]
+		B --> C[Controllers]
+		C --> M[Mongoose Models]
+		M --> D[(MongoDB Atlas\nauth-db)]
+		C --> Q[BullMQ Queue]
+		Q --> P[Resume Parser Service\nFastAPI + spaCy]
+		C --> X[Cloudinary]
+		P --> X
+```
+
+## Request Flow
+
+```mermaid
+sequenceDiagram
+		participant F as Frontend
+		participant E as Express API
+		participant M as MongoDB Atlas
+		participant P as Python Resume Parser
+		participant N as Socket.IO
+
+		F->>E: Login / browse jobs / apply
+		E->>E: Verify JWT and role
+		E->>M: Read or write via Mongoose
+		alt Resume upload
+				E->>P: Send resume URL or file for parsing
+				P-->>E: Extracted skills, title, summary, education, experience
+		end
+		E->>N: Emit notification or status update
+		E-->>F: JSON response
+```
+
+## Folder Structure
 
 ```text
 Lakshya/
-├── lakshyafrontend/        # React frontend
-├── lakshyabackend/         # Express API
-└── resume-parser-service/   # Python resume parsing microservice
+├── lakshyafrontend/          # React frontend
+├── lakshyabackend/           # Express API and data layer
+├── resume-parser-service/     # Python resume parsing microservice
+├── cypress/                  # End-to-end tests
+├── README.md                 # Main project overview
+├── SETUP.md                  # Setup guide
+└── start-all-services.ps1    # Local startup helper
 ```
 
-## Getting started
+## Database Design
+
+Lakshya uses **MongoDB Atlas** through **Mongoose**. The active connection string in the backend environment targets the MongoDB database named `auth-db`. Several scripts also support local MongoDB usage with the `lakshya` database name for development and verification.
+
+### Collections
+
+- `users`: identity, role, soft-delete state, resume details, and recruiter/job-seeker profile fields.
+- `jobs`: job posts, salaries, skills, requirements, status, and ownership.
+- `applications`: user-job applications, status transitions, interview details, and match metadata.
+- `notifications`: read/unread notifications for application events and recruiter actions.
+- `jobmatchanalyses`: match scoring snapshots for a user-job pair.
+- `posts`: legacy or simplified job post records used by older flows.
+- `auditlogs`: system activity and operational trace records.
+
+```mermaid
+erDiagram
+		USER ||--o{ JOB : creates
+		USER ||--o{ APPLICATION : submits
+		USER ||--o{ NOTIFICATION : receives
+		USER ||--o{ JOBMATCHANALYSIS : owns
+		JOB ||--o{ APPLICATION : receives
+		JOB ||--o{ NOTIFICATION : references
+		APPLICATION ||--o{ NOTIFICATION : references
+```
+
+### Model Highlights
+
+- `User`
+	- Stores `name`, `email`, `number`, `role`, soft-delete flags, resume data, recruiter metadata, and job-seeker profile fields.
+- `Job`
+	- Stores title, description, company, location, salary, skills, category, job type, remote type, status, and ownership.
+- `Application`
+	- Stores application state, match score, matched and missing skills, interview rounds, and withdrawal data.
+- `Notification`
+	- Stores recipient, type, message, read state, and references back to job or application records.
+- `JobMatchAnalysis`
+	- Stores a durable analysis record for one user-job pair with semantic and skill-based scoring.
+
+## API Surface
+
+The backend exposes route groups for the main product areas:
+
+- `/api/auth` for register, login, password recovery, and token-related flows.
+- `/api/profile` for profile updates, resume uploads, and avatar management.
+- `/api/jobs` for browsing, creating, updating, and managing jobs.
+- `/api/applications` for application submission and workflow updates.
+- `/api/recruiter` for recruiter dashboards and application operations.
+- `/api/job-seeker` for matching, recommendations, and candidate-facing tools.
+- `/api/admin` for protected admin workflows.
+- `/api/notifications` for notification feed and read-state updates.
+
+## Local Setup
 
 ### Prerequisites
 
 - Node.js 20+
-- MongoDB
-- Python 3.8+ for the resume parser
+- npm 9+
+- MongoDB Atlas or a local MongoDB instance
+- Python 3.8+ for the resume parser service
 
-### 1) Backend
+### Backend
 
 ```bash
 cd lakshyabackend
@@ -82,14 +192,15 @@ npm install
 Create `lakshyabackend/.env`:
 
 ```env
-MONGO_URI=
-JWT_SECRET=
-EMAIL_USER=
-EMAIL_PASS=
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-GROQ_API_KEY=
+PORT=3000
+MONGO_CONN=<your-mongodb-connection-string>
+JWT_SECRET=<your-jwt-secret>
+EMAIL_USER=<your-email>
+EMAIL_PASS=<your-email-password>
+CLOUDINARY_CLOUD_NAME=<your-cloud-name>
+CLOUDINARY_API_KEY=<your-api-key>
+CLOUDINARY_API_SECRET=<your-api-secret>
+GROQ_API_KEY=<optional-ai-key>
 RESUME_PARSER_URL=http://localhost:8000
 FRONTEND_URL=http://localhost:5173
 ```
@@ -100,7 +211,7 @@ Run the API:
 npm run dev
 ```
 
-### 2) Frontend
+### Frontend
 
 ```bash
 cd lakshyafrontend
@@ -108,7 +219,13 @@ npm install
 npm run dev
 ```
 
-### 3) Resume parser service
+Build the frontend for production:
+
+```bash
+npm run build
+```
+
+### Resume Parser Service
 
 ```bash
 cd resume-parser-service
@@ -119,7 +236,7 @@ python -m spacy download en_core_web_sm
 python main.py
 ```
 
-## Default local URLs
+## Default Local URLs
 
 | Service | URL |
 |---|---|
@@ -127,21 +244,35 @@ python main.py
 | Backend API | http://localhost:3000 |
 | Resume parser | http://localhost:8000 |
 
-## Useful API areas
+## Engineering Decisions
 
-- `/api/auth` - register, login, forgot password, reset password
-- `/api/jobs` - browse, create, update, save, and manage jobs
-- `/api/profile` - profile updates, resume upload, avatar upload, password change
-- `/api/job-seeker` - job matching and recommendations
-- `/api/recruiter` - application management and hiring activity
-- `/api/notifications` - notification feed and read state
+- Separation of concerns is enforced through routes, middleware, controllers, services, and models.
+- JWT-based authentication keeps the API stateless and easier to scale.
+- Role middleware keeps recruiter and admin actions isolated from general user flows.
+- MongoDB indexes are used for common lookups such as user role, job filters, application state, and match sorting.
+- Resume parsing is isolated in a Python service so heavy NLP work does not block the Node API.
+- Socket.IO is used for real-time notification and status updates.
+- Cloudinary handles file storage so uploaded resumes and images do not bloat the app server.
 
-## Recruiter impact
+## Why the Architecture Works
 
-This project is strong for recruiters because it shows more than CRUD screens: it demonstrates **role-based access control, hiring workflow design, resume intelligence, live updates, and data-driven candidate evaluation**. It feels like a real product rather than a demo.
+Lakshya is structured like a real hiring platform:
 
-## Related notes
+1. The browser talks to the Express API through REST and real-time sockets.
+2. The backend validates authentication and authorization before business logic runs.
+3. Mongoose models persist the state of users, jobs, applications, notifications, and match analysis.
+4. The resume parser service handles document extraction and semantic enrichment.
+5. Background jobs and notifications keep the product responsive while still supporting heavier workflows.
 
-- `SETUP.md` contains a shorter setup guide
-- The `lakshyabackend` and `lakshyafrontend` folders also contain local READMEs
+## Improvements You Could Add Next
+
+- Add stronger request validation across all write endpoints.
+- Add automated tests for the resume parsing and application state transitions.
+- Add refresh-token rotation and token revocation.
+- Add rate limiting for authentication and upload routes.
+- Add observability for queue jobs, parser latency, and notification delivery.
+
+## Summary
+
+Lakshya demonstrates a full-stack production-style architecture with React, TypeScript, Node.js, Express, MongoDB Atlas, Mongoose, Socket.IO, BullMQ, Cloudinary, and a Python resume parsing microservice. It is a strong portfolio project because it shows product scope, backend design, real-time communication, and a clear hiring workflow.
 
