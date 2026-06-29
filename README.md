@@ -1,6 +1,6 @@
 # Lakshya
 
-Lakshya is a full-stack job portal that connects job seekers, recruiters, and admins in a single hiring workflow. It goes beyond standard CRUD screens by combining role-based access control, job discovery, application tracking, resume intelligence, real-time notifications, and a background resume parsing service.
+
 
 ## Why this project is recruiter-friendly
 
